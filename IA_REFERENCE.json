@@ -1,0 +1,569 @@
+{
+  "projectMetadata": {
+    "name": "Pollution Monitoring System",
+    "version": "3.0",
+    "date": "April 2026",
+    "status": "Production",
+    "language": "JavaScript (Node.js)",
+    "framework": "Express.js 5.2.1",
+    "database": "MongoDB 4.0+",
+    "authentication": "JWT + RBAC"
+  },
+  "stack": {
+    "backend": {
+      "express": "5.2.1",
+      "mongoose": "9.3.1",
+      "jsonwebtoken": "9.0.3",
+      "bcryptjs": "3.0.3",
+      "mqtt": "5.15.1",
+      "express-rate-limit": "8.3.1",
+      "dotenv": "17.3.1"
+    },
+    "iot": {
+      "device": "ESP32",
+      "protocol": "MQTT",
+      "sensors": [
+        "CO2",
+        "SO2",
+        "NOX",
+        "PM25",
+        "PM10",
+        "COV",
+        "TEMPERATURE",
+        "HUMIDITY"
+      ]
+    }
+  },
+  "authentication": {
+    "type": "JWT",
+    "accessTokenExpiry": "15m",
+    "refreshTokenExpiry": "7d",
+    "header": "Authorization: Bearer <token>",
+    "payload": {
+      "userId": "ObjectId",
+      "email": "String",
+      "role": "String",
+      "zone": "String | null",
+      "iat": "Timestamp",
+      "exp": "Timestamp"
+    }
+  },
+  "roles": {
+    "SUPER_ADMIN": {
+      "level": 5,
+      "permissions": [
+        "manage_industries",
+        "manage_nodes",
+        "manage_operators",
+        "manage_roles",
+        "configure_thresholds",
+        "view_live_data",
+        "view_history",
+        "acknowledge_alerts",
+        "generate_reports",
+        "export_data",
+        "calibrate_sensors"
+      ]
+    },
+    "HEAD_SUPERVISOR": {
+      "level": 4,
+      "permissions": [
+        "manage_industries",
+        "manage_nodes",
+        "manage_operators",
+        "manage_roles",
+        "view_live_data",
+        "view_history",
+        "acknowledge_alerts",
+        "generate_reports",
+        "export_data",
+        "calibrate_sensors"
+      ]
+    },
+    "SITE_SUPERVISOR": {
+      "level": 3,
+      "permissions": [
+        "manage_nodes",
+        "manage_operators",
+        "view_live_data",
+        "view_history",
+        "acknowledge_alerts",
+        "generate_reports",
+        "export_data",
+        "calibrate_sensors"
+      ]
+    },
+    "OPERATOR": {
+      "level": 1,
+      "permissions": [
+        "view_live_data",
+        "view_history",
+        "acknowledge_alerts",
+        "calibrate_sensors"
+      ],
+      "restriction": "zone-based access only"
+    },
+    "AUDITOR": {
+      "level": 2,
+      "permissions": ["view_history", "generate_reports", "export_data"]
+    }
+  },
+  "models": {
+    "User": {
+      "fields": {
+        "_id": "ObjectId",
+        "username": "String (unique, required)",
+        "email": "String (unique, lowercase, required)",
+        "password": "String (bcrypted, minLength: 6)",
+        "role": "Enum: SUPER_ADMIN|HEAD_SUPERVISOR|SITE_SUPERVISOR|OPERATOR|AUDITOR",
+        "zone": "String|null (for OPERATOR only)",
+        "site": "String|null (for SITE_SUPERVISOR)",
+        "isActive": "Boolean",
+        "lastLogin": "Date",
+        "createdAt": "Date",
+        "updatedAt": "Date"
+      }
+    },
+    "Industrie": {
+      "fields": {
+        "_id": "ObjectId",
+        "name": "String (required, unique)",
+        "licenseNumber": "String (unique)",
+        "sector": "String (e.g., 'Cimenterie', 'Raffinerie')",
+        "coordinates": "GeoJSON Point [longitude, latitude]",
+        "zonesCount": "Number",
+        "status": "Enum: Active|Suspended|Closed",
+        "contactPerson": "String",
+        "phone": "String",
+        "createdAt": "Date",
+        "updatedAt": "Date"
+      },
+      "indexes": ["coordinates (2dsphere)"]
+    },
+    "SensorNode": {
+      "fields": {
+        "_id": "ObjectId",
+        "nom": "String (required)",
+        "IndustrieId": "ObjectId → Industrie (required)",
+        "localisation": "GeoJSON Point [longitude, latitude]",
+        "zone": "String (e.g., 'Zone-A', 'Zone-B')",
+        "Status": "Enum: Active|Inactive",
+        "IPAddress": "String",
+        "macAddress": "String (unique)",
+        "createdAt": "Date",
+        "updatedAt": "Date"
+      },
+      "indexes": ["localisation (2dsphere)", "IndustrieId"]
+    },
+    "Sensor": {
+      "fields": {
+        "_id": "ObjectId",
+        "sensorNodeId": "ObjectId → SensorNode (required)",
+        "PolluantId": "ObjectId → Polluant (required)",
+        "type": "Enum: CO2|SO2|NOX|PM25|PM10|COV|TEMPERATURE|HUMIDITY",
+        "model": "String (e.g., 'MQ-135', 'SDS011')",
+        "unit": "String (e.g., 'ppm', 'µg/m³')",
+        "calibrationDate": "Date",
+        "driftThreshold": "Number",
+        "createdAt": "Date",
+        "updatedAt": "Date"
+      },
+      "indexes": ["sensorNodeId", "polluantId"]
+    },
+    "Polluant": {
+      "fields": {
+        "_id": "ObjectId",
+        "name": "String (required, unique)",
+        "formula": "String (required, e.g., 'NO₂')",
+        "unit": "String (required, e.g., 'µg/m³')",
+        "regulatoryLimit": "Number (ANPE threshold)",
+        "warningThreshold": "Number (< regulatory limit)",
+        "description": "String",
+        "conversionFactor": "Number (default: 1)",
+        "createdAt": "Date",
+        "updatedAt": "Date"
+      },
+      "anpeStandards": "NT 106.04 (Tunisie)"
+    },
+    "Reading": {
+      "fields": {
+        "_id": "ObjectId",
+        "sensorId": "ObjectId → Sensor (required)",
+        "PolluantId": "ObjectId → Polluant (required)",
+        "nodeId": "ObjectId → SensorNode (required)",
+        "value": "Number (required, validated: 0-1000)",
+        "unit": "String (required)",
+        "isValid": "Boolean (default: false)",
+        "rawValue": "Number (pre-conversion value)",
+        "timestamp": "Date (default: now)",
+        "createdAt": "Date",
+        "updatedAt": "Date"
+      },
+      "indexes": [
+        "timestamp: -1",
+        "sensorId: 1, timestamp: -1",
+        "PolluantId: 1, timestamp: -1",
+        "nodeId: 1, timestamp: -1"
+      ],
+      "validation": {
+        "rule": "isValid = value >= 0 && value <= 1000",
+        "description": "Eliminates sensor errors/saturation"
+      }
+    },
+    "Alert": {
+      "fields": {
+        "_id": "ObjectId",
+        "PolluantId": "ObjectId → Polluant (required)",
+        "SensorId": "ObjectId → Sensor (required)",
+        "ReadingId": "ObjectId → Reading (required)",
+        "severity": "Enum: Warning|High|Critical",
+        "type": "Enum: Threshold|SensorFault|Anomaly",
+        "value": "Number (measured value)",
+        "threshold": "Number (triggered threshold)",
+        "message": "String (detailed message with % overage)",
+        "timestamp": "Date",
+        "isAcknowledged": "Boolean (default: false)",
+        "acknowledgedby": "ObjectId → User",
+        "acknowledgedAt": "Date",
+        "createdAt": "Date",
+        "updatedAt": "Date"
+      },
+      "indexes": [
+        "isAcknowledged: 1, severity: 1",
+        "timestamp: -1",
+        "PolluantId: 1, timestamp: -1"
+      ],
+      "automaticGeneration": "Triggered IMMEDIATELY after Reading creation"
+    },
+    "Report": {
+      "fields": {
+        "_id": "ObjectId",
+        "title": "String (required)",
+        "industrie": "ObjectId → Industrie (required)",
+        "period": {
+          "startDate": "Date",
+          "endDate": "Date"
+        },
+        "pollutants": [
+          {
+            "pollutantId": "ObjectId",
+            "readings": "Number",
+            "avgValue": "Number",
+            "maxValue": "Number",
+            "exceedanceCount": "Number",
+            "exceedancePercentage": "Number"
+          }
+        ],
+        "status": "Enum: DRAFT|SUBMITTED|APPROVED|REJECTED",
+        "generatedBy": "ObjectId → User",
+        "generatedAt": "Date",
+        "submittedAt": "Date",
+        "approvedBy": "ObjectId → User",
+        "approvedAt": "Date",
+        "notes": "String",
+        "createdAt": "Date",
+        "updatedAt": "Date"
+      }
+    },
+    "RefreshToken": {
+      "fields": {
+        "_id": "ObjectId",
+        "userId": "ObjectId → User (required)",
+        "token": "String (required, unique)",
+        "expiresAt": "Date (required)",
+        "isRevoked": "Boolean (default: false)",
+        "createdAt": "Date",
+        "updatedAt": "Date"
+      }
+    }
+  },
+  "alertEngine": {
+    "description": "Automatic alert generation triggered after EVERY Reading creation",
+    "thresholdComparison": {
+      "Critical": {
+        "condition": "value > regulatoryLimit × 1.5",
+        "example": "150 > 120"
+      },
+      "High": {
+        "condition": "value > regulatoryLimit",
+        "example": "125 > 120"
+      },
+      "Warning": {
+        "condition": "value > warningThreshold",
+        "example": "105 > 100"
+      },
+      "NoAlert": {
+        "condition": "value <= warningThreshold",
+        "example": "95 <= 100"
+      }
+    },
+    "exceedanceCalculation": "(readingValue - regulatoryLimit) / regulatoryLimit × 100",
+    "messageFormat": "{POLLUTANT}: {value} {unit} — Dépassement: +{percentage}% du seuil ANPE",
+    "relationalIntegrity": "Each Reading → At most 1 Alert (linked by ReadingId)"
+  },
+  "endpoints": {
+    "authentication": {
+      "POST /auth/register": {
+        "role": "public",
+        "params": ["email", "username", "password"],
+        "returns": "User object + tokens"
+      },
+      "POST /auth/login": {
+        "role": "public",
+        "params": ["email", "password"],
+        "returns": "accessToken + refreshToken"
+      },
+      "POST /auth/refresh": {
+        "role": "public",
+        "params": ["refreshToken"],
+        "returns": "new accessToken"
+      },
+      "POST /auth/logout": {
+        "role": "authenticated",
+        "middleware": ["verifyToken"],
+        "effect": "revoke refresh token"
+      },
+      "GET /auth/me": {
+        "role": "authenticated",
+        "middleware": ["verifyToken"],
+        "returns": "current user profile"
+      }
+    },
+    "readings": {
+      "GET /api/readings": {
+        "role": "OPERATOR+",
+        "middleware": ["verifyToken", "checkRole", "checkZone"],
+        "params": ["sensorId", "dateFrom", "dateTo", "limit", "page"],
+        "returns": "paginated readings"
+      },
+      "POST /api/readings/ingest": {
+        "role": "internal/MQTT",
+        "middleware": ["validateRequestBody"],
+        "params": [
+          "sensorId",
+          "polluantId",
+          "nodeId",
+          "value",
+          "unit",
+          "rawValue"
+        ],
+        "effect": "Creates Reading AND triggers Alert Engine",
+        "returns": "Reading + Alert (if generated)"
+      },
+      "GET /api/readings/stats": {
+        "role": "OPERATOR+",
+        "middleware": ["verifyToken"],
+        "params": ["sensorId", "dateFrom", "dateTo"],
+        "returns": {
+          "avg": "Number",
+          "min": "Number",
+          "max": "Number",
+          "stdDev": "Number",
+          "count": "Number"
+        }
+      }
+    },
+    "alerts": {
+      "GET /api/alerts": {
+        "role": "OPERATOR+",
+        "middleware": ["verifyToken"],
+        "params": ["severity", "acknowledged", "limit"],
+        "returns": "paginated alerts"
+      },
+      "GET /api/alerts/active": {
+        "role": "OPERATOR+",
+        "middleware": ["verifyToken"],
+        "returns": "unacknowledged alerts only"
+      },
+      "PUT /api/alerts/{id}/acknowledge": {
+        "role": "OPERATOR+",
+        "middleware": ["verifyToken", "checkRole"],
+        "effect": "Mark alert as acknowledged",
+        "fields": [
+          "acknowledgedby: req.user.userId",
+          "acknowledgedAt: Date.now()",
+          "isAcknowledged: true"
+        ]
+      }
+    },
+    "sensor-nodes": {
+      "GET /api/sensor-nodes": {
+        "role": "SITE_SUPERVISOR+",
+        "middleware": ["verifyToken", "checkRole"],
+        "returns": "paginated nodes"
+      },
+      "POST /api/sensor-nodes": {
+        "role": "SITE_SUPERVISOR+",
+        "middleware": ["verifyToken", "checkRole"],
+        "params": ["nom", "IndustrieId", "localisation", "zone", "macAddress"]
+      },
+      "PUT /api/sensor-nodes/{id}": {
+        "role": "SITE_SUPERVISOR+",
+        "middleware": ["verifyToken", "checkRole"],
+        "allowedUpdates": ["Status", "IPAddress"]
+      }
+    },
+    "sensors": {
+      "GET /api/sensors": {
+        "role": "public",
+        "returns": "all sensors"
+      },
+      "POST /api/sensors": {
+        "role": "SITE_SUPERVISOR+",
+        "middleware": ["verifyToken", "checkRole"],
+        "params": ["sensorNodeId", "PolluantId", "type", "model", "unit"]
+      },
+      "PUT /api/sensors/{id}/calibrate": {
+        "role": "OPERATOR+",
+        "middleware": ["verifyToken", "checkRole"],
+        "params": ["calibrationDate", "driftThreshold"]
+      }
+    },
+    "polluants": {
+      "GET /api/polluants": {
+        "role": "public",
+        "returns": "all pollutants with ANPE thresholds"
+      },
+      "POST /api/polluants": {
+        "role": "SUPER_ADMIN",
+        "middleware": ["verifyToken", "checkRole"],
+        "params": [
+          "name",
+          "formula",
+          "unit",
+          "regulatoryLimit",
+          "warningThreshold"
+        ]
+      },
+      "PUT /api/polluants/{id}": {
+        "role": "SUPER_ADMIN",
+        "middleware": ["verifyToken", "checkRole"],
+        "allowedUpdates": [
+          "regulatoryLimit",
+          "warningThreshold",
+          "conversionFactor"
+        ]
+      }
+    },
+    "industries": {
+      "GET /api/industries": {
+        "role": "HEAD_SUPERVISOR+",
+        "middleware": ["verifyToken"],
+        "returns": "paginated industries"
+      },
+      "POST /api/industries": {
+        "role": "HEAD_SUPERVISOR+",
+        "middleware": ["verifyToken", "checkRole"],
+        "params": ["name", "licenseNumber", "sector", "coordinates"]
+      }
+    },
+    "reports": {
+      "GET /api/reports": {
+        "role": "AUDITOR+",
+        "middleware": ["verifyToken", "checkRole"]
+      },
+      "POST /api/reports": {
+        "role": "AUDITOR+",
+        "middleware": ["verifyToken", "checkRole"],
+        "params": ["title", "industrie", "period", "pollutants"]
+      },
+      "POST /api/reports/{id}/export": {
+        "role": "AUDITOR+",
+        "middleware": ["verifyToken", "checkRole"],
+        "returns": "PDF file (ANPE format)"
+      }
+    }
+  },
+  "conventions": {
+    "naming": {
+      "models": "PascalCase (User, Reading, Alert)",
+      "controllers": "camelCase + 'Controller' (readingController, alertController)",
+      "routes": "kebab-case (/api/sensor-nodes, /api/readings/ingest)",
+      "variables": "camelCase (sensorNodeId, isValid, readingValue)",
+      "constants": "UPPER_SNAKE_CASE (MAX_READINGS_PER_REQUEST, MONGO_URI)"
+    },
+    "responseFormat": {
+      "success": {
+        "code": "200-201",
+        "structure": {
+          "success": "true",
+          "message": "string",
+          "data": "object|array"
+        }
+      },
+      "error": {
+        "code": "4xx-5xx",
+        "structure": {
+          "success": "false",
+          "message": "string",
+          "error": "string (optional)"
+        }
+      }
+    },
+    "middlewareStack": [
+      "verifyToken (JWT validation)",
+      "checkRole (RBAC)",
+      "checkZone (zone restriction for OPERATOR)",
+      "validateRequest (business logic validation)",
+      "controller (actual logic)"
+    ],
+    "errorHandling": "Use createError(statusCode, message) from errorHandler middleware"
+  },
+  "criticalRules": [
+    "1. Every Reading AUTOMATICALLY triggers Alert Engine",
+    "2. Alert created in readingController (NOT separate endpoint)",
+    "3. Validation: 0 <= value <= 1000 (ALWAYS)",
+    "4. RBAC middleware MUST be checkRole(\"ROLE1\", \"ROLE2\")",
+    "5. OPERATOR restricted by zone (null zone = global access)",
+    "6. Use error_messages & success_messages constants",
+    "7. Alert severity: Warning → High → Critical (threshold hierarchy)",
+    "8. Each model has createdAt & updatedAt fields",
+    "9. All ObjectId references use mongoose.Schema.Types.ObjectId",
+    "10. No hardcoded thresholds (always from DB Polluant)",
+    "11. Database queries must use indexes on high-volume collections",
+    "12. Populate related ObjectIds (sensors, pollutants, readings)",
+    "13. Alert is IRREVERSIBLE (acknowledgedAt cannot be removed)",
+    "14. One Reading = At most one Alert (linked by ReadingId)"
+  ],
+  "environmentVariables": {
+    "MONGO_URI": "mongodb://localhost:27017/pollution-monitoring",
+    "JWT_SECRET": "min 32 chars (secure)",
+    "JWT_REFRESH_SECRET": "min 32 chars (secure)",
+    "ACCESS_TOKEN_EXPIRY": "15m",
+    "REFRESH_TOKEN_EXPIRY": "7d",
+    "PORT": "5000",
+    "NODE_ENV": "production|development",
+    "MQTT_BROKER_URL": "mqtt://localhost",
+    "MQTT_PORT": "1883"
+  },
+  "validationRules": {
+    "reading": {
+      "value": "Number (required, >= 0, <= 1000)",
+      "sensorId": "ObjectId (required, must exist)",
+      "polluantId": "ObjectId (required, must exist)",
+      "nodeId": "ObjectId (required, must exist)",
+      "unit": "String (required)"
+    },
+    "user": {
+      "email": "String (required, unique, email format)",
+      "password": "String (required, minLength: 6)",
+      "username": "String (required, unique)",
+      "role": "Enum from ROLE_HIERARCHY"
+    },
+    "alert": {
+      "severity": "Calculated (not user input)",
+      "type": "Auto-generated (Threshold|SensorFault|Anomaly)",
+      "isAcknowledged": "Boolean (default: false, irreversible to true)"
+    }
+  },
+  "performanceTips": [
+    "Use .lean() for read-only queries",
+    "Always populate required ObjectIds in single query",
+    "Limit results by default (e.g., max 100)",
+    "Use pagination for large datasets",
+    "Avoid N+1 queries (use populate, not forEach)",
+    "Index on: sensorId, PolluantId, nodeId, timestamp",
+    "Geospatial index for coordinates (2dsphere)",
+    "Database connections: 1 cluster per environment"
+  ]
+}

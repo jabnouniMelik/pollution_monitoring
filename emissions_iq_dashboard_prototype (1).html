@@ -1,0 +1,401 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+.app{display:flex;height:680px;font-family:var(--font-sans);font-size:14px;border-radius:var(--border-radius-lg);overflow:hidden;border:0.5px solid var(--color-border-tertiary);}
+.sidebar{width:196px;background:#1E3A5F;display:flex;flex-direction:column;flex-shrink:0;}
+.sb-logo{padding:14px 16px;border-bottom:0.5px solid rgba(255,255,255,0.12);}
+.sb-logo-name{color:#fff;font-size:14px;font-weight:500;}
+.sb-logo-sub{color:rgba(255,255,255,0.45);font-size:11px;margin-top:1px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;color:rgba(255,255,255,0.65);cursor:pointer;font-size:12px;border-left:2px solid transparent;}
+.nav-item:hover{background:rgba(255,255,255,0.07);color:#fff;}
+.nav-item.active{background:rgba(255,255,255,0.11);color:#fff;border-left-color:#90CAF9;}
+.nav-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0;}
+.nb{margin-left:auto;background:#E24B4A;color:#fff;font-size:10px;padding:1px 5px;border-radius:8px;font-weight:500;}
+.sb-footer{padding:12px 16px;border-top:0.5px solid rgba(255,255,255,0.1);margin-top:auto;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--color-background-tertiary);}
+.topbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:0 18px;height:46px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.tb-left{display:flex;align-items:center;gap:10px;}
+.tb-title{font-size:13px;font-weight:500;color:var(--color-text-primary);}
+.zone-sel{font-size:11px;padding:3px 7px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-secondary);}
+.tb-right{display:flex;align-items:center;gap:10px;}
+.bell-wrap{position:relative;cursor:pointer;font-size:14px;}
+.bell-dot{position:absolute;top:-3px;right:-3px;width:14px;height:14px;background:#E24B4A;border-radius:50%;font-size:9px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:500;}
+.role-pill{font-size:11px;padding:3px 8px;background:#E8EAF6;color:#3949AB;border-radius:var(--border-radius-md);}
+.content{flex:1;overflow-y:auto;padding:14px 18px;}
+.page{display:none;}
+.page.active{display:block;}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:12px 14px;}
+.card-title{font-size:11px;color:var(--color-text-secondary);font-weight:500;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px;}
+.g5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:12px;}
+.g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:12px;}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px;}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.st{font-size:13px;font-weight:500;color:var(--color-text-primary);}
+.sa{font-size:11px;color:var(--color-text-info);cursor:pointer;}
+.kc{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:12px 14px;}
+.kl{font-size:11px;color:var(--color-text-secondary);font-weight:500;margin-bottom:2px;}
+.ks{font-size:10px;color:var(--color-text-tertiary);}
+.kv{font-size:21px;font-weight:500;line-height:1.2;margin:3px 0;}
+.kd{font-size:11px;margin-top:2px;}
+.cs{color:var(--color-text-success);}
+.cw{color:var(--color-text-warning);}
+.cd{color:var(--color-text-danger);}
+.ci{color:var(--color-text-info);}
+.cp{color:#7B1FA2;}
+.pc{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:10px 12px;}
+.pn{font-size:12px;font-weight:500;color:var(--color-text-primary);}
+.pv{font-size:19px;font-weight:500;margin:3px 0 1px;}
+.pu{font-size:11px;color:var(--color-text-secondary);}
+.gbar{height:4px;background:var(--color-border-tertiary);border-radius:2px;margin-top:7px;}
+.gfill{height:100%;border-radius:2px;}
+.plim{display:flex;justify-content:space-between;font-size:10px;color:var(--color-text-tertiary);margin-top:2px;}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;}
+.ai{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--color-border-tertiary);}
+.ai:last-child{border-bottom:none;}
+.sb{font-size:10px;font-weight:500;padding:2px 6px;border-radius:4px;white-space:nowrap;}
+.sc{background:#FFEBEE;color:#B71C1C;}
+.sh2{background:#FFF3E0;color:#E65100;}
+.sm{background:#FFF8E1;color:#F57F17;}
+.sl{background:#E8F5E9;color:#1B5E20;}
+.am{font-size:12px;color:var(--color-text-primary);margin-bottom:1px;}
+.ameta{font-size:11px;color:var(--color-text-secondary);}
+.frow{display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
+.fb{font-size:11px;padding:4px 9px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-secondary);cursor:pointer;}
+.fb.on{background:#1E3A5F;color:#fff;border-color:#1E3A5F;}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{text-align:left;padding:7px 9px;font-size:11px;font-weight:500;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary);}
+.tbl td{padding:7px 9px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary);}
+.tbl tr:last-child td{border-bottom:none;}
+.prc{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:9px 11px;}
+.prl{font-size:11px;color:var(--color-text-secondary);margin-bottom:2px;}
+.prv{font-size:15px;font-weight:500;}
+.cbar{height:3px;background:var(--color-border-tertiary);border-radius:2px;margin-top:5px;}
+.ri{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--color-border-tertiary);}
+.ri:last-child{border-bottom:none;}
+.sp2{font-size:10px;font-weight:500;padding:2px 7px;border-radius:12px;}
+.st-a{background:#E8F5E9;color:#1B5E20;}
+.st-s{background:#E3F2FD;color:#1565C0;}
+.st-d{background:#F5F5F5;color:#616161;}
+.bsm{font-size:11px;padding:4px 9px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-primary);cursor:pointer;}
+.bsm:hover{background:var(--color-background-secondary);}
+.warn-border{border-color:#FFB74D !important;}
+</style>
+
+<div class="app">
+<div class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-name">EmissionsIQ</div>
+    <div class="sb-logo-sub">Sfax-01 · ENIM PFE 2026</div>
+  </div>
+  <nav style="padding:6px 0;flex:1;">
+    <div class="nav-item active" onclick="nav('overview',this)"><span class="nav-icon">▣</span>Vue d'ensemble</div>
+    <div class="nav-item" onclick="nav('alerts',this)"><span class="nav-icon">▲</span>Alertes<span class="nb">3</span></div>
+    <div class="nav-item" onclick="nav('history',this)"><span class="nav-icon">◈</span>Historique émissions</div>
+    <div class="nav-item" onclick="nav('compliance',this)"><span class="nav-icon">◆</span>Conformité réglementaire</div>
+    <div class="nav-item" onclick="nav('ai',this)"><span class="nav-icon">◇</span>IA &amp; Prédictions</div>
+    <div class="nav-item" onclick="nav('reports',this)"><span class="nav-icon">▦</span>Rapports ANPE</div>
+  </nav>
+  <div class="sb-footer">
+    <div style="color:rgba(255,255,255,0.45);font-size:11px;">5 nœuds actifs</div>
+    <div style="color:rgba(255,255,255,0.75);font-size:11px;margin-top:2px;">Dernière MàJ: 12s</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="tb-left">
+      <span class="tb-title">Surveillance des Émissions Industrielles</span>
+      <select class="zone-sel"><option>Toutes les zones</option><option>Zone A</option><option>Zone B</option><option>Zone C</option></select>
+    </div>
+    <div class="tb-right">
+      <div class="bell-wrap">&#9873;<div class="bell-dot">3</div></div>
+      <span class="role-pill">Superviseur</span>
+      <span style="font-size:12px;color:var(--color-text-secondary);">Melik J.</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+  <!-- ═══ PAGE: Vue d'ensemble ═══ -->
+  <div class="page active" id="page-overview">
+    <div class="g4">
+      <div class="kc"><div class="kl">Taux de Dépassement</div><div class="ks">TD — mars 2026</div><div class="kv cw">4.2%</div><div class="kd cw">↑ +0.8% vs fév.</div></div>
+      <div class="kc"><div class="kl">Indice Perf. Environ.</div><div class="ks">IPE — mars 2026</div><div class="kv cs">96.8<span style="font-size:13px;">/100</span></div><div class="kd cs">↑ +1.2 vs fév.</div></div>
+      <div class="kc"><div class="kl">Émission Moy. / Jour</div><div class="ks">EMJ — CO2</div><div class="kv ci">12.4<span style="font-size:13px;"> kg/j</span></div><div class="kd cs">↓ −1.2 vs fév.</div></div>
+      <div class="kc"><div class="kl">Réduction CO2</div><div class="ks">RCO2 — mensuel</div><div class="kv cp">−8.5%</div><div class="kd cs">Objectif ≤ −5% ✓</div></div>
+    </div>
+    <div class="sh"><span class="st">Mesures en temps réel</span><span style="font-size:11px;color:var(--color-text-secondary);">Mis à jour il y a 12 s · 5 capteurs actifs</span></div>
+    <div class="g5">
+      <div class="pc"><div class="pn"><span class="dot" style="background:#2E7D32;"></span>CO2</div><div class="pv cs">620</div><div class="pu">ppm · VLE: 1000</div><div class="gbar"><div class="gfill" style="width:62%;background:#2E7D32;"></div></div><div class="plim"><span>0</span><span>1000</span></div></div>
+      <div class="pc warn-border"><div class="pn"><span class="dot" style="background:#E65100;"></span>NOx</div><div class="pv cw">165</div><div class="pu">mg/Nm³ · VLE: 200</div><div class="gbar"><div class="gfill" style="width:82%;background:#E65100;"></div></div><div class="plim"><span>0</span><span>200</span></div></div>
+      <div class="pc"><div class="pn"><span class="dot" style="background:#2E7D32;"></span>SO2</div><div class="pv cs">45</div><div class="pu">mg/Nm³ · VLE: 200</div><div class="gbar"><div class="gfill" style="width:22%;background:#2E7D32;"></div></div><div class="plim"><span>0</span><span>200</span></div></div>
+      <div class="pc warn-border"><div class="pn"><span class="dot" style="background:#E65100;"></span>PM2.5</div><div class="pv cw">18.2</div><div class="pu">µg/m³ · VLE: 25</div><div class="gbar"><div class="gfill" style="width:73%;background:#E65100;"></div></div><div class="plim"><span>0</span><span>25</span></div></div>
+      <div class="pc"><div class="pn"><span class="dot" style="background:#2E7D32;"></span>COV</div><div class="pv cs">38.5</div><div class="pu">mg/Nm³ · VLE: 50</div><div class="gbar"><div class="gfill" style="width:77%;background:#2E7D32;"></div></div><div class="plim"><span>0</span><span>50</span></div></div>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="sh" style="margin-bottom:6px;"><span class="card-title" style="margin:0;">NOx — Tendance 24h</span><span class="kd cw" style="font-size:11px;">⚠ Zone avertissement</span></div>
+        <div style="position:relative;height:140px;"><canvas id="c-mini"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="sh" style="margin-bottom:6px;"><span class="card-title" style="margin:0;">Alertes récentes</span><span class="sa" onclick="nav('alerts',document.querySelectorAll('.nav-item')[1])">Voir tout →</span></div>
+        <div class="ai"><span class="sb sc">CRITIQUE</span><div><div class="am">NOx dépasse VLE · Station-01 / Zone-A</div><div class="ameta">245 mg/Nm³ > 200 · il y a 8 min · Non acquitté</div></div></div>
+        <div class="ai"><span class="sb sh2">ÉLEVÉ</span><div><div class="am">PM2.5 seuil avertissement · Zone-B</div><div class="ameta">18.2 µg/m³ > 15 · il y a 23 min</div></div></div>
+        <div class="ai"><span class="sb sm">MOYEN</span><div><div class="am">Anomalie IA détectée · Zone-A</div><div class="ameta">Score IF: −0.42 · il y a 1h</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: Alertes ═══ -->
+  <div class="page" id="page-alerts">
+    <div class="sh"><span class="st">Centre des Alertes</span><div style="display:flex;gap:7px;align-items:center;"><span style="font-size:11px;color:var(--color-text-secondary);">3 non acquittées</span><button class="bsm">Tout acquitter</button></div></div>
+    <div class="frow">
+      <button class="fb on">Toutes (6)</button><button class="fb">CRITIQUE (1)</button><button class="fb">ÉLEVÉ (2)</button><button class="fb">MOYEN (2)</button><button class="fb">BAS (1)</button><button class="fb">Non acquittées</button>
+      <select class="zone-sel" style="margin-left:auto;"><option>Toutes les zones</option><option>Zone A</option><option>Zone B</option></select>
+    </div>
+    <div class="card" style="padding:0 14px;">
+      <div class="ai" style="padding:11px 0;">
+        <span class="sb sc">CRITIQUE</span>
+        <div style="flex:1;">
+          <div class="am" style="font-weight:500;">NOx dépasse le seuil réglementaire NT 106.04</div>
+          <div class="ameta">Station Sfax-01 · Zone-A · Capteur NO2-A1 · 14/03/2026 09:42</div>
+          <div style="margin-top:3px;display:flex;gap:14px;font-size:11px;">
+            <span style="color:var(--color-text-secondary);">Mesuré: <strong style="color:#B71C1C;">245 mg/Nm³</strong></span>
+            <span style="color:var(--color-text-secondary);">VLE: 200 mg/Nm³</span>
+            <span class="cd" style="font-weight:500;">+22.5% dépassement</span>
+            <span class="cw">Non acquitté — 8 min</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:5px;"><button class="bsm cd" style="border-color:var(--color-border-danger);">Acquitter</button><button class="bsm">Escalader</button></div>
+      </div>
+      <div class="ai" style="padding:11px 0;">
+        <span class="sb sh2">ÉLEVÉ</span>
+        <div style="flex:1;">
+          <div class="am" style="font-weight:500;">PM2.5 dépasse seuil avertissement</div>
+          <div class="ameta">Station Sfax-02 · Zone-B · PMS5003 · 14/03/2026 09:29</div>
+          <div style="margin-top:3px;display:flex;gap:14px;font-size:11px;">
+            <span style="color:var(--color-text-secondary);">Mesuré: <strong class="cw">18.2 µg/m³</strong></span>
+            <span style="color:var(--color-text-secondary);">Warning: 15 µg/m³</span>
+            <span class="cw" style="font-weight:500;">+21.3% dépassement warning</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:5px;"><button class="bsm">Acquitter</button><button class="bsm">Escalader</button></div>
+      </div>
+      <div class="ai" style="padding:11px 0;">
+        <span class="sb sh2">ÉLEVÉ</span>
+        <div style="flex:1;">
+          <div class="am" style="font-weight:500;">NOx — dépassement prolongé > 10 min</div>
+          <div class="ameta">Station Sfax-01 · Zone-A · 14/03/2026 08:55 · Durée: 47 min · Moy: 168 mg/Nm³</div>
+        </div>
+        <div style="display:flex;gap:5px;"><button class="bsm">Acquitter</button></div>
+      </div>
+      <div class="ai" style="padding:11px 0;">
+        <span class="sb sm">MOYEN</span>
+        <div style="flex:1;">
+          <div class="am" style="font-weight:500;">Anomalie IA détectée — comportement multi-capteurs inhabituel</div>
+          <div class="ameta">Isolation Forest · Score: −0.42 · Zone-A · 14/03/2026 08:12 · PM2.5 isolé élevé</div>
+        </div>
+        <div style="display:flex;gap:5px;"><button class="bsm">Acquitter</button></div>
+      </div>
+      <div class="ai" style="padding:11px 0;">
+        <span class="sb sm">MOYEN</span>
+        <div style="flex:1;">
+          <div class="am" style="font-weight:500;">Prédiction LSTM — NOx prédit > VLE dans 45 min</div>
+          <div class="ameta">IA / LSTM · Horizon 1h · Confiance 78% · Valeur prédite: 213 mg/Nm³</div>
+        </div>
+        <div style="display:flex;gap:5px;"><button class="bsm">Voir prédiction</button></div>
+      </div>
+      <div class="ai" style="padding:11px 0;">
+        <span class="sb sl">BAS</span>
+        <div style="flex:1;">
+          <div class="am" style="font-weight:500;">Dérive capteur — SHT31 Station-03</div>
+          <div class="ameta">Watchdog drift · Zone-C · 14/03/2026 06:00</div>
+        </div>
+        <div style="display:flex;gap:5px;"><button class="bsm">Calibrer</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: Historique ═══ -->
+  <div class="page" id="page-history">
+    <div class="sh">
+      <span class="st">Historique des Émissions</span>
+      <div class="frow" style="margin:0;gap:5px;">
+        <button class="fb">1h</button><button class="fb on">24h</button><button class="fb">7j</button><button class="fb">30j</button>
+      </div>
+    </div>
+    <div class="frow">
+      <button class="fb on">NOx</button><button class="fb">SO2</button><button class="fb">CO2</button><button class="fb">PM2.5</button><button class="fb">COV</button><button class="fb">Superposer</button>
+    </div>
+    <div class="card" style="margin-bottom:10px;">
+      <div class="sh" style="margin-bottom:6px;">
+        <div><span class="card-title" style="margin:0;">NOx — 24 dernières heures · Station Sfax-01</span></div>
+        <div style="display:flex;gap:12px;font-size:11px;align-items:center;">
+          <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:2px;background:#378ADD;display:inline-block;"></span>Mesure</span>
+          <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:2px;background:#7F77DD;display:inline-block;border-top:2px dashed #7F77DD;"></span>Prédiction</span>
+          <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:2px;background:#E24B4A;display:inline-block;border-top:2px dashed #E24B4A;"></span>VLE 200</span>
+          <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:2px;background:#EF9F27;display:inline-block;border-top:2px dashed #EF9F27;"></span>Warning 150</span>
+        </div>
+      </div>
+      <div style="position:relative;height:220px;"><canvas id="c-hist"></canvas></div>
+    </div>
+    <div class="g4">
+      <div class="kc"><div class="kl">Min 24h</div><div class="kv" style="font-size:17px;">98<span style="font-size:12px;"> mg/Nm³</span></div></div>
+      <div class="kc"><div class="kl">Max 24h</div><div class="kv cd" style="font-size:17px;">245<span style="font-size:12px;"> mg/Nm³</span></div></div>
+      <div class="kc"><div class="kl">Moyenne 24h</div><div class="kv cw" style="font-size:17px;">165<span style="font-size:12px;"> mg/Nm³</span></div></div>
+      <div class="kc"><div class="kl">Dépassements</div><div class="kv cd" style="font-size:17px;">3<span style="font-size:12px;"> événements</span></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: Conformité ═══ -->
+  <div class="page" id="page-compliance">
+    <div class="sh"><span class="st">Conformité Réglementaire — NT 106.04 / ANPE</span><span style="font-size:11px;color:var(--color-text-secondary);">Période : mars 2026</span></div>
+    <div class="g2" style="align-items:start;">
+      <div class="card" style="padding:12px 0;">
+        <div style="padding:0 14px 8px;"><span class="card-title">Tableau de conformité par polluant</span></div>
+        <table class="tbl">
+          <thead><tr><th>Polluant</th><th>Capteur</th><th>VLE ANPE</th><th>Conc. moy.</th><th>TD%</th><th>Statut</th></tr></thead>
+          <tbody>
+            <tr><td><strong>NOx</strong></td><td>NO2-A1</td><td>200 mg/Nm³</td><td>165 mg/Nm³</td><td class="cw"><strong>4.2%</strong></td><td><span class="sb sh2">ATTENTION</span></td></tr>
+            <tr><td><strong>SO2</strong></td><td>SO2-B4</td><td>200 mg/Nm³</td><td>45 mg/Nm³</td><td class="cs">0.0%</td><td><span class="sb sl">CONFORME</span></td></tr>
+            <tr><td><strong>PM2.5</strong></td><td>PMS5003</td><td>25 µg/m³</td><td>18.2 µg/m³</td><td class="cw"><strong>1.3%</strong></td><td><span class="sb sh2">ATTENTION</span></td></tr>
+            <tr><td><strong>COV</strong></td><td>CCS811</td><td>50 mg/Nm³</td><td>38.5 mg/Nm³</td><td class="cs">0.0%</td><td><span class="sb sl">CONFORME</span></td></tr>
+            <tr><td><strong>CO2</strong></td><td>MH-Z19B</td><td>1000 ppm</td><td>620 ppm</td><td class="cs">0.0%</td><td><span class="sb sl">CONFORME</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:10px;text-align:center;">
+          <div class="card-title" style="text-align:left;">Indice de Performance Environnementale</div>
+          <div style="position:relative;height:140px;"><canvas id="c-ipe"></canvas></div>
+          <div style="font-size:26px;font-weight:500;color:#1B5E20;margin-top:2px;">96.8</div>
+          <div style="font-size:11px;color:var(--color-text-secondary);">sur 100 — Excellent (cible ≥ 95)</div>
+        </div>
+        <div class="card">
+          <div class="card-title">KPIs réglementaires</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px;">
+            <div><div style="font-size:11px;color:var(--color-text-secondary);">TD global</div><div style="font-size:17px;font-weight:500;" class="cw">4.2%</div><div style="font-size:10px;color:var(--color-text-tertiary);">Cible ≤ 2%/mois</div></div>
+            <div><div style="font-size:11px;color:var(--color-text-secondary);">RCO2 vs fév.</div><div style="font-size:17px;font-weight:500;" class="cs">−8.5%</div><div style="font-size:10px;color:var(--color-text-tertiary);">Cible ≤ −5%/trim. ✓</div></div>
+            <div><div style="font-size:11px;color:var(--color-text-secondary);">Dépassements</div><div style="font-size:17px;font-weight:500;" class="cd">121</div><div style="font-size:10px;color:var(--color-text-tertiary);">mesures / 2880 NOx</div></div>
+            <div><div style="font-size:11px;color:var(--color-text-secondary);">EMJ CO2</div><div style="font-size:17px;font-weight:500;" class="ci">12.4</div><div style="font-size:10px;color:var(--color-text-tertiary);">kg/jour</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:8px;">Évolution mensuelle du TD — NOx &amp; PM2.5 (6 mois)</div>
+      <div style="position:relative;height:140px;"><canvas id="c-mtd"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: IA & Prédictions ═══ -->
+  <div class="page" id="page-ai">
+    <div class="sh"><span class="st">Intelligence Artificielle — Prédictions &amp; Anomalies</span><button class="bsm" style="border-color:var(--color-border-info);color:var(--color-text-info);">Réentraîner les modèles</button></div>
+    <div class="g4" style="margin-bottom:10px;">
+      <div class="kc"><div class="kl">RMSE — LSTM NOx</div><div class="kv" style="font-size:17px;">3.2<span style="font-size:12px;"> mg/Nm³</span></div><div style="font-size:10px;color:var(--color-text-tertiary);">Cible &lt;10% plage</div></div>
+      <div class="kc"><div class="kl">MAE — LSTM NOx</div><div class="kv" style="font-size:17px;">2.4<span style="font-size:12px;"> mg/Nm³</span></div><div style="font-size:10px;color:var(--color-text-tertiary);">Cible &lt;5 ✓</div></div>
+      <div class="kc"><div class="kl">R² — LSTM global</div><div class="kv cs" style="font-size:17px;">0.89</div><div style="font-size:10px;color:var(--color-text-tertiary);">Cible &gt;0.85 ✓</div></div>
+      <div class="kc"><div class="kl">F1 — Isolation Forest</div><div class="kv cs" style="font-size:17px;">0.87</div><div style="font-size:10px;color:var(--color-text-tertiary);">Recall: 0.91 ✓</div></div>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:8px;">Prédictions LSTM — Horizon 1h &amp; 24h</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
+          <div class="prc"><div class="prl">NOx dans 1h</div><div class="prv cd">213 mg/Nm³</div><div style="font-size:11px;color:#B71C1C;margin-top:1px;">Prédit &gt; VLE (200)</div><div class="cbar"><div style="height:100%;width:78%;background:#378ADD;border-radius:2px;"></div></div><div style="font-size:10px;color:var(--color-text-tertiary);margin-top:2px;">Confiance: 78%</div></div>
+          <div class="prc"><div class="prl">NOx dans 24h</div><div class="prv cw">178 mg/Nm³</div><div style="font-size:11px;color:#E65100;margin-top:1px;">Tendance haussière</div><div class="cbar"><div style="height:100%;width:65%;background:#378ADD;border-radius:2px;"></div></div><div style="font-size:10px;color:var(--color-text-tertiary);margin-top:2px;">Confiance: 65%</div></div>
+          <div class="prc"><div class="prl">PM2.5 dans 1h</div><div class="prv cw">20.1 µg/m³</div><div style="font-size:11px;color:#E65100;margin-top:1px;">Proche VLE (25)</div><div class="cbar"><div style="height:100%;width:82%;background:#378ADD;border-radius:2px;"></div></div><div style="font-size:10px;color:var(--color-text-tertiary);margin-top:2px;">Confiance: 82%</div></div>
+          <div class="prc"><div class="prl">CO2 dans 24h</div><div class="prv cs">598 ppm</div><div style="font-size:11px;color:#1B5E20;margin-top:1px;">Tendance stable</div><div class="cbar"><div style="height:100%;width:91%;background:#378ADD;border-radius:2px;"></div></div><div style="font-size:10px;color:var(--color-text-tertiary);margin-top:2px;">Confiance: 91%</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:8px;">Détections d'anomalies — Isolation Forest</div>
+        <table class="tbl">
+          <thead><tr><th>Date/Heure</th><th>Polluant</th><th>Score IF</th><th>Verdict</th></tr></thead>
+          <tbody>
+            <tr><td>14/03 08:12</td><td>PM2.5</td><td class="cd"><strong>−0.42</strong></td><td><span class="sb sc">Anomalie</span></td></tr>
+            <tr><td>13/03 22:30</td><td>NOx</td><td class="cw">−0.28</td><td><span class="sb sh2">Anomalie</span></td></tr>
+            <tr><td>13/03 15:45</td><td>COV</td><td class="cs">+0.14</td><td><span class="sb sl">Normal</span></td></tr>
+            <tr><td>13/03 09:00</td><td>SO2</td><td class="cs">+0.22</td><td><span class="sb sl">Normal</span></td></tr>
+            <tr><td>12/03 18:15</td><td>NOx</td><td class="cw">−0.35</td><td><span class="sb sh2">Anomalie</span></td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px;padding-top:8px;border-top:0.5px solid var(--color-border-tertiary);display:flex;justify-content:space-between;font-size:11px;color:var(--color-text-secondary);">
+          <span>Contamination: 5%</span><span>Réentraîné il y a 3 jours</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: Rapports ═══ -->
+  <div class="page" id="page-reports">
+    <div class="sh"><span class="st">Rapports Réglementaires ANPE</span><button class="bsm" style="border-color:var(--color-border-info);color:var(--color-text-info);padding:5px 12px;">+ Générer un rapport</button></div>
+    <div class="card" style="margin-bottom:10px;">
+      <div class="card-title" style="margin-bottom:8px;">Nouveau rapport — Soumission ANPE</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;">
+        <div><label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Période début</label><input type="date" value="2026-03-01" style="width:100%;font-size:12px;padding:5px 7px;"></div>
+        <div><label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Période fin</label><input type="date" value="2026-03-31" style="width:100%;font-size:12px;padding:5px 7px;"></div>
+        <div><label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:3px;">Site</label><select style="width:100%;font-size:12px;padding:5px 7px;"><option>Station Sfax-01</option></select></div>
+        <button class="bsm" style="padding:5px 12px;border-color:var(--color-border-info);color:var(--color-text-info);white-space:nowrap;">Générer</button>
+      </div>
+    </div>
+    <div class="card" style="padding:0 14px;">
+      <div style="padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:11px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.4px;">Rapports générés</div>
+      <div class="ri">
+        <div style="flex:1;"><div style="font-size:13px;font-weight:500;color:var(--color-text-primary);">Rapport mensuel — Mars 2026</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px;">Site Sfax-01 · IPE: en cours · TD: 4.2% · MàJ: 14/03/2026</div></div>
+        <span class="sp2 st-d">BROUILLON</span>
+        <div style="display:flex;gap:5px;"><button class="bsm">Aperçu</button><button class="bsm" style="border-color:var(--color-border-info);color:var(--color-text-info);">Soumettre ANPE</button></div>
+      </div>
+      <div class="ri">
+        <div style="flex:1;"><div style="font-size:13px;font-weight:500;color:var(--color-text-primary);">Rapport mensuel — Février 2026</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px;">Site Sfax-01 · IPE: 95.6 · TD: 3.4% · Généré le 01/03/2026</div></div>
+        <span class="sp2 st-a">APPROUVÉ</span>
+        <div style="display:flex;gap:5px;"><button class="bsm">PDF</button><button class="bsm">CSV</button></div>
+      </div>
+      <div class="ri">
+        <div style="flex:1;"><div style="font-size:13px;font-weight:500;color:var(--color-text-primary);">Rapport mensuel — Janvier 2026</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px;">Site Sfax-01 · IPE: 94.1 · TD: 5.7% · Soumis ANPE le 03/02/2026</div></div>
+        <span class="sp2 st-s">SOUMIS ANPE</span>
+        <div style="display:flex;gap:5px;"><button class="bsm">PDF</button><button class="bsm">CSV</button></div>
+      </div>
+      <div class="ri">
+        <div style="flex:1;"><div style="font-size:13px;font-weight:500;color:var(--color-text-primary);">Rapport trimestriel — T4 2025</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px;">Site Sfax-01 · IPE: 93.2 · RCO2: −12.1% · Approuvé ANPE le 15/01/2026</div></div>
+        <span class="sp2 st-a">APPROUVÉ</span>
+        <div style="display:flex;gap:5px;"><button class="bsm">PDF</button></div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+var ci={};
+function nav(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+  if(!ci[id]){ci[id]=1;setTimeout(()=>initC(id),60);}
+}
+function rnd(v,min,max){return Math.min(max,Math.max(min,v+(Math.random()-.47)*16));}
+function noxData(n){var v=115,a=[];for(var i=0;i<n;i++){v=rnd(v,80,250);if(i>n*.62)v+=2.5;a.push(Math.round(v));}return a;}
+function timeL(h,step){var a=[];for(var i=0;i<=h*60/step;i++){var hh=Math.floor(i*step/60),mm=(i*step)%60;a.push((hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm);}return a;}
+var baseOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:10},maxTicksLimit:4}},x:{grid:{display:false},ticks:{font:{size:9},maxTicksLimit:8,autoSkip:true}}}};
+function initC(id){
+  if(id==='overview'){
+    var l=timeL(24,120),d=noxData(13);
+    new Chart(document.getElementById('c-mini'),{type:'line',data:{labels:l,datasets:[{data:d,borderColor:'#378ADD',borderWidth:2,pointRadius:0,tension:.4,fill:true,backgroundColor:'rgba(55,138,221,0.07)'},{data:Array(13).fill(200),borderColor:'#E24B4A',borderWidth:1.5,borderDash:[5,3],pointRadius:0}]},options:{...baseOpts,scales:{y:{min:60,max:265,grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:10},maxTicksLimit:4}},x:{grid:{display:false},ticks:{font:{size:9},maxTicksLimit:6,autoSkip:true}}}}});
+  }
+  if(id==='history'){
+    var n=49,l=timeL(24,30),d=noxData(n);
+    var pd=Array(38).fill(null).concat(d.slice(38).map((v,i)=>Math.min(260,d[37]+i*3.1)));
+    new Chart(document.getElementById('c-hist'),{type:'line',data:{labels:l,datasets:[{label:'NOx',data:d,borderColor:'#378ADD',borderWidth:2,pointRadius:0,tension:.4,fill:true,backgroundColor:'rgba(55,138,221,0.05)'},{label:'Prédiction',data:pd,borderColor:'#7F77DD',borderWidth:2,borderDash:[6,4],pointRadius:0,tension:.4},{label:'VLE',data:Array(n).fill(200),borderColor:'#E24B4A',borderWidth:1.5,borderDash:[5,3],pointRadius:0},{label:'Warning',data:Array(n).fill(150),borderColor:'#EF9F27',borderWidth:1.5,borderDash:[5,3],pointRadius:0}]},options:{...baseOpts,scales:{y:{min:60,max:270,grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:10},maxTicksLimit:5}},x:{grid:{display:false},ticks:{font:{size:9},maxTicksLimit:10,autoSkip:true}}}}});
+  }
+  if(id==='compliance'){
+    new Chart(document.getElementById('c-ipe'),{type:'doughnut',data:{datasets:[{data:[96.8,3.2],backgroundColor:['#2E7D32','rgba(128,128,128,0.12)'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'74%',plugins:{legend:{display:false}}}});
+    new Chart(document.getElementById('c-mtd'),{type:'bar',data:{labels:['Oct','Nov','Dec','Jan','Fev','Mar'],datasets:[{label:'NOx TD%',data:[6.1,5.8,5.2,5.7,3.8,4.2],backgroundColor:'#378ADD'},{label:'PM2.5 TD%',data:[2.1,1.8,2.4,2.1,1.6,1.3],backgroundColor:'#7F77DD'},{type:'line',label:'Cible 2%',data:[2,2,2,2,2,2],borderColor:'#E24B4A',borderDash:[5,3],borderWidth:1.5,pointRadius:0,backgroundColor:'transparent'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:9,grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:10},callback:v=>v+'%'}},x:{grid:{display:false},ticks:{font:{size:10}}}}}});
+  }
+}
+setTimeout(()=>{ci['overview']=1;initC('overview');},120);
+</script>

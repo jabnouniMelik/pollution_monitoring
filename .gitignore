@@ -1,0 +1,53 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node modules
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+.pytest_cache/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+
+# MongoDB
+.mongodump/
+
+# PlatformIO
+.pio/
+.vscode/.vscode.db
+.vscode/c_cpp_properties.json
+.vscode/launch.json
+.vscode/settings.json
+.vscode/extensions.json
+
+# Build outputs
+dist/
+build/

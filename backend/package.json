@@ -1,0 +1,38 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "start": "node --max-old-space-size=4096 server.js",
+    "test": "node tests/test.js",
+    "test:integration": "node tests/test.js",
+    "test:errors": "node tests/errorHandling.test.js",
+    "test:services": "node tests/serviceErrors.test.js",
+    "init:simulator": "node init-simulator.js",
+    "init:kpi": "node init-kpi-config.js",
+    "init:users": "node init-users.js",
+    "init:thresholds": "node init-thresholds.js",
+    "init": "npm run init:simulator && npm run init:users && npm run init:thresholds && npm run init:kpi"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.3.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.3.1",
+    "mqtt": "^5.15.1",
+    "node-cron": "^3.0.3",
+    "ws": "^8.16.0"
+  }
+}

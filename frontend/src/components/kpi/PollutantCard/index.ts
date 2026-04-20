@@ -1,0 +1,1 @@
+export { PollutantCard } from './PollutantCard'

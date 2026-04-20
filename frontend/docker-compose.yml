@@ -1,0 +1,29 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: emissionsiq/frontend:latest
+    container_name: emissionsiq-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # The backend service is expected to exist in ../backend. The placeholder
+  # below lets `docker compose up` wire network aliases even when the backend
+  # image is built elsewhere. Replace with your real backend image if needed.
+  backend:
+    image: node:20-alpine
+    container_name: emissionsiq-backend
+    working_dir: /app
+    volumes:
+      - ../backend:/app
+    command: ["node", "server.js"]
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+    expose:
+      - "5000"
+    restart: unless-stopped
