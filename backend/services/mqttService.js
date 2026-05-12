@@ -14,6 +14,7 @@ const mqtt = require("mqtt");
 const readingService = require("./ReadingService");
 const Sensor = require("../models/Sensor");
 const Polluant = require("../models/Polluant");
+const SensorNode = require("../models/SensorNode");
 
 // ── Broker MQTT ───────────────────────────────────────────────
 const MQTT_BROKER = process.env.MQTT_BROKER || "mqtt://localhost:1883";
@@ -23,6 +24,38 @@ const MQTT_BROKER = process.env.MQTT_BROKER || "mqtt://localhost:1883";
 // per-message logging would flood stdout and add significant memory pressure.
 const DEBUG_MQTT = process.env.DEBUG_MQTT === "true";
 const mlog = DEBUG_MQTT ? console.log.bind(console) : () => {};
+
+const extractZoneFromTopic = (topic) => {
+  const match = topic.match(/^emissions\/([^/]+)\//i);
+  return match ? match[1] : null;
+};
+
+const resolveSensorForMessage = async (data, topic) => {
+  const zone = data.zone || extractZoneFromTopic(topic);
+
+  if (zone) {
+    const nodeIds = await SensorNode.find({ zone })
+      .select("_id")
+      .lean();
+
+    if (nodeIds.length > 0) {
+      const sensor = await Sensor.findOne({
+        type: data.sensorType,
+        model: data.model,
+        sensorNodeId: { $in: nodeIds.map((node) => node._id) },
+      }).lean();
+
+      if (sensor) {
+        return sensor;
+      }
+    }
+  }
+
+  return await Sensor.findOne({
+    type: data.sensorType,
+    model: data.model,
+  }).lean();
+};
 
 // ── Traitement d'un message MQTT reçu ────────────────────────
 // Délègue toute la logique métier à ReadingService
@@ -40,11 +73,8 @@ const processMessage = async (topic, payload) => {
     // Le simulateur envoie: {sensorType, model, value, unit, ...}
     // ReadingService s'attend: {sensorId, polluantId, nodeId, value, unit, ...}
 
-    // Récupérer l'ID du capteur depuis la DB via type + model
-    const sensor = await Sensor.findOne({
-      type: data.sensorType,
-      model: data.model,
-    }).lean();
+    // Récupérer l'ID du capteur depuis la DB via type + model + zone si disponible
+    const sensor = await resolveSensorForMessage(data, topic);
 
     if (!sensor) {
       console.warn(

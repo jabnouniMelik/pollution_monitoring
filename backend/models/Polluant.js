@@ -7,6 +7,13 @@ const PolluantSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    code: {
+      type: String,
+      required: true,
+      unique: true,
+      uppercase: true,
+      // Auto-set from name if not provided
+    },
     formula: {
       type: String,
       required: true,
@@ -39,4 +46,11 @@ const PolluantSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+// Auto-generate code from name if not provided
+PolluantSchema.pre("save", function () {
+  if (!this.code && this.name) {
+    this.code = this.name.toUpperCase();
+  }
+});
 module.exports = mongoose.model("Polluant", PolluantSchema);

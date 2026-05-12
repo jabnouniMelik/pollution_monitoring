@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
 const ReportSchema = new mongoose.Schema(
   {
+    title: {
+      type: String,
+      default: "Rapport Environnemental",
+    },
     periodStart: {
       type: Date,
       required: true,
@@ -9,12 +13,24 @@ const ReportSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    // Zone for which this report was generated
+    zoneId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Zone",
+      default: null,
+    },
+    // Site for which this report was generated
+    siteId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Site",
+      default: null,
+    },
     overallScore: {
-      type: Number, //IPE:score global/100
+      type: Number,
     },
     polluantScores: {
       type: Map,
-      of: Number, //score par polluant/100
+      of: Number,
     },
     breachCount: {
       type: Number,
@@ -27,21 +43,26 @@ const ReportSchema = new mongoose.Schema(
     generatedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      //required: true,
     },
     status: {
       type: String,
       enum: ["DRAFT", "SUBMITTED", "APPROVED"],
       default: "DRAFT",
     },
+    format: {
+      type: String,
+      enum: ["pdf", "csv", "xlsx"],
+      default: "pdf",
+    },
     fileUrl: {
-      type: String, //URL du rapport généré (PDF)
+      type: String,
     },
   },
   { timestamps: true },
 );
-//index: rapport par période
+
 ReportSchema.index({ periodStart: -1, periodEnd: -1 });
-//index:rapport par status
 ReportSchema.index({ status: 1 });
+ReportSchema.index({ zoneId: 1, periodStart: -1 });
+ReportSchema.index({ siteId: 1, periodStart: -1 });
 module.exports = mongoose.model("Report", ReportSchema);

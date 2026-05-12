@@ -16,44 +16,53 @@ class ZoneManagementService {
    * @returns {Promise<Object>} Zone créée
    */
   async createZone(data, requester) {
-    const { code, nom, siteId, industrieId, description, localisation } = data;
+    const {
+      code, nom, siteId, industrieId, description, localisation,
+      pollutants, approvalStatus, actif,
+      approvalRequestedBy, approvalRequestedAt, approvedBy, approvedAt,
+    } = data;
 
-    // Vérifier permissions
+    // Permission check
     if (!["SUPER_ADMIN", "HEAD_SUPERVISOR", "SITE_SUPERVISOR"].includes(requester.role)) {
       throw new Error("Autorisation insuffisante pour créer des zones");
     }
 
-    // Valider champs requis
-    if (!code || !nom || !siteId || !industrieId) {
-      throw new Error("code, nom, siteId et industrieId requis");
+    // Required fields (code and industrieId are already resolved by the controller)
+    if (!nom || !siteId || !industrieId) {
+      throw new Error("nom, siteId et industrieId requis");
     }
 
-    // Vérifier que le site existe
+    // Verify site exists
     const site = await siteRepository.findById(siteId);
     if (!site) {
       throw new Error("Site non trouvé");
     }
 
-    // Vérifier que site et industrieId correspondent
-    if (site.industrieId.toString() !== industrieId) {
+    // site.industrieId may be a populated object (from repository) or a raw ObjectId
+    const siteIndustrieId = (site.industrieId?._id || site.industrieId)?.toString();
+
+    // Verify site belongs to the given industry
+    if (siteIndustrieId !== industrieId) {
       throw new Error("Site et industrieId ne correspondent pas");
     }
 
-    // Vérifier les droits d'accès selon le rôle
+    // Role-based access check
     if (requester.role === "SITE_SUPERVISOR") {
-      // SITE_SUPERVISOR peut créer des zones uniquement dans ses sites
-      if (site.supervisorId.toString() !== requester._id.toString()) {
+      const supervisorId = (site.supervisorId?._id || site.supervisorId)?.toString();
+      const requesterId = (requester.userId || requester._id)?.toString();
+      if (supervisorId !== requesterId) {
         throw new Error("Vous ne pouvez créer des zones que dans vos propres sites");
       }
     } else if (requester.role === "HEAD_SUPERVISOR") {
-      // HEAD_SUPERVISOR peut créer des zones dans l'industrie qu'il supervise
-      if (site.industrieId.toString() !== requester.industryId.toString()) {
+      if (!requester.industryId) {
+        throw new Error("Votre compte n'est pas associé à une industrie");
+      }
+      if (siteIndustrieId !== requester.industryId.toString()) {
         throw new Error("Vous ne pouvez créer des zones que dans votre industrie");
       }
     }
-    // SUPER_ADMIN peut créer partout
 
-    // Créer la zone
+    // Create the zone — pass all fields from controller (approval, actif, pollutants)
     const zone = await zoneRepository.create({
       code,
       nom,
@@ -61,8 +70,14 @@ class ZoneManagementService {
       industrieId,
       description: description || null,
       localisation: localisation || null,
+      pollutants: pollutants || [],
       operatorsAssigned: [],
-      actif: true,
+      actif: actif !== undefined ? actif : false,
+      approvalStatus: approvalStatus || "PENDING",
+      approvalRequestedBy: approvalRequestedBy || null,
+      approvalRequestedAt: approvalRequestedAt || null,
+      approvedBy: approvedBy || null,
+      approvedAt: approvedAt || null,
     });
 
     return zone;
@@ -84,13 +99,15 @@ class ZoneManagementService {
       return await zoneRepository.findAll(query);
     } else if (requester.role === "SITE_SUPERVISOR") {
       // Récupérer les sites supervisés par ce SITE_SUPERVISOR
-      const supervisedSites = await siteRepository.findBySupervisor(requester._id);
+      const requesterId = requester.userId || requester._id;
+      const supervisedSites = await siteRepository.findBySupervisor(requesterId);
       const siteIds = supervisedSites.map(s => s._id);
       query.siteId = { $in: siteIds };
       return await zoneRepository.findAll(query);
     } else if (requester.role === "OPERATOR") {
       // OPERATOR voit les zones assignées
-      return await zoneRepository.findByOperator(requester._id);
+      const requesterId = requester.userId || requester._id;
+      return await zoneRepository.findByOperator(requesterId);
     }
 
     throw new Error("Accès refusé");
@@ -112,19 +129,22 @@ class ZoneManagementService {
     if (requester.role === "SUPER_ADMIN") {
       return zone;
     } else if (requester.role === "HEAD_SUPERVISOR") {
-      if (zone.industrieId.toString() !== requester.industryId.toString()) {
+      const zoneIndustrieId = (zone.industrieId?._id || zone.industrieId)?.toString();
+      if (zoneIndustrieId !== requester.industryId?.toString()) {
         throw new Error("Accès refusé");
       }
       return zone;
     } else if (requester.role === "SITE_SUPERVISOR") {
       const site = await siteRepository.findById(zone.siteId);
-      if (site.supervisorId.toString() !== requester._id.toString()) {
+      const supervisorId = (site?.supervisorId?._id || site?.supervisorId)?.toString();
+      const requesterId = (requester.userId || requester._id)?.toString();
+      if (supervisorId !== requesterId) {
         throw new Error("Accès refusé");
       }
       return zone;
     } else if (requester.role === "OPERATOR") {
-      // Vérifier que l'opérateur est assigné à cette zone
-      if (!zone.operatorsAssigned.some(id => id.toString() === requester._id.toString())) {
+      const requesterId = (requester.userId || requester._id)?.toString();
+      if (!zone.operatorsAssigned.some(id => id.toString() === requesterId)) {
         throw new Error("Accès refusé");
       }
       return zone;
@@ -253,16 +273,18 @@ class ZoneManagementService {
       throw new Error("Site non trouvé");
     }
 
-    // Vérifier autorisation
+    const siteIndustrieId = (site.industrieId?._id || site.industrieId)?.toString();
+
     if (requester.role === "SUPER_ADMIN") {
       return await zoneRepository.findBySite(siteId);
     } else if (requester.role === "HEAD_SUPERVISOR") {
-      if (site.industrieId.toString() !== requester.industryId.toString()) {
+      if (siteIndustrieId !== requester.industryId?.toString()) {
         throw new Error("Accès refusé");
       }
       return await zoneRepository.findBySite(siteId);
     } else if (requester.role === "SITE_SUPERVISOR") {
-      if (site.supervisorId.toString() !== requester._id.toString()) {
+      const requesterId = (requester.userId || requester._id)?.toString();
+      if ((site.supervisorId?._id || site.supervisorId)?.toString() !== requesterId) {
         throw new Error("Accès refusé");
       }
       return await zoneRepository.findBySite(siteId);

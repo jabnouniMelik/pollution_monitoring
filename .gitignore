@@ -51,3 +51,8 @@ pids/
 # Build outputs
 dist/
 build/
+*.tsbuildinfo
+
+# Runtime uploads and generated reports
+backend/uploads/
+backend/test-report-*.txt

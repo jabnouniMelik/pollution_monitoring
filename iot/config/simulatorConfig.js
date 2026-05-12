@@ -32,6 +32,20 @@ const SIMULATOR_CONFIG = {
     location: { latitude: 34.74, longitude: 10.76 },
   },
 
+  // Zones simulées pour générer des alertes dans plusieurs zones.
+  nodes: [
+    {
+      name: "Station-Sfax-01",
+      zone: "Zone-A",
+      location: { latitude: 34.74, longitude: 10.76 },
+    },
+    {
+      name: "Station-Sfax-02",
+      zone: "Zone-B",
+      location: { latitude: 34.76, longitude: 10.78 },
+    },
+  ],
+
   // ── Configuration des capteurs ─────────────────────────────
   sensors: {
     // CO₂ — MH-Z19B — toutes les 10 secondes

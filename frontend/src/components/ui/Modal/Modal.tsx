@@ -54,11 +54,13 @@ export function Modal({ open, onClose, title, description, children, footer, siz
         ref={ref}
         tabIndex={-1}
         className={cn(
-          'w-full overflow-hidden rounded-card bg-card shadow-elevated outline-none',
+          'flex w-full flex-col rounded-card bg-card shadow-elevated outline-none',
+          'max-h-[90vh]',   // never taller than 90% of viewport
           SIZE[size],
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-border px-4 py-3">
+        {/* Fixed header */}
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border px-4 py-3">
           <div>
             <h2 id="modal-title" className="text-base font-semibold text-text-primary">
               {title}
@@ -74,8 +76,16 @@ export function Modal({ open, onClose, title, description, children, footer, siz
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="px-4 py-4">{children}</div>
-        {footer && <div className="flex justify-end gap-2 border-t border-border px-4 py-3">{footer}</div>}
+
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-4 py-4">{children}</div>
+
+        {/* Fixed footer */}
+        {footer && (
+          <div className="flex shrink-0 justify-end gap-2 border-t border-border px-4 py-3">
+            {footer}
+          </div>
+        )}
       </div>
     </div>,
     document.body,

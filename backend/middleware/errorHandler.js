@@ -35,6 +35,50 @@ const handleMongooseError = (err) => {
   return null;
 };
 
+// Best-effort fallback for legacy services that still throw plain Error
+// without an explicit statusCode.
+const inferStatusFromMessage = (err) => {
+  const message = String(err?.message || "").toLowerCase();
+  if (!message) return null;
+
+  if (
+    message.includes("token") &&
+    (message.includes("invalide") ||
+      message.includes("requis") ||
+      message.includes("expir") ||
+      message.includes("manquant"))
+  ) {
+    return 401;
+  }
+
+  if (message.includes("non trouv") || message.includes("introuvable")) {
+    return 404;
+  }
+
+  const badRequestHints = [
+    "requis",
+    "invalide",
+    "incorrect",
+    "déjà",
+    "deja",
+    "format",
+    "doit",
+    "impossible de supprimer",
+    "inactif",
+    "inactif",
+    "positive",
+    "supérieur",
+    "inferieur",
+    "inférieur",
+  ];
+
+  if (badRequestHints.some((hint) => message.includes(hint))) {
+    return 400;
+  }
+
+  return null;
+};
+
 //Middleware principale
 //express reconnaît une fonction de middleware d'erreur par sa signature (err, req, res, next)
 const errorHandler = (err, req, res, next) => {
@@ -56,6 +100,16 @@ const errorHandler = (err, req, res, next) => {
       message: err.message,
     });
   }
+
+  // Backward-compatible fallback for services still throwing plain Error.
+  const inferredStatus = inferStatusFromMessage(err);
+  if (inferredStatus) {
+    return res.status(inferredStatus).json({
+      success: false,
+      message: err.message,
+    });
+  }
+
   //erreur inconnue-> 500 internal server error
   res.status(500).json({
     success: false,

@@ -102,8 +102,15 @@ class AggregateDataRepository {
    * @param {Date} periodStart - Date début
    * @returns {Promise<Array>} Array d'agrégations
    */
-  async findByPeriod(period, periodStart) {
-    return await AggregateData.find({ period, periodStart }).populate(
+  async findByPeriod(period, periodStart, periodEnd = null) {
+    const filter = { period };
+    if (periodStart || periodEnd) {
+      filter.periodStart = {};
+      if (periodStart) filter.periodStart.$gte = periodStart;
+      if (periodEnd) filter.periodStart.$lte = periodEnd;
+    }
+
+    return await AggregateData.find(filter).populate(
       "polluantId",
       "name unit weight",
     );

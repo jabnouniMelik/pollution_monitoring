@@ -4,6 +4,8 @@ import { ChartWrapper } from '@/components/charts/ChartWrapper/ChartWrapper'
 import { HistoryChart, type HistorySeries } from '@/components/charts/HistoryChart/HistoryChart'
 import { Select, type SelectOption } from '@/components/ui/Select/Select'
 import { Card } from '@/components/ui/Card/Card'
+import { QueryState } from '@/components/common/QueryState/QueryState'
+import { HistorySkeleton } from '@/components/ui/Skeleton/SkeletonBlocks'
 import { POLLUTANT_CODES, POLLUTANTS, type PollutantCode } from '@/lib/constants/pollutants'
 import { TUNISIA_DECRET_LIMITS } from '@/lib/constants/tunisiaDecret'
 import { useHistoricalReadings } from '@/features/readings/hooks/useReadings'
@@ -22,28 +24,41 @@ const POLLUTANT_OPTIONS: SelectOption[] = POLLUTANT_CODES.map((code) => ({
   label: POLLUTANTS[code].label,
 }))
 
+function periodToRange(period: string): { from: string; to: string; limit: number } {
+  const now = new Date()
+  const to = now.toISOString()
+  const limits: Record<string, number> = {
+    hour: 500,
+    day: 500,
+    week: 500,
+    month: 500,
+    year: 500,
+  }
+  const offsets: Record<string, number> = {
+    hour: 60 * 60 * 1000,
+    day: 24 * 60 * 60 * 1000,
+    week: 7 * 24 * 60 * 60 * 1000,
+    month: 30 * 24 * 60 * 60 * 1000,
+    year: 365 * 24 * 60 * 60 * 1000,
+  }
+  const from = new Date(now.getTime() - (offsets[period] ?? offsets.day)).toISOString()
+  return { from, to, limit: limits[period] ?? 500 }
+}
+
 export default function History() {
   const { period, setPeriod, siteId, zoneId } = useSelectionStore()
   const [pollutant, setPollutant] = useState<PollutantCode>('NOX')
+
+  const { from, to, limit } = periodToRange(period)
 
   const readings = useHistoricalReadings({
     siteId: siteId ?? undefined,
     zoneId: zoneId ?? undefined,
     pollutant,
+    from,
+    to,
+    limit,
   })
-
-  const series = useMemo<HistorySeries[]>(() => {
-    if (!readings.data?.length) return []
-    const meta = POLLUTANTS[pollutant]
-    return [
-      {
-        label: meta.label,
-        color: meta.color,
-        points: readings.data.map((r) => ({ t: r.timestamp, v: r.measurements[pollutant]?.value ?? 0 })),
-        threshold: TUNISIA_DECRET_LIMITS[pollutant]?.limit,
-      },
-    ]
-  }, [readings.data, pollutant])
 
   return (
     <div className="space-y-4">
@@ -68,28 +83,45 @@ export default function History() {
         }
       />
 
-      <ChartWrapper
-        title={`Concentration ${POLLUTANTS[pollutant].longLabel}`}
-        subtitle={`Unité: ${POLLUTANTS[pollutant].unit} · VLE: ${TUNISIA_DECRET_LIMITS[pollutant]?.limit ?? '—'}`}
-        height={420}
-        loading={readings.isLoading}
+      <QueryState
+        query={readings}
+        loadingSkeleton={<HistorySkeleton />}
+        emptyTitle="Aucune donnée historique"
+        emptyDescription={`Aucune mesure disponible pour ${POLLUTANTS[pollutant].label} sur la période sélectionnée.`}
+        errorTitle="Erreur de chargement"
+        errorDescription="Impossible de charger les données historiques."
       >
-        {series.length > 0 ? (
-          <HistoryChart series={series} unit={POLLUTANTS[pollutant].unit} />
-        ) : (
-          <div className="flex h-full items-center justify-center text-sm text-text-tertiary">
-            Aucune donnée pour la période sélectionnée
-          </div>
-        )}
-      </ChartWrapper>
+        {(data) => {
+          const series: HistorySeries[] = [
+            {
+              label: POLLUTANTS[pollutant].label,
+              color: POLLUTANTS[pollutant].color,
+              points: data.map((r) => ({ t: r.timestamp, v: r.measurements[pollutant]?.value ?? 0 })),
+              threshold: TUNISIA_DECRET_LIMITS[pollutant]?.limit,
+            },
+          ]
 
-      <Card>
-        <h3 className="text-sm font-semibold">Résumé statistique</h3>
-        <p className="mt-0.5 text-xs text-text-secondary">
-          Min, max, moyenne et écart-type calculés sur la période.
-        </p>
-        <Summary values={readings.data?.map((r) => r.measurements[pollutant]?.value ?? 0) ?? []} />
-      </Card>
+          return (
+            <>
+              <ChartWrapper
+                title={`Concentration ${POLLUTANTS[pollutant].longLabel}`}
+                subtitle={`Unité: ${POLLUTANTS[pollutant].unit} · VLE: ${TUNISIA_DECRET_LIMITS[pollutant]?.limit ?? '—'}`}
+                height={420}
+              >
+                <HistoryChart series={series} unit={POLLUTANTS[pollutant].unit} />
+              </ChartWrapper>
+
+              <Card>
+                <h3 className="text-sm font-semibold">Résumé statistique</h3>
+                <p className="mt-0.5 text-xs text-text-secondary">
+                  Min, max, moyenne et écart-type calculés sur la période.
+                </p>
+                <Summary values={data.map((r) => r.measurements[pollutant]?.value ?? 0)} />
+              </Card>
+            </>
+          )
+        }}
+      </QueryState>
     </div>
   )
 }

@@ -8,7 +8,18 @@ const alertRepository = require("../repositories/AlertRepository");
 
 class AlertService {
   /**
-   * Récupère toutes les alertes avec filtres avancés
+   * Récupère toutes les alertes avec filtres avancés et pagination
+   * @param {Object} filters - Filtres (severity, isAcknowledged, polluantId, date range)
+   * @param {Number} page - Numéro de page
+   * @param {Number} pageSize - Éléments par page
+   * @returns {Promise<Object>} { items, total, page, pageSize, totalPages }
+   */
+  async getAllAlertsPaginated(filters = {}, page = 1, pageSize = 20) {
+    return await alertRepository.findAllPaginated(filters, page, pageSize);
+  }
+
+  /**
+   * Récupère toutes les alertes avec filtres avancés (sans pagination - legacy)
    * @param {Object} filters - Filtres (severity, isAcknowledged, polluantId, date range)
    * @param {Number} limit - Max résultats
    * @returns {Promise<Array>} Alertes
@@ -25,7 +36,9 @@ class AlertService {
   async getAlertById(id) {
     const alert = await alertRepository.findById(id);
     if (!alert) {
-      throw new Error("Alerte non trouvée");
+      const err = new Error("Alerte non trouvée");
+      err.statusCode = 404;
+      throw err;
     }
     return alert;
   }
@@ -40,11 +53,15 @@ class AlertService {
   async acknowledgeAlert(id, userId) {
     const alert = await alertRepository.findById(id);
     if (!alert) {
-      throw new Error("Alerte non trouvée");
+      const err = new Error("Alerte non trouvée");
+      err.statusCode = 404;
+      throw err;
     }
 
     if (alert.isAcknowledged) {
-      throw new Error("Alerte déjà acquittée");
+      const err = new Error("Alerte déjà acquittée");
+      err.statusCode = 409;
+      throw err;
     }
 
     return await alertRepository.acknowledge(id, userId);
@@ -60,18 +77,27 @@ class AlertService {
   async escalateAlert(id, newSeverity, reason) {
     const alert = await alertRepository.findById(id);
     if (!alert) {
-      throw new Error("Alerte non trouvée");
+      const err = new Error("Alerte non trouvée");
+      err.statusCode = 404;
+      throw err;
     }
 
-    // Vérifier que newSeverity est valide
-    const validSeverities = ["WARNING", "HIGH", "CRITICAL"];
-    if (!validSeverities.includes(newSeverity)) {
-      throw new Error(
-        `Sévérité invalide. Valeurs acceptées : ${validSeverities.join(", ")}`,
+    // Normalize severity to DB enum casing: "Warning" | "High" | "Critical"
+    const severityNormMap = {
+      warning: "Warning",
+      high: "High",
+      critical: "Critical",
+    };
+    const normalized = severityNormMap[newSeverity.toLowerCase()];
+    if (!normalized) {
+      const err = new Error(
+        `Sévérité invalide. Valeurs acceptées : warning, high, critical`,
       );
+      err.statusCode = 400;
+      throw err;
     }
 
-    return await alertRepository.escalate(id, newSeverity, reason);
+    return await alertRepository.escalate(id, normalized, reason);
   }
 
   /**
@@ -84,10 +110,14 @@ class AlertService {
   async resolveAlert(id, userId, note) {
     const alert = await alertRepository.findById(id);
     if (!alert) {
-      throw new Error("Alerte non trouvée");
+      const err = new Error("Alerte non trouvée");
+      err.statusCode = 404;
+      throw err;
     }
     if (alert.resolvedAt) {
-      throw new Error("Alerte déjà résolue");
+      const err = new Error("Alerte déjà résolue");
+      err.statusCode = 409;
+      throw err;
     }
     return await alertRepository.resolve(id, userId, note);
   }
@@ -97,16 +127,18 @@ class AlertService {
    * Utilisé par le Dashboard pour KPIs
    * @returns {Promise<Object>} Stats globales
    */
-  async getAlertStats() {
-    const statsBySeverity = await alertRepository.statsBySeverity();
-    const statsByPolluant = await alertRepository.statsByPolluant();
-    const totalUnacknowledged = await alertRepository.countUnacknowledged();
+  async getAlertStats(filters = {}) {
+    const statsBySeverity = await alertRepository.statsBySeverity(filters);
+    const statsByPolluant = await alertRepository.statsByPolluant(filters);
+    const totalUnacknowledged = await alertRepository.countUnacknowledged(filters);
     const criticalUnacknowledged =
-      await alertRepository.countCriticalUnacknowledged();
+      await alertRepository.countCriticalUnacknowledged(filters);
+    const totalResolved = await alertRepository.countResolved(filters);
 
     return {
       totalUnacknowledged,
       criticalUnacknowledged,
+      totalResolved,
       bySeverity: statsBySeverity,
       byPolluant: statsByPolluant,
     };

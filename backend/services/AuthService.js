@@ -7,7 +7,11 @@
 const bcrypt = require("bcryptjs");
 const userRepository = require("../repositories/UserRepository");
 const refreshTokenRepository = require("../repositories/RefreshTokenRepository");
-const { generateAccessToken, generateRefreshToken } = require("../config/jwt");
+const {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} = require("../config/jwt");
 
 // See models/User.js — bcryptjs is pure JS, so cost 10 is the sane default.
 const BCRYPT_COST = Number(process.env.BCRYPT_COST) || 10;
@@ -31,34 +35,41 @@ class AuthService {
 
     // Valider champs requis
     if (!username || !email || !password || !role) {
-      throw new Error("username, email, password et role sont requis");
+      const err = new Error("username, email, password et role sont requis");
+      err.statusCode = 400;
+      throw err;
     }
 
     // Valider rôle
     if (!VALID_ROLES.includes(role)) {
-      throw new Error(
+      const err = new Error(
         `Rôle invalide. Valeurs acceptées : ${VALID_ROLES.join(", ")}`,
       );
+      err.statusCode = 400;
+      throw err;
     }
 
     // Vérifier unicité email et username
     const existingByEmail = await userRepository.findByEmail(email);
     if (existingByEmail) {
-      throw new Error("Email déjà utilisé");
+      const err = new Error("Email déjà utilisé");
+      err.statusCode = 400;
+      throw err;
     }
 
     const existingByUsername = await userRepository.findByUsername(username);
     if (existingByUsername) {
-      throw new Error("Username déjà utilisé");
+      const err = new Error("Username déjà utilisé");
+      err.statusCode = 400;
+      throw err;
     }
 
-    const hashedPassword = await bcrypt.hash(password, BCRYPT_COST);
-
     // Créer l'utilisateur
+    // Le hook pre('save') du model User hash automatiquement le password
     const user = await userRepository.create({
       username,
       email,
-      password: hashedPassword,
+      password,  // passé en clair — le model le hash via pre('save')
       role,
       zone: zone || null,
       site: site || null,
@@ -80,19 +91,25 @@ class AuthService {
   async login(email, password) {
     // Vérifier email
     if (!email || !password) {
-      throw new Error("Email et mot de passe requis");
+      const err = new Error("Email et mot de passe requis");
+      err.statusCode = 400;
+      throw err;
     }
 
     // Récupérer utilisateur avec password (nécessaire pour comparaison)
     const user = await userRepository.findByEmail(email);
     if (!user) {
-      throw new Error("Email ou mot de passe incorrect");
+      const err = new Error("Email ou mot de passe incorrect");
+      err.statusCode = 401;
+      throw err;
     }
 
     // Comparer mot de passe
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
-      throw new Error("Email ou mot de passe incorrect");
+      const err = new Error("Email ou mot de passe incorrect");
+      err.statusCode = 401;
+      throw err;
     }
 
     // Générer tokens
@@ -112,9 +129,38 @@ class AuthService {
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 jours
     });
 
+    // Populate zones and industry for operators and supervisors
+    const populatePaths = [
+      { path: 'industryId', select: 'nom secteur' },
+      { path: 'sitesManaging', select: 'nom industrieId' }
+    ];
+
+    // OPERATOR: populate their assigned zones
+    if (user.role === 'OPERATOR') {
+      populatePaths.push({ path: 'zonesAssigned', select: 'code nom siteId industrieId' });
+    }
+
+    await user.populate(populatePaths);
+
+    // SITE_SUPERVISOR / HEAD_SUPERVISOR: fetch all zones from their sites
+    let supervisorZones = [];
+    if (
+      (user.role === 'SITE_SUPERVISOR' || user.role === 'HEAD_SUPERVISOR') &&
+      user.sitesManaging?.length > 0
+    ) {
+      const Zone = require('../models/Zone');
+      const siteIds = user.sitesManaging.map((s) => s._id || s);
+      supervisorZones = await Zone.find({ siteId: { $in: siteIds }, actif: true })
+        .select('code nom siteId industrieId')
+        .lean();
+    }
+
     // Retourner user sans password
     const userObj = user.toObject();
     delete userObj.password;
+    if (supervisorZones.length > 0) {
+      userObj.zonesAssigned = supervisorZones;
+    }
 
     return {
       user: userObj,
@@ -131,6 +177,15 @@ class AuthService {
   async refresh(refreshToken) {
     if (!refreshToken) {
       const err = new Error("Refresh token requis");
+      err.statusCode = 401;
+      throw err;
+    }
+
+    // Vérification cryptographique (signature/expiration JWT).
+    try {
+      verifyRefreshToken(refreshToken);
+    } catch {
+      const err = new Error("Refresh token invalide");
       err.statusCode = 401;
       throw err;
     }
@@ -159,12 +214,18 @@ class AuthService {
     }
 
     // Générer nouvel access token
-    const newAccessToken = generateAccessToken({
-      _id: user._id,
-      role: user.role,
-    });
-
-    return { accessToken: newAccessToken };
+    try {
+      const newAccessToken = generateAccessToken({
+        _id: user._id,
+        role: user.role,
+      });
+      return { accessToken: newAccessToken };
+    } catch (e) {
+      const err = new Error("Configuration JWT invalide (access token)");
+      err.statusCode = 500;
+      err.cause = e;
+      throw err;
+    }
   }
 
   /**
@@ -188,14 +249,44 @@ class AuthService {
 
   /**
    * Récupère le profil de l'utilisateur connecté
+   * Populate zones et industrie pour les opérateurs
    * @param {String} userId - ID utilisateur
    * @returns {Promise<Object>} Profil utilisateur
    */
   async getProfile(userId) {
     const user = await userRepository.findById(userId);
     if (!user) {
-      throw new Error("Utilisateur non trouvé");
+      const err = new Error("Utilisateur non trouvé");
+      err.statusCode = 404;
+      throw err;
     }
+
+    const populatePaths = [
+      { path: 'industryId', select: 'nom secteur' },
+      { path: 'sitesManaging', select: 'nom industrieId' }
+    ];
+
+    if (user.role === 'OPERATOR') {
+      populatePaths.push({ path: 'zonesAssigned', select: 'code nom siteId industrieId' });
+    }
+
+    await user.populate(populatePaths);
+
+    // SITE_SUPERVISOR / HEAD_SUPERVISOR: fetch zones from their sites
+    if (
+      (user.role === 'SITE_SUPERVISOR' || user.role === 'HEAD_SUPERVISOR') &&
+      user.sitesManaging?.length > 0
+    ) {
+      const Zone = require('../models/Zone');
+      const siteIds = user.sitesManaging.map((s) => s._id || s);
+      const zones = await Zone.find({ siteId: { $in: siteIds }, actif: true })
+        .select('code nom siteId industrieId')
+        .lean();
+      const userObj = user.toObject();
+      userObj.zonesAssigned = zones;
+      return userObj;
+    }
+
     return user;
   }
 }

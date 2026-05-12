@@ -6,7 +6,7 @@ import {
   useAcknowledgeAlert,
   useEscalateAlert,
   useResolveAlert,
-} from '@/features/alerts/hooks/useAlertActions'
+} from '@/features/alerts/hooks/useAlerts'
 
 interface AlertActionsProps {
   alert: Alert
@@ -19,10 +19,15 @@ export function AlertActions({ alert, compact }: AlertActionsProps) {
   const res = useResolveAlert()
 
   const size = compact ? 'sm' : 'md'
+  const isResolved = Boolean(alert.resolvedAt)
+  const isAcknowledged = Boolean(alert.acknowledged)
+
+  // Nothing to show if fully resolved
+  if (isResolved) return null
 
   return (
     <div className="flex flex-wrap items-center gap-1">
-      {!alert.acknowledged && (
+      {!isAcknowledged && (
         <PermissionGate permission="ACKNOWLEDGE_ALERT">
           <Button
             variant="secondary"
@@ -38,20 +43,27 @@ export function AlertActions({ alert, compact }: AlertActionsProps) {
           </Button>
         </PermissionGate>
       )}
-      <PermissionGate permission="ESCALATE_ALERT">
-        <Button
-          variant="ghost"
-          size={size}
-          leftIcon={<ChevronsUp className="h-3.5 w-3.5" />}
-          loading={esc.isPending}
-          onClick={(e) => {
-            e.stopPropagation()
-            esc.mutate({ id: alert.id })
-          }}
-        >
-          Escalader
-        </Button>
-      </PermissionGate>
+
+      {/* Only show escalate if not already at critical */}
+      {alert.severity !== 'critical' && (
+        <PermissionGate permission="ESCALATE_ALERT">
+          <Button
+            variant="ghost"
+            size={size}
+            leftIcon={<ChevronsUp className="h-3.5 w-3.5" />}
+            loading={esc.isPending}
+            onClick={(e) => {
+              e.stopPropagation()
+              // warning → high, high/critical → critical
+              const newSeverity = alert.severity === 'critical' ? 'critical' : 'high'
+              esc.mutate({ id: alert.id, newSeverity, reason: 'Escaladé' })
+            }}
+          >
+            Escalader
+          </Button>
+        </PermissionGate>
+      )}
+
       <PermissionGate permission="RESOLVE_ALERT">
         <Button
           variant="primary"

@@ -104,7 +104,7 @@ const getValueLevel = (value, sensor) => {
 };
 
 // ── Générer un message MQTT complet ──────────────────────────
-const generateMQTTMessage = (sensorKey, scenario = "random") => {
+const generateMQTTMessage = (sensorKey, scenario = "random", node = SIMULATOR_CONFIG.node) => {
   const sensor = SIMULATOR_CONFIG.sensors[sensorKey];
   const value = generateValue(sensorKey, scenario);
   if (value === null) return null;
@@ -115,8 +115,8 @@ const generateMQTTMessage = (sensorKey, scenario = "random") => {
     // Identification
     sensorType: sensor.type,
     model: sensor.model,
-    zone: SIMULATOR_CONFIG.node.zone,
-    nodeName: SIMULATOR_CONFIG.node.name,
+    zone: node.zone || SIMULATOR_CONFIG.node.zone,
+    nodeName: node.name || SIMULATOR_CONFIG.node.name,
 
     // Mesure
     value,

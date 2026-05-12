@@ -1,4 +1,4 @@
-import type { User } from '../types/auth.types'
+import type { User, Zone, Industry, Site } from '../types/auth.types'
 import { Role } from '@/lib/constants/roles'
 
 /**
@@ -25,6 +25,23 @@ export function normalizeUser(raw: unknown): User {
     ? (rawRole as Role)
     : Role.OPERATOR
 
+  // zonesAssigned can be populated Zone objects or plain string IDs
+  const rawZones = Array.isArray(u.zonesAssigned)
+    ? u.zonesAssigned
+    : Array.isArray(u.assignedZones)
+      ? u.assignedZones
+      : []
+
+  // Keep populated Zone objects if they have _id + nom (came from /me or login)
+  const zonesAssigned = rawZones.filter(
+    (z): z is Zone => z !== null && typeof z === 'object' && '_id' in z && 'nom' in z
+  ) as Zone[]
+
+  // Flat string IDs for legacy consumers
+  const assignedZones = rawZones.map((z) =>
+    typeof z === 'string' ? z : (z as Record<string, unknown>)?._id?.toString?.() ?? ''
+  ).filter(Boolean) as string[]
+
   return {
     userId: rawId,
     _id: typeof u._id === 'string' ? (u._id as string) : rawId,
@@ -37,16 +54,17 @@ export function normalizeUser(raw: unknown): User {
     role,
     site: (u.site as string | null | undefined) ?? null,
     zone: (u.zone as string | null | undefined) ?? null,
+    industryId: (u.industryId as Industry | string | null | undefined) ?? null,
+    sitesManaging: Array.isArray(u.sitesManaging)
+      ? (u.sitesManaging as Site[])
+      : [],
+    zonesAssigned,
     assignedSites: Array.isArray(u.sitesManaging)
       ? (u.sitesManaging as string[])
       : Array.isArray(u.assignedSites)
         ? (u.assignedSites as string[])
         : [],
-    assignedZones: Array.isArray(u.zonesAssigned)
-      ? (u.zonesAssigned as string[])
-      : Array.isArray(u.assignedZones)
-        ? (u.assignedZones as string[])
-        : [],
+    assignedZones,
     createdAt: (u.createdAt as string | undefined) ?? undefined,
     lastLoginAt: (u.lastLogin as string | undefined) ?? (u.lastLoginAt as string | undefined),
   }

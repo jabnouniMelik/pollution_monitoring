@@ -6,14 +6,33 @@ const cors = require("cors");
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 const connectDB = require("./config/db");
-const { initializeWebSocket, getStats: getWSStats } = require("./services/websocketService");
+const {
+  initializeWebSocket,
+  getStats: getWSStats,
+} = require("./services/websocketService");
 
 const app = express();
 const server = http.createServer(app);
 
+// ── Increase max listeners to prevent warnings ─────────────────
+// Necessary for WebSocket and multiple connection handlers
+server.setMaxListeners(0);
+
 // ── CORS Configuration ────────────────────────────────────────
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  origin: function (origin, callback) {
+    const allowed = ["http://localhost:3000", "http://127.0.0.1:3000",
+                   "http://localhost:5173", "http://127.0.0.1:5173"];
+    const envUrl = process.env.FRONTEND_URL;
+    if (envUrl) allowed.push(envUrl);
+
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || allowed.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -24,12 +43,16 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
+// ── Serve static files (reports uploads) ──────────────────────
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 // Global rate-limit.
 // - In development: generous cap so a page reload / HMR burst doesn't lock you out.
 // - In production: stricter cap to mitigate abuse.
 // Tune via RATE_LIMIT_MAX if you need a specific value (still respects dev/prod defaults).
 const isProd = process.env.NODE_ENV === "production";
-const RATE_LIMIT_MAX = Number(process.env.RATE_LIMIT_MAX) || (isProd ? 300 : 2000);
+const RATE_LIMIT_MAX =
+  Number(process.env.RATE_LIMIT_MAX) || (isProd ? 300 : 2000);
 
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -55,13 +78,18 @@ app.get("/api/users/test-direct", (req, res) => {
 // Mount RBAC routes directly
 try {
   const userRoutes = require("./routes/userManagementRoutes");
-  console.log("[DEBUG] userRoutes type:", typeof userRoutes, "constructor:", userRoutes?.constructor?.name);
-  
+  console.log(
+    "[DEBUG] userRoutes type:",
+    typeof userRoutes,
+    "constructor:",
+    userRoutes?.constructor?.name,
+  );
+
   app.use("/api/users", (req, res, next) => {
     console.log("[MOUNT DEBUG] /api/users path matched!");
     next();
   });
-  
+
   app.use("/api/users", userRoutes);
   console.log("[DEBUG] ✓ User routes mounted");
 } catch (e) {
@@ -85,7 +113,10 @@ app.use("/api/kpi", require("./routes/kpiRoutes"));
 try {
   app.use("/api/sites", require("./routes/siteManagementRoutes"));
   app.use("/api/zones", require("./routes/zoneManagementRoutes"));
-  app.use("/api/thresholds", require("./routes/thresholdConfigManagementRoutes"));
+  app.use(
+    "/api/thresholds",
+    require("./routes/thresholdConfigManagementRoutes"),
+  );
   app.use("/api/site-config", require("./routes/siteConfigManagementRoutes"));
   console.log("[DEBUG] ✓ Site/Zone/Threshold/SiteConfig routes mounted");
 } catch (e) {
@@ -103,7 +134,9 @@ app.get("/test", (req, res) => {
 
 // Catch-all debug route
 app.use((req, res, next) => {
-  console.log(`[DEBUG CATCH-ALL] ${req.method} ${req.originalUrl} - Route not matched`);
+  console.log(
+    `[DEBUG CATCH-ALL] ${req.method} ${req.originalUrl} - Route not matched`,
+  );
   next();
 });
 
@@ -137,7 +170,9 @@ const PORT = process.env.PORT || 5000;
     await connectDB();
   } catch (err) {
     console.error("❌ MongoDB connection failed:", err.message);
-    console.error("   → Vérifiez que MongoDB est lancé et que MONGO_URI est correct.");
+    console.error(
+      "   → Vérifiez que MongoDB est lancé et que MONGO_URI est correct.",
+    );
     process.exit(1);
   }
 

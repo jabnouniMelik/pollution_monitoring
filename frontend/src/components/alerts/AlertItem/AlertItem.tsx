@@ -67,11 +67,15 @@ export function AlertItem({ alert, actions, onClick, className }: AlertItemProps
             <Badge variant={meta.badge}>{meta.label}</Badge>
             <span className="text-xs font-semibold text-text-primary">{alert.pollutant}</span>
             <span className="text-[10px] text-text-tertiary">• {formatRelative(alert.timestamp)}</span>
-            {alert.acknowledged && (
+            {alert.resolved ? (
+              <Badge variant="success" className="ml-auto">
+                {alert.resolvedBy ? 'Résolue' : 'Auto-résolue'}
+              </Badge>
+            ) : alert.acknowledged ? (
               <Badge variant="neutral" className="ml-auto">
                 Acquittée
               </Badge>
-            )}
+            ) : null}
           </div>
 
           <p className="mt-1 text-sm text-text-primary truncate-2">{alert.message}</p>
@@ -89,7 +93,19 @@ export function AlertItem({ alert, actions, onClick, className }: AlertItemProps
                 {formatNumber(alert.threshold, 1)}
               </dd>
             </div>
-            {alert.sensorId && (
+            {alert.zoneName && (
+              <div>
+                <dt className="inline">Zone: </dt>
+                <dd className="inline font-semibold text-text-primary">{alert.zoneName}</dd>
+              </div>
+            )}
+            {alert.nodeName && (
+              <div>
+                <dt className="inline">Nœud: </dt>
+                <dd className="inline">{alert.nodeName}</dd>
+              </div>
+            )}
+            {alert.sensorId && !alert.nodeName && (
               <div>
                 <dt className="inline">Capteur: </dt>
                 <dd className="inline">{alert.sensorId}</dd>

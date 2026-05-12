@@ -5,18 +5,25 @@ import { Card } from '@/components/ui/Card/Card'
 import { Button } from '@/components/ui/Button/Button'
 import { Table, type TableColumn } from '@/components/ui/Table/Table'
 import { Badge } from '@/components/ui/Badge/Badge'
-import { EmptyState } from '@/components/common/EmptyState/EmptyState'
+import { QueryState } from '@/components/common/QueryState/QueryState'
+import { ReportsSkeleton } from '@/components/ui/Skeleton/SkeletonBlocks'
 import { Modal } from '@/components/ui/Modal/Modal'
 import { Input } from '@/components/ui/Input/Input'
 import { Select } from '@/components/ui/Select/Select'
 import { PermissionGate } from '@/components/common/PermissionGate/PermissionGate'
 import { useGenerateReport, useReports } from '@/features/reports/hooks/useReports'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 import { formatDateTime } from '@/lib/utils/formatters'
+import { useToast } from '@/components/ui/Toast/ToastProvider'
 import type { GenerateReportPayload, Report } from '@/features/reports/types/report.types'
+import type { Zone } from '@/features/auth/types/auth.types'
+import { Role } from '@/lib/constants/roles'
 
 export default function Reports() {
   const reports = useReports()
   const generate = useGenerateReport()
+  const { user } = useAuth()
+  const toast = useToast()
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState<GenerateReportPayload>({
     title: '',
@@ -25,7 +32,26 @@ export default function Reports() {
     format: 'pdf',
     includeCompliance: true,
     includeAlerts: true,
+    zoneId: undefined,
   })
+
+  // Zones available to this user
+  const zones: Zone[] = (user?.zonesAssigned ?? []) as Zone[]
+  const showZonePicker = zones.length > 0
+
+  const handleGenerate = async () => {
+    if (!form.from || !form.to) {
+      toast.error('Veuillez sélectionner une période')
+      return
+    }
+    if (new Date(form.from) >= new Date(form.to)) {
+      toast.error('La date de début doit être avant la date de fin')
+      return
+    }
+    await generate.mutateAsync(form)
+    setOpen(false)
+    setForm({ title: '', from: '', to: '', format: 'pdf', includeCompliance: true, includeAlerts: true, zoneId: undefined })
+  }
 
   const columns: TableColumn<Report>[] = [
     {
@@ -50,7 +76,7 @@ export default function Reports() {
       header: 'Statut',
       accessor: (r) => (
         <Badge variant={r.status === 'ready' ? 'success' : r.status === 'failed' ? 'danger' : 'info'}>
-          {r.status ?? 'ready'}
+          {r.status === 'ready' ? 'Prêt' : r.status === 'pending' ? 'En cours' : r.status ?? 'Prêt'}
         </Badge>
       ),
     },
@@ -88,30 +114,31 @@ export default function Reports() {
       />
 
       <Card padded={false}>
-        {reports.data && reports.data.length === 0 ? (
-          <div className="p-4">
-            <EmptyState
-              icon={<FileText className="h-8 w-8" />}
-              title="Aucun rapport"
-              description="Générez votre premier rapport pour le soumettre à l’ANPE."
+        <QueryState
+          query={reports}
+          loadingSkeleton={<ReportsSkeleton />}
+          emptyTitle="Aucun rapport"
+          emptyDescription="Générez votre premier rapport pour le soumettre à l'ANPE."
+          errorTitle="Erreur de chargement"
+          errorDescription="Impossible de charger la liste des rapports."
+        >
+          {(data) => (
+            <Table<Report>
+              columns={columns}
+              data={data}
+              getRowKey={(r) => r.id}
+              emptyMessage="Aucun rapport"
             />
-          </div>
-        ) : (
-          <Table<Report>
-            columns={columns}
-            data={reports.data ?? []}
-            getRowKey={(r) => r.id}
-            emptyMessage={reports.isLoading ? 'Chargement…' : 'Aucun rapport'}
-          />
-        )}
+          )}
+        </QueryState>
       </Card>
 
       <Modal
         open={open}
         onClose={() => setOpen(false)}
         title="Nouveau rapport"
-        description="Configurez la période et le format du rapport à générer."
-        size="lg"
+        description="Configurez la période, la zone et le format du rapport."
+        size="md"
         footer={
           <>
             <Button variant="secondary" onClick={() => setOpen(false)}>
@@ -120,10 +147,7 @@ export default function Reports() {
             <Button
               variant="primary"
               loading={generate.isPending}
-              onClick={async () => {
-                await generate.mutateAsync(form)
-                setOpen(false)
-              }}
+              onClick={handleGenerate}
             >
               Générer
             </Button>
@@ -132,25 +156,40 @@ export default function Reports() {
       >
         <div className="space-y-3">
           <Input
-            label="Titre"
+            label="Titre (optionnel)"
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
             placeholder="Rapport trimestriel T1 2026"
           />
+
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Début"
+              label="Date de début"
               type="date"
               value={form.from}
               onChange={(e) => setForm({ ...form, from: e.target.value })}
             />
             <Input
-              label="Fin"
+              label="Date de fin"
               type="date"
               value={form.to}
               onChange={(e) => setForm({ ...form, to: e.target.value })}
             />
           </div>
+
+          {/* Zone picker — shown when user has zones */}
+          {showZonePicker && (
+            <Select
+              label="Zone"
+              value={form.zoneId ?? ''}
+              onChange={(e) => setForm({ ...form, zoneId: e.target.value || undefined })}
+              options={[
+                { value: '', label: 'Toutes les zones' },
+                ...zones.map((z) => ({ value: z._id, label: `${z.nom} (${z.code})` })),
+              ]}
+            />
+          )}
+
           <Select
             label="Format"
             options={[

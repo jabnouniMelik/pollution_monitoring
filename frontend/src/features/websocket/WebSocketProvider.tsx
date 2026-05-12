@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { wsClient } from './websocketClient'
+import { applyWSMessage } from './applyWSMessage'
 import { useAuth } from '@/features/auth/hooks/useAuth'
+import { queryClient } from '@/lib/api/queryClient'
 import type { WSConnectionStatus, WSMessage } from '@/@types/websocket'
 
 interface WebSocketContextValue {
@@ -41,6 +43,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     const offMessage = wsClient.onMessage((msg) => {
       setLastMessage(msg)
       setLastUpdate(new Date())
+      applyWSMessage(queryClient, msg)
     })
 
     return () => {

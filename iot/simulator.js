@@ -54,6 +54,7 @@ const client = mqtt.connect(SIMULATOR_CONFIG.mqtt.broker, {
 });
 
 const intervals = [];
+const nodes = SIMULATOR_CONFIG.nodes || [SIMULATOR_CONFIG.node];
 
 // ── Événement : Connexion réussie ─────────────────────────────
 client.on("connect", () => {
@@ -79,23 +80,25 @@ client.on("connect", () => {
 
   console.log("└──────────────┴──────────────────────┴───────────┘\n");
 
-  // Démarrer chaque capteur
-  Object.keys(sensors).forEach((sensorKey) => {
-    const sensor = sensors[sensorKey];
+  // Démarrer chaque capteur sur chaque zone simulée
+  nodes.forEach((node) => {
+    Object.keys(sensors).forEach((sensorKey) => {
+      const sensor = sensors[sensorKey];
 
-    // Première mesure immédiate
-    publishReading(sensorKey, sensor);
+      // Première mesure immédiate
+      publishReading(sensorKey, sensor, node);
 
-    // Puis selon l'interval du capteur
-    const timer = setInterval(() => {
-      publishReading(sensorKey, sensor);
-    }, sensor.interval);
+      // Puis selon l'interval du capteur
+      const timer = setInterval(() => {
+        publishReading(sensorKey, sensor, node);
+      }, sensor.interval);
 
-    intervals.push(timer);
+      intervals.push(timer);
+    });
   });
 
   console.log(
-    `\n📊 Simulation active — ${Object.keys(sensors).length} capteurs\n`,
+    `\n📊 Simulation active — ${Object.keys(sensors).length} capteurs × ${nodes.length} zones\n`,
   );
 
   // Résumé toutes les 60 secondes
@@ -120,13 +123,14 @@ client.on("connect", () => {
 });
 
 // ── Fonction : Publier une mesure ─────────────────────────────
-const publishReading = (sensorKey, sensor) => {
-  const message = generateMQTTMessage(sensorKey, SCENARIO);
+const publishReading = (sensorKey, sensor, node = SIMULATOR_CONFIG.node) => {
+  const message = generateMQTTMessage(sensorKey, SCENARIO, node);
   if (!message) return;
 
   const payload = JSON.stringify(message);
+  const topic = `emissions/${node.zone}/${sensor.type}`;
 
-  client.publish(sensor.topic, payload, { qos: 1 }, (err) => {
+  client.publish(topic, payload, { qos: 1 }, (err) => {
     if (err) {
       console.error(` Erreur publication ${sensor.type}:`, err.message);
       return;
@@ -136,7 +140,7 @@ const publishReading = (sensorKey, sensor) => {
 
     console.log(
       `${icon} [${new Date().toLocaleTimeString()}] ` +
-        `${sensor.type.padEnd(12)} : ` +
+        `[${node.zone}] ${sensor.type.padEnd(12)} : ` +
         `${String(message.value).padStart(8)} ${message.unit.padEnd(8)} ` +
         `[${message.level.toUpperCase()}]`,
     );

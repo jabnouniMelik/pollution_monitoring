@@ -114,11 +114,12 @@ UserSchema.methods.comparePassword = async function (candidatePassword) {
 };
 
 // ── Index pour les recherches fréquentes ─────────────────────
+// Note: email a déjà un index unique via le schéma { unique: true }
+// donc on ne le redéfinit pas ici pour éviter le warning Mongoose
 
 UserSchema.index({ role: 1 });
 UserSchema.index({ industryId: 1 });
 UserSchema.index({ isActive: 1 });
-UserSchema.index({ email: 1 });
 UserSchema.index({ role: 1, industryId: 1 }); // Pour filtrer users par role + industrie
 
 module.exports = mongoose.model("User", UserSchema);

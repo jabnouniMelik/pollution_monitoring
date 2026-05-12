@@ -5,55 +5,88 @@
  */
 
 const siteRepository = require("../repositories/SiteRepository");
+const zoneRepository = require("../repositories/ZoneRepository");
 const userRepository = require("../repositories/UserRepository");
 
 class SiteManagementService {
   /**
-   * Crée un nouveau site (SUPER_ADMIN ou HEAD_SUPERVISOR pour son industrie)
-   * @param {Object} data - { nom, industrieId, supervisorId, localisation, contact }
-   * @param {Object} requester - Utilisateur qui fait la requête
-   * @returns {Promise<Object>} Site créé
+   * Crée un nouveau site + une zone initiale obligatoire
+   * @param {Object} data - { nom, industrieId, zoneName, pollutants, localisation, ... }
+   * @param {Object} requester
    */
   async createSite(data, requester) {
-    const { nom, industrieId, supervisorId, localisation, contact } = data;
+    const { nom, industrieId, zoneName, pollutants, localisation, contact, ...rest } = data;
 
-    // Vérifier permissions
+    // Permission check
     if (requester.role === "SUPER_ADMIN") {
-      // SUPER_ADMIN peut créer des sites dans n'importe quelle industrie
+      // ok — can create anywhere
     } else if (requester.role === "HEAD_SUPERVISOR") {
-      // HEAD_SUPERVISOR peut créer des sites uniquement dans son industrie
+      if (!requester.industryId) {
+        const err = new Error("Votre compte n'est pas associé à une industrie — contactez le Super Admin");
+        err.statusCode = 403;
+        throw err;
+      }
       if (industrieId !== requester.industryId.toString()) {
-        throw new Error("HEAD_SUPERVISOR ne peut créer des sites que dans son industrie");
+        const err = new Error("HEAD_SUPERVISOR ne peut créer des sites que dans son industrie");
+        err.statusCode = 403;
+        throw err;
       }
     } else {
-      throw new Error("Seul SUPER_ADMIN et HEAD_SUPERVISOR peuvent créer des sites");
+      const err = new Error("Seul SUPER_ADMIN et HEAD_SUPERVISOR peuvent créer des sites");
+      err.statusCode = 403;
+      throw err;
     }
 
-    // Valider champs requis
-    if (!nom || !industrieId || !supervisorId) {
-      throw new Error("nom, industrieId et supervisorId requis");
+    if (!nom) {
+      const err = new Error("nom requis");
+      err.statusCode = 400;
+      throw err;
     }
 
-    // Vérifier que le superviseur existe et est HEAD_SUPERVISOR
-    const supervisor = await userRepository.findById(supervisorId);
-    if (!supervisor || supervisor.role !== "HEAD_SUPERVISOR") {
-      throw new Error("Superviseur non trouvé ou n'est pas HEAD_SUPERVISOR");
+    if (!industrieId) {
+      const err = new Error("industrieId introuvable — vérifiez votre profil");
+      err.statusCode = 400;
+      throw err;
     }
 
-    // Vérifier que l'industrie du superviseur correspond
-    if (supervisor.industryId.toString() !== industrieId) {
-      throw new Error("Superviseur ne peut superviser que les sites de son industrie");
+    if (!zoneName) {
+      const err = new Error("zoneName requis — un site doit contenir au moins une zone");
+      err.statusCode = 400;
+      throw err;
     }
 
-    // Créer le site
+    // Create the site (supervisorId is the requester for HEAD_SUPERVISOR)
+    const supervisorId = requester.role === "HEAD_SUPERVISOR" ? requester.userId : null;
+
     const site = await siteRepository.create({
       nom,
       industrieId,
       supervisorId,
       localisation: localisation || null,
       contact: contact || null,
-      actif: true,
+      ...rest,
     });
+
+    // Auto-create the initial zone
+    const zoneCode = zoneName
+      .toUpperCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^A-Z0-9-]/g, '')
+      .slice(0, 20);
+
+    await zoneRepository.create({
+      code: zoneCode,
+      nom: zoneName,
+      siteId: site._id,
+      industrieId,
+      localisation: localisation || null,  // same location as site
+      pollutants: pollutants || [],
+      operatorsAssigned: [],
+      actif: site.actif,
+    });
+
+    // Update zone count
+    await siteRepository.update(site._id, { zoneCount: 1 });
 
     return site;
   }
@@ -76,14 +109,21 @@ class SiteManagementService {
       return await siteRepository.findAll(query);
     } else if (requester.role === "SITE_SUPERVISOR") {
       // Voir uniquement les sites dont il supervise
-      return await siteRepository.findBySupervisor(requester._id);
+      const requesterId = requester.userId || requester._id;
+      return await siteRepository.findBySupervisor(requesterId);
     } else if (requester.role === "OPERATOR") {
       // L'OPERATOR voit les sites via les zones assignées
       // À implémenter lors de la requête des zones
-      throw new Error("Les OPERATOR doivent accéder aux sites via les zones");
+      const err = new Error(
+        "Les OPERATOR doivent accéder aux sites via les zones",
+      );
+      err.statusCode = 403;
+      throw err;
     }
 
-    throw new Error("Accès refusé");
+    const err = new Error("Accès refusé");
+    err.statusCode = 403;
+    throw err;
   }
 
   /**
@@ -95,25 +135,36 @@ class SiteManagementService {
   async getSiteById(siteId, requester) {
     const site = await siteRepository.findById(siteId);
     if (!site) {
-      throw new Error("Site non trouvé");
+      const err = new Error("Site non trouvé");
+      err.statusCode = 404;
+      throw err;
     }
 
     // Vérifier autorisation
     if (requester.role === "SUPER_ADMIN") {
       return site;
     } else if (requester.role === "HEAD_SUPERVISOR") {
-      if (site.industrieId.toString() !== requester.industryId.toString()) {
-        throw new Error("Accès refusé");
+      const siteIndustrieId = (site.industrieId?._id || site.industrieId)?.toString();
+      if (siteIndustrieId !== requester.industryId?.toString()) {
+        const err = new Error("Accès refusé");
+        err.statusCode = 403;
+        throw err;
       }
       return site;
     } else if (requester.role === "SITE_SUPERVISOR") {
-      if (site.supervisorId.toString() !== requester._id.toString()) {
-        throw new Error("Accès refusé");
+      const supervisorId = (site.supervisorId?._id || site.supervisorId)?.toString();
+      const requesterId = (requester.userId || requester._id)?.toString();
+      if (supervisorId !== requesterId) {
+        const err = new Error("Accès refusé");
+        err.statusCode = 403;
+        throw err;
       }
       return site;
     }
 
-    throw new Error("Accès refusé");
+    const err = new Error("Accès refusé");
+    err.statusCode = 403;
+    throw err;
   }
 
   /**
@@ -132,7 +183,9 @@ class SiteManagementService {
       requester.role !== "SUPER_ADMIN" &&
       requester.role !== "HEAD_SUPERVISOR"
     ) {
-      throw new Error("Autorisation insuffisante");
+      const err = new Error("Autorisation insuffisante");
+      err.statusCode = 403;
+      throw err;
     }
 
     const allowedFields = ["nom", "contact", "localisation", "actif"];
@@ -156,18 +209,26 @@ class SiteManagementService {
    */
   async deleteSite(siteId, requester) {
     if (requester.role !== "SUPER_ADMIN") {
-      throw new Error("Seul le SUPER_ADMIN peut supprimer des sites");
+      const err = new Error("Seul le SUPER_ADMIN peut supprimer des sites");
+      err.statusCode = 403;
+      throw err;
     }
 
     const site = await siteRepository.findById(siteId);
     if (!site) {
-      throw new Error("Site non trouvé");
+      const err = new Error("Site non trouvé");
+      err.statusCode = 404;
+      throw err;
     }
 
     // Vérifier qu'il n'y a pas de zones actives
     const canDelete = await siteRepository.canDelete(siteId);
     if (!canDelete) {
-      throw new Error("Impossible de supprimer un site qui contient des zones");
+      const err = new Error(
+        "Impossible de supprimer un site qui contient des zones",
+      );
+      err.statusCode = 400;
+      throw err;
     }
 
     return await siteRepository.delete(siteId);
@@ -182,22 +243,36 @@ class SiteManagementService {
    */
   async assignSupervisor(siteId, supervisorId, requester) {
     if (requester.role !== "SUPER_ADMIN") {
-      throw new Error("Seul le SUPER_ADMIN peut assigner des superviseurs");
+      const err = new Error(
+        "Seul le SUPER_ADMIN peut assigner des superviseurs",
+      );
+      err.statusCode = 403;
+      throw err;
     }
 
     const site = await siteRepository.findById(siteId);
     if (!site) {
-      throw new Error("Site non trouvé");
+      const err = new Error("Site non trouvé");
+      err.statusCode = 404;
+      throw err;
     }
 
     const newSupervisor = await userRepository.findById(supervisorId);
     if (!newSupervisor || newSupervisor.role !== "HEAD_SUPERVISOR") {
-      throw new Error("Superviseur non trouvé ou n'est pas HEAD_SUPERVISOR");
+      const err = new Error(
+        "Superviseur non trouvé ou n'est pas HEAD_SUPERVISOR",
+      );
+      err.statusCode = 400;
+      throw err;
     }
 
     // Vérifier que le superviseur et le site sont du même industrie
     if (newSupervisor.industryId.toString() !== site.industrieId.toString()) {
-      throw new Error("Superviseur et site doivent être du même industrie");
+      const err = new Error(
+        "Superviseur et site doivent être du même industrie",
+      );
+      err.statusCode = 400;
+      throw err;
     }
 
     return await siteRepository.update(siteId, {
@@ -216,12 +291,16 @@ class SiteManagementService {
       return await siteRepository.findByIndustrie(industrieId);
     } else if (requester.role === "HEAD_SUPERVISOR") {
       if (industrieId !== requester.industryId.toString()) {
-        throw new Error("Accès refusé");
+        const err = new Error("Accès refusé");
+        err.statusCode = 403;
+        throw err;
       }
       return await siteRepository.findByIndustrie(industrieId);
     }
 
-    throw new Error("Accès refusé");
+    const err = new Error("Accès refusé");
+    err.statusCode = 403;
+    throw err;
   }
 
   /**

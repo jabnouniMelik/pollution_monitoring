@@ -42,17 +42,38 @@ const getReportById = async (req, res, next) => {
 };
 
 // ── POST /api/reports/generate ─────────────────────────────
-// Génère automatiquement un rapport sur une période
-// Calcule : breachCount, overallScore (IPE), polluantScores
 const generateReport = async (req, res, next) => {
   try {
-    const { periodStart, periodEnd } = req.body;
-    const generatedBy = req.body.userId || null;
+    const {
+      periodStart,
+      periodEnd,
+      title,
+      format,
+      siteId,
+      zoneId,
+      includeCompliance,
+      includeAlerts,
+    } = req.body;
+
+    if (!periodStart || !periodEnd) {
+      return res.status(400).json({
+        success: false,
+        message: "periodStart et periodEnd sont requis",
+      });
+    }
+
+    const generatedBy = req.user?.userId || null;
 
     const report = await reportService.generateReport({
       periodStart,
       periodEnd,
       generatedBy,
+      title,
+      format,
+      siteId: siteId || null,
+      zoneId: zoneId || null,
+      includeCompliance: includeCompliance !== false,
+      includeAlerts: includeAlerts !== false,
     });
 
     res.status(201).json({

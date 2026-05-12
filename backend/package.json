@@ -2,30 +2,34 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
   "main": "index.js",
   "directories": {
     "test": "tests"
   },
   "scripts": {
     "start": "node --max-old-space-size=4096 server.js",
-    "test": "node tests/test.js",
-    "test:integration": "node tests/test.js",
-    "test:errors": "node tests/errorHandling.test.js",
-    "test:services": "node tests/serviceErrors.test.js",
+    "simulate": "node simulator.js",
+    "simulate:warning": "node simulator.js warning",
+    "simulate:critical": "node simulator.js critical",
+    "init:fresh": "node init-fresh.js",
+    "check": "node check-system-ready.js",
     "init:simulator": "node init-simulator.js",
     "init:kpi": "node init-kpi-config.js",
     "init:users": "node init-users.js",
     "init:thresholds": "node init-thresholds.js",
     "init": "npm run init:simulator && npm run init:users && npm run init:thresholds && npm run init:kpi"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
+    "axios": "^1.6.7",
     "bcryptjs": "^3.0.3",
+    "chartjs-node-canvas": "^5.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
+    "csv-writer": "^1.6.0",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.3.1",
@@ -33,6 +37,8 @@
     "mongoose": "^9.3.1",
     "mqtt": "^5.15.1",
     "node-cron": "^3.0.3",
+    "puppeteer": "^24.42.0",
     "ws": "^8.16.0"
-  }
+  },
+  "devDependencies": {}
 }

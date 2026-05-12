@@ -33,3 +33,19 @@ export const thresholdSchema = z.object({
   message: 'Le seuil critique doit être supérieur au seuil d’alerte',
   path: ['critical'],
 })
+
+/** One pollutant row in global threshold configuration (Config page). */
+export const pollutantThresholdRowSchema = z
+  .object({
+    min: z.number(),
+    max: z.number(),
+    warning: z.number(),
+    critical: z.number(),
+    unit: z.string().min(1),
+    reference: z.string().optional(),
+  })
+  .refine((t) => t.min < t.max, { message: 'Le minimum doit être inférieur au maximum', path: ['max'] })
+  .refine((t) => t.critical > t.warning, {
+    message: 'Le seuil critique doit être supérieur au seuil d’alerte',
+    path: ['critical'],
+  })

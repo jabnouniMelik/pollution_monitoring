@@ -8,97 +8,32 @@ const express = require("express");
 const router = express.Router();
 const verifyToken = require("../middleware/verifyToken");
 const { checkRole } = require("../middleware/checkRole");
-const zoneManagementController = require("../controllers/zoneManagementController");
+const {
+  createZone, getZones, getZoneById, updateZone, deleteZone,
+  approveZone, rejectZone, getPendingZones, prepareZone,
+  assignOperator, removeOperator, getZonesBySite, countSensors,
+} = require("../controllers/zoneManagementController");
 
 // Middleware: toutes les routes nécessitent authentication
 router.use(verifyToken);
 
-/**
- * POST /api/zones
- * Créer une zone (SUPER_ADMIN, HEAD_SUPERVISOR, SITE_SUPERVISOR)
- */
-router.post(
-  "/",
-  checkRole("SUPER_ADMIN", "HEAD_SUPERVISOR", "SITE_SUPERVISOR"),
-  zoneManagementController.createZone
-);
+// ── Special routes BEFORE /:id ────────────────────────────────
+router.get("/pending", checkRole("SUPER_ADMIN"), getPendingZones);
+router.get("/site/:siteId", getZonesBySite);
 
-/**
- * GET /api/zones
- * Récupérer zones (filtrage par rôle)
- * SUPER_ADMIN → toutes les zones
- * HEAD_SUPERVISOR → zones de son industrie
- * SITE_SUPERVISOR → zones de ses sites
- * OPERATOR → ses zones assignées
- */
-router.get("/", zoneManagementController.getZones);
+router.post("/", checkRole("SUPER_ADMIN", "HEAD_SUPERVISOR", "SITE_SUPERVISOR"), createZone);
+router.get("/", getZones);
+router.get("/:id", getZoneById);
+router.put("/:id", checkRole("SUPER_ADMIN", "HEAD_SUPERVISOR", "SITE_SUPERVISOR"), updateZone);
+router.delete("/:id", checkRole("SUPER_ADMIN"), deleteZone);
 
-/**
- * GET /api/zones/:id
- * Récupérer une zone par ID (avec contrôle d'accès)
- */
-router.get("/:id", zoneManagementController.getZoneById);
+// Approval actions
+router.post("/:id/approve", checkRole("SUPER_ADMIN"), approveZone);
+router.post("/:id/reject", checkRole("SUPER_ADMIN"), rejectZone);
+router.patch("/:id/prepare", checkRole("SUPER_ADMIN"), prepareZone);
 
-/**
- * PUT /api/zones/:id
- * Mettre à jour une zone
- * SUPER_ADMIN, HEAD_SUPERVISOR, ou SITE_SUPERVISOR
- */
-router.put(
-  "/:id",
-  checkRole("SUPER_ADMIN", "HEAD_SUPERVISOR", "SITE_SUPERVISOR"),
-  zoneManagementController.updateZone
-);
-
-/**
- * DELETE /api/zones/:id
- * Supprimer une zone (SUPER_ADMIN only)
- * ⚠️ Impossible si capteurs existent
- */
-router.delete(
-  "/:id",
-  checkRole("SUPER_ADMIN"),
-  zoneManagementController.deleteZone
-);
-
-/**
- * POST /api/zones/:id/operators
- * Assigner un opérateur à une zone
- * SUPER_ADMIN, HEAD_SUPERVISOR, ou SITE_SUPERVISOR
- */
-router.post(
-  "/:id/operators",
-  checkRole("SUPER_ADMIN", "HEAD_SUPERVISOR", "SITE_SUPERVISOR"),
-  zoneManagementController.assignOperator
-);
-
-/**
- * DELETE /api/zones/:id/operators/:operatorId
- * Retirer un opérateur d'une zone
- * SUPER_ADMIN, HEAD_SUPERVISOR, ou SITE_SUPERVISOR
- */
-router.delete(
-  "/:id/operators/:operatorId",
-  checkRole("SUPER_ADMIN", "HEAD_SUPERVISOR", "SITE_SUPERVISOR"),
-  zoneManagementController.removeOperator
-);
-
-/**
- * GET /api/zones/site/:siteId
- * Récupérer zones d'un site
- */
-router.get(
-  "/site/:siteId",
-  zoneManagementController.getZonesBySite
-);
-
-/**
- * GET /api/zones/:id/sensors-count
- * Compter les capteurs d'une zone
- */
-router.get(
-  "/:id/sensors-count",
-  zoneManagementController.countSensors
-);
+router.post("/:id/operators", checkRole("SUPER_ADMIN", "HEAD_SUPERVISOR", "SITE_SUPERVISOR"), assignOperator);
+router.delete("/:id/operators/:operatorId", checkRole("SUPER_ADMIN", "HEAD_SUPERVISOR", "SITE_SUPERVISOR"), removeOperator);
+router.get("/:id/sensors-count", countSensors);
 
 module.exports = router;

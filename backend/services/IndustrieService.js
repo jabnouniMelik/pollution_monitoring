@@ -25,7 +25,9 @@ class IndustrieService {
   async getIndustrieById(id) {
     const industrie = await industrieRepository.findById(id);
     if (!industrie) {
-      throw new Error("Industrie non trouvée");
+      const err = new Error("Industrie non trouvée");
+      err.statusCode = 404;
+      throw err;
     }
 
     const nodeCount = await sensorNodeRepository.countByIndustrie(id);
@@ -44,12 +46,26 @@ class IndustrieService {
   async createIndustrie(data) {
     // Valider champs requis
     if (!data.nom || !data.secteur || !data.localisation) {
-      throw new Error("nom, secteur et localisation sont requis");
+      const err = new Error("nom, secteur et localisation sont requis");
+      err.statusCode = 400;
+      throw err;
     }
 
     // Vérifier format email contact
     if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-      throw new Error("Format email invalide");
+      const err = new Error("Format email invalide");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    // Empêcher les doublons métier sur le nom d'industrie
+    const existingIndustries = await industrieRepository.findAll({
+      nom: data.nom,
+    });
+    if (existingIndustries.length > 0) {
+      const err = new Error("Industrie déjà existante");
+      err.statusCode = 400;
+      throw err;
     }
 
     return await industrieRepository.create(data);
@@ -64,12 +80,16 @@ class IndustrieService {
   async updateIndustrie(id, data) {
     const industrie = await industrieRepository.findById(id);
     if (!industrie) {
-      throw new Error("Industrie non trouvée");
+      const err = new Error("Industrie non trouvée");
+      err.statusCode = 404;
+      throw err;
     }
 
     // Vérifier format email si fourni
     if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-      throw new Error("Format email invalide");
+      const err = new Error("Format email invalide");
+      err.statusCode = 400;
+      throw err;
     }
 
     return await industrieRepository.update(id, data);
@@ -84,13 +104,19 @@ class IndustrieService {
   async deleteIndustrie(id) {
     const industrie = await industrieRepository.findById(id);
     if (!industrie) {
-      throw new Error("Industrie non trouvée");
+      const err = new Error("Industrie non trouvée");
+      err.statusCode = 404;
+      throw err;
     }
 
     // Vérifier qu'il n'existe pas de nœuds
     const nodeCount = await sensorNodeRepository.countByIndustrie(id);
     if (nodeCount > 0) {
-      throw new Error(`Impossible de supprimer : ${nodeCount} nœuds associés`);
+      const err = new Error(
+        `Impossible de supprimer : ${nodeCount} nœuds associés`,
+      );
+      err.statusCode = 409;
+      throw err;
     }
 
     return await industrieRepository.delete(id);

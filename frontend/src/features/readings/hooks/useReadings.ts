@@ -8,13 +8,15 @@ export function useLatestReadings(params: ReadingQuery = {}) {
     queryKey: queryKeys.readings.latest(params),
     queryFn: () => readingApi.latest(params),
     refetchInterval: 15_000,
+    placeholderData: (prev) => prev, // keep previous data visible during refetch → no flash
   })
 }
 
 export function useHistoricalReadings(params: ReadingQuery = {}) {
   return useQuery({
-    queryKey: queryKeys.readings.history(params),
+    queryKey: queryKeys.readings.list(params),
     queryFn: () => readingApi.history(params),
-    staleTime: 30_000,
+    staleTime: 0,
+    placeholderData: (prev) => prev,
   })
 }

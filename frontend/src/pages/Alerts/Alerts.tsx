@@ -1,58 +1,113 @@
-import { useMemo, useState } from 'react'
-import { Download, RefreshCw } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { PageHeader } from '@/components/layout/PageHeader/PageHeader'
 import { AlertFiltersBar } from '@/components/alerts/AlertFilters/AlertFilters'
 import { AlertList } from '@/components/alerts/AlertList/AlertList'
+import { AlertDetailModal } from '@/components/alerts/AlertDetailModal/AlertDetailModal'
 import { Card } from '@/components/ui/Card/Card'
-import { Button } from '@/components/ui/Button/Button'
 import { Badge } from '@/components/ui/Badge/Badge'
+import { Pagination } from '@/components/ui/Pagination/Pagination'
 import { useAlerts, useAlertStats } from '@/features/alerts/hooks/useAlerts'
-import type { AlertFilters } from '@/features/alerts/types/alert.types'
+import { useAlertScope } from '@/features/alerts/hooks/useAlertScope'
+import type {
+  Alert,
+  AlertFilters,
+  AlertSeverity,
+  AlertStatus,
+} from '@/features/alerts/types/alert.types'
 import { useWebSocketSubscription } from '@/features/websocket/useWebSocketSubscription'
 import { useQueryClient } from '@tanstack/react-query'
 
+const ALERT_SEVERITIES: AlertSeverity[] = ['critical', 'warning', 'info']
+const ALERT_STATUSES: AlertStatus[] = ['open', 'acknowledged', 'escalated', 'resolved']
+
+function parsePositiveInt(raw: string | null | undefined): number | undefined {
+  if (!raw) return undefined
+  const n = Number(raw)
+  if (!Number.isFinite(n) || n <= 0) return undefined
+  return Math.floor(n)
+}
+
+function isAlertSeverity(v: string | null): v is AlertSeverity {
+  return Boolean(v && ALERT_SEVERITIES.includes(v as AlertSeverity))
+}
+
+function isAlertStatus(v: string | null): v is AlertStatus {
+  return Boolean(v && ALERT_STATUSES.includes(v as AlertStatus))
+}
+
 export default function Alerts() {
-  const [filters, setFilters] = useState<AlertFilters>({ pageSize: 20 })
-  const alerts = useAlerts(filters)
-  const stats = useAlertStats()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null)
+  const scope = useAlertScope() // role-aware scope filter
+
+  const filters = useMemo<AlertFilters>(() => {
+    const severity = searchParams.get('severity')
+    const status = searchParams.get('status')
+    const pollutant = searchParams.get('pollutant') ?? undefined
+    const page = parsePositiveInt(searchParams.get('page'))
+    const pageSize = parsePositiveInt(searchParams.get('pageSize')) ?? 20
+
+    return {
+      pageSize,
+      page,
+      pollutant,
+      severity: isAlertSeverity(severity) ? severity : undefined,
+      status: isAlertStatus(status) ? status : undefined,
+      // Merge role-based scope (siteId/zoneId) with URL filters
+      ...(scope ?? {}),
+    }
+  }, [searchParams, scope])
+
+  const setFilters = useCallback(
+    (next: AlertFilters) => {
+      const nextParams = new URLSearchParams()
+      const setIf = (key: string, value: string | number | undefined) => {
+        if (value === undefined || value === '') return
+        nextParams.set(key, String(value))
+      }
+
+      setIf('severity', next.severity)
+      setIf('status', next.status)
+      setIf('pollutant', next.pollutant)
+      setIf('page', next.page)
+      if ((next.pageSize ?? 20) !== 20) {
+        setIf('pageSize', next.pageSize)
+      }
+
+      setSearchParams(nextParams, { replace: true })
+    },
+    [setSearchParams],
+  )
+
+  const alerts = useAlerts(filters, { enabled: scope !== null })
+  const stats = useAlertStats({ ...(scope ?? {}) })
   const qc = useQueryClient()
 
   useWebSocketSubscription(['alerts:all'], () => {
     qc.invalidateQueries({ queryKey: ['alerts'] })
   })
 
-  const filtered = useMemo(() => {
-    const items = alerts.data?.items ?? []
-    if (!filters.search) return items
-    const needle = filters.search.toLowerCase()
-    return items.filter(
-      (a) =>
-        a.message.toLowerCase().includes(needle) ||
-        a.pollutant.toLowerCase().includes(needle) ||
-        (a.sensorId ?? '').toLowerCase().includes(needle),
-    )
-  }, [alerts.data, filters.search])
+  const items = alerts.data?.items ?? []
+
+  const total = alerts.data?.total ?? 0
+  const page = alerts.data?.page ?? 1
+  const pageSize = alerts.data?.pageSize ?? 20
+  const totalPages = Math.ceil(total / pageSize)
+
+  const handlePageChange = (newPage: number) => {
+    setFilters({ ...filters, page: newPage })
+  }
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setFilters({ ...filters, pageSize: newPageSize, page: 1 })
+  }
 
   return (
     <div className="space-y-4">
       <PageHeader
         title="Alertes"
         subtitle="Gestion centralisée des alertes réglementaires et opérationnelles"
-        actions={
-          <>
-            <Button
-              variant="secondary"
-              size="sm"
-              leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
-              onClick={() => alerts.refetch()}
-            >
-              Actualiser
-            </Button>
-            <Button variant="primary" size="sm" leftIcon={<Download className="h-3.5 w-3.5" />}>
-              Exporter CSV
-            </Button>
-          </>
-        }
       />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -66,8 +121,25 @@ export default function Alerts() {
         <div className="mb-3">
           <AlertFiltersBar value={filters} onChange={setFilters} />
         </div>
-        <AlertList alerts={filtered} isLoading={alerts.isLoading} />
+        <AlertList alerts={items} isLoading={alerts.isLoading} onSelect={setSelectedAlert} />
       </Card>
+
+      {!alerts.isLoading && total > 0 && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
+      )}
+
+      <AlertDetailModal
+        alert={selectedAlert}
+        open={Boolean(selectedAlert)}
+        onClose={() => setSelectedAlert(null)}
+      />
     </div>
   )
 }

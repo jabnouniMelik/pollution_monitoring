@@ -22,7 +22,9 @@ class PolluantService {
   async getPolluantById(id) {
     const polluant = await polluantRepository.findById(id);
     if (!polluant) {
-      throw new Error("Polluant non trouvé");
+      const err = new Error("Polluant non trouvé");
+      err.statusCode = 404;
+      throw err;
     }
     return polluant;
   }
@@ -35,7 +37,9 @@ class PolluantService {
   async createPolluant(data) {
     // Valider champs requis
     if (!data.name || !data.unit || data.regulatoryLimit === undefined) {
-      throw new Error("name, unit et regulatoryLimit sont requis");
+      const err = new Error("name, unit et regulatoryLimit sont requis");
+      err.statusCode = 400;
+      throw err;
     }
 
     // Vérifier que la limite réglementaire > 0

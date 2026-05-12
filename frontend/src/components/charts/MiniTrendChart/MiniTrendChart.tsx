@@ -28,6 +28,7 @@ export function MiniTrendChart({
               backgroundColor: hexToRgba(color, 0.15),
               fill: true,
               tension: 0.35,
+              cubicInterpolationMode: 'monotone',
               pointRadius: 0,
               borderWidth: 2,
             },

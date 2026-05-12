@@ -11,6 +11,7 @@ import {
   useUpdateTargets,
   useUpdateWeights,
 } from '@/features/config/hooks/useUpdateConfig'
+import { ThresholdConfigSection } from './ThresholdConfigSection'
 
 export default function Config() {
   const { data: config } = useKPIConfig()
@@ -36,7 +37,7 @@ export default function Config() {
     <div className="space-y-4">
       <PageHeader
         title="Configuration"
-        subtitle="Paramètres du calcul KPI · accès restreint aux superviseurs"
+        subtitle="Paramètres KPI et seuils réglementaires · réservé au super administrateur"
       />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -135,6 +136,8 @@ export default function Config() {
             </Button>
           </PermissionGate>
         </Card>
+
+        <ThresholdConfigSection />
       </div>
     </div>
   )

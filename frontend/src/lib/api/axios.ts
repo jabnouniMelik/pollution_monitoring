@@ -55,8 +55,10 @@ api.interceptors.response.use(
       return Promise.reject(normalizeError(error))
     }
 
-    // Avoid infinite loops on the refresh endpoint itself
-    if (original.url?.includes(endpoints.auth.refresh) || original._retry) {
+    // Avoid infinite loops on the refresh endpoint itself or /me after refresh
+    if (original.url?.includes(endpoints.auth.refresh) || 
+        original.url?.includes(endpoints.auth.me) ||
+        original._retry) {
       accessToken = null
       unauthorizedHandlers.forEach((h) => h())
       return Promise.reject(normalizeError(error))
@@ -101,6 +103,12 @@ async function refreshAccessToken(): Promise<string | null> {
   })()
 
   return refreshing
+}
+
+/** Uses HttpOnly refresh cookie; returns true if a new access token was obtained. */
+export async function tryRefreshSession(): Promise<boolean> {
+  const token = await refreshAccessToken()
+  return Boolean(token)
 }
 
 export interface ApiErrorShape {

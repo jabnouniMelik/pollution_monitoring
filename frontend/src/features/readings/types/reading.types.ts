@@ -16,6 +16,8 @@ export interface Reading {
 export interface ReadingQuery {
   siteId?: string
   zoneId?: string
+  /** Prefer for `GET /api/readings/latest` (backend query `nodeId`) */
+  nodeId?: string
   sensorId?: string
   pollutant?: string
   from?: string

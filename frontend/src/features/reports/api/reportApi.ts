@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { api, unwrap } from '@/lib/api/axios'
 import { endpoints } from '@/lib/api/endpoints'
 import type { GenerateReportPayload, Report, ReportFormat } from '../types/report.types'
@@ -37,8 +38,18 @@ function formatPeriod(start?: string, end?: string): string {
   return `${toDate(start)} → ${toDate(end)}`
 }
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
 function normalizeReport(raw: RawReport): Report {
-  const url = raw.url ?? raw.fileUrl
+  const rawUrl = raw.url ?? raw.fileUrl
+  // fileUrl from backend is a relative path like /uploads/reports/xxx.pdf
+  // Prepend the backend base URL so the browser fetches from the right server
+  const url = rawUrl
+    ? rawUrl.startsWith('http')
+      ? rawUrl
+      : `${API_BASE}${rawUrl}`
+    : undefined
+
   const rawFormat = typeof raw.format === 'string' ? raw.format.toLowerCase() : undefined
   const format: ReportFormat =
     rawFormat === 'pdf' || rawFormat === 'csv' || rawFormat === 'xlsx'
@@ -89,8 +100,21 @@ export const reportApi = {
     const resp = await api.post<ApiSuccess<RawReport>>(endpoints.reports.generate, body)
     return normalizeReport(unwrap(resp.data))
   },
+  /**
+   * Backend has no `GET /reports/:id/export`. Download via `fileUrl` or same-origin path.
+   */
   async export(id: string): Promise<Blob> {
-    const resp = await api.get<Blob>(endpoints.reports.export(id), { responseType: 'blob' })
+    const r = await reportApi.byId(id)
+    if (!r.url) {
+      throw new Error(
+        'Aucun fichier associé à ce rapport. Export serveur non disponible (endpoint manquant côté API).',
+      )
+    }
+    if (r.url.startsWith('http://') || r.url.startsWith('https://')) {
+      const resp = await axios.get<Blob>(r.url, { responseType: 'blob' })
+      return resp.data
+    }
+    const resp = await api.get<Blob>(r.url, { responseType: 'blob' })
     return resp.data
   },
 }

@@ -1,28 +1,35 @@
 import type { ReactNode } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { hasAllPermissions, hasAnyPermission } from '@/lib/rbac/checkPermission'
-import type { Permission } from '@/lib/constants/roles'
+import type { Permission, Role } from '@/lib/constants/roles'
 
 interface PermissionGateProps {
   permission?: Permission
   anyOf?: Permission[]
   allOf?: Permission[]
+  /** If set, user must have this exact role (combine with permission checks when both are set) */
+  role?: Role
   children: ReactNode
   fallback?: ReactNode
 }
 
 /**
- * Renders children only when the current user holds the required permission(s).
- * Provide exactly one of `permission`, `anyOf`, or `allOf`.
+ * Renders children when the user matches `role` (if set) and holds the required permission(s).
  */
 export function PermissionGate({
   permission,
   anyOf,
   allOf,
+  role,
   children,
   fallback = null,
 }: PermissionGateProps) {
   const { user } = useAuth()
+
+  if (role !== undefined) {
+    if (!user || user.role !== role) return <>{fallback}</>
+    if (!permission && !anyOf && !allOf) return <>{children}</>
+  }
 
   let allowed = false
   if (user) {

@@ -25,11 +25,15 @@ const {
 const verifyToken = require("../middleware/verifyToken");
 
 // ── Rate Limiting anti brute-force ────────────────────────────
-// Maximum 10 tentatives de login par IP par 15 minutes
-// Protège contre les attaques par dictionnaire
+// En production: strict (10 tentatives / 15 min).
+// En dev/test: plus permissif pour éviter les faux positifs pendant les suites.
+const isProd = process.env.NODE_ENV === "production";
+const loginRateLimitMax =
+  Number(process.env.LOGIN_RATE_LIMIT_MAX) || (isProd ? 10 : 200);
+
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // 10 tentatives max
+  max: loginRateLimitMax,
   message: {
     success: false,
     message: "Trop de tentatives de connexion — Réessayez dans 15 minutes",

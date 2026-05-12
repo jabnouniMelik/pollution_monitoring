@@ -37,3 +37,23 @@ export function statusFromLimit(value: number, limit: number, warnBand = 0.8): S
   if (ratio >= warnBand) return 'warning'
   return 'success'
 }
+
+/**
+ * Compute a status from a value against a `[min, max]` normal range.
+ * Used for environmental parameters (temperature, humidity, …) where the
+ * value is OK when inside the range, borderline near edges, and bad outside.
+ */
+export function statusFromRange(
+  value: number,
+  [min, max]: [number, number],
+  warnBand = 0.1,
+): Status {
+  if (!Number.isFinite(value) || !Number.isFinite(min) || !Number.isFinite(max) || max <= min) {
+    return 'neutral'
+  }
+  const span = max - min
+  const guard = span * warnBand
+  if (value < min - guard || value > max + guard) return 'danger'
+  if (value < min || value > max) return 'warning'
+  return 'success'
+}

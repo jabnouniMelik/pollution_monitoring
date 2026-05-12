@@ -16,64 +16,65 @@ const { alert_severity, alert_types } = require("../utils/constants");
 const DEBUG_INGEST = process.env.DEBUG_INGEST === "true";
 const dlog = DEBUG_INGEST ? console.log.bind(console) : () => {};
 
-// Alert debounce window (ms). Within this window, an already-alerted
-// sensor+polluant pair will NOT create a new alert at the same severity.
-// A new alert is still produced immediately if the severity escalates
-// (Warning → High → Critical).
-const ALERT_DEBOUNCE_MS =
-  Number(process.env.ALERT_DEBOUNCE_MS) || 5 * 60 * 1000; // default 5 min
+// ============================================================
+// ALERT ENGINE CONFIGURATION
+// ============================================================
+// UPDATE_WINDOW_MS: how often an active alert's value/timestamp
+// is refreshed while the breach continues. Default 30 seconds.
+// Set via ALERT_UPDATE_WINDOW_MS env var.
+const UPDATE_WINDOW_MS =
+  Number(process.env.ALERT_UPDATE_WINDOW_MS) || 30 * 1000; // 30 s
 
 // Severity rank for escalation detection
 const SEVERITY_RANK = { Warning: 1, High: 2, Critical: 3 };
 
 class ReadingService {
   constructor() {
-    // In-memory debounce state.
-    // Key: `${sensorId}:${polluantId}` — bounded by sensor×polluant combinations.
-    // Value: { severity: string, at: number (ms since epoch) }
-    this._lastAlertBySensorPolluant = new Map();
+    // In-memory cache of the current open alert per (sensorId:polluantId).
+    // Key: `${sensorId}:${polluantId}`
+    // Value: { alertId, severity, lastUpdatedAt (ms) }
+    // This avoids a DB lookup on every reading.
+    this._activeAlerts = new Map();
+    // Warm up cache from DB on startup (async, non-blocking)
+    this._warmUpCache();
   }
 
-  _shouldCreateAlert(sensorId, polluantId, severity) {
-    const key = `${sensorId}:${polluantId}`;
-    const last = this._lastAlertBySensorPolluant.get(key);
-    const now = Date.now();
-    if (!last) return true;
-    const lastRank = SEVERITY_RANK[last.severity] || 0;
-    const newRank = SEVERITY_RANK[severity] || 0;
-    // Always alert on severity escalation
-    if (newRank > lastRank) return true;
-    // Otherwise respect the cooldown
-    return now - last.at >= ALERT_DEBOUNCE_MS;
+  async _warmUpCache() {
+    try {
+      const Alert = require("../models/Alert");
+      // Load all open (non-resolved, non-acknowledged) alerts
+      const openAlerts = await Alert.find({
+        isAcknowledged: false,
+        resolvedAt: null,
+      }).select("_id SensorId PolluantId severity timestamp").lean();
+
+      for (const a of openAlerts) {
+        const key = `${String(a.SensorId)}:${String(a.PolluantId)}`;
+        this._activeAlerts.set(key, {
+          alertId: a._id,
+          severity: a.severity,
+          lastUpdatedAt: new Date(a.timestamp).getTime(),
+        });
+      }
+      dlog(`[AlertEngine] Cache warmed: ${openAlerts.length} open alerts loaded`);
+    } catch (e) {
+      // Non-fatal — cache starts empty, will rebuild from readings
+      console.warn("[AlertEngine] Cache warm-up failed:", e.message);
+    }
   }
 
-  _rememberAlert(sensorId, polluantId, severity) {
-    const key = `${sensorId}:${polluantId}`;
-    this._lastAlertBySensorPolluant.set(key, {
-      severity,
-      at: Date.now(),
-    });
-  }
+  // ── Alert engine ────────────────────────────────────────────
   /**
-   * Moteur d'alertes interne
-   * Détermine la sévérité et crée une alerte si nécessaire
-   * @param {Object} reading - Mesure créée
-   * @param {Object} polluant - Données du polluant
-   * @returns {Promise<Object|null>} Alerte créée ou null
+   * Core alert logic:
+   *   - If value is within limits → auto-resolve any open alert
+   *   - If value exceeds threshold:
+   *       • No open alert → create one
+   *       • Open alert, same/lower severity, within update window → skip
+   *       • Open alert, same/lower severity, window expired → update value/timestamp
+   *       • Open alert, higher severity → update severity + value immediately
    */
   async checkAndCreateAlert(reading, polluant) {
     try {
-      dlog(`\n🔍 [ALERT] Vérification des seuils pour ${polluant.name}`);
-      dlog(`   Polluant data:`, {
-        name: polluant.name,
-        regulatoryLimit: polluant.regulatoryLimit,
-        warningThreshold: polluant.warningThreshold,
-      });
-      dlog(`   Reading data:`, {
-        value: reading.value,
-        unit: reading.unit,
-      });
-
       const hasRegulatoryLimit =
         typeof polluant.regulatoryLimit === "number" &&
         Number.isFinite(polluant.regulatoryLimit);
@@ -81,31 +82,14 @@ class ReadingService {
         typeof polluant.warningThreshold === "number" &&
         Number.isFinite(polluant.warningThreshold);
 
-      dlog(
-        `   Thresholds exist? regulatory=${hasRegulatoryLimit}, warning=${hasWarningThreshold}`,
-      );
+      if (!hasRegulatoryLimit || !hasWarningThreshold) return null;
 
-      // Les métriques environnementales sans seuils réglementaires (ex: température, humidité)
-      // ne doivent pas générer d'alertes de type "Threshold".
-      if (!hasRegulatoryLimit || !hasWarningThreshold) {
-        dlog(`   ⚠️  No thresholds defined, skipping alert`);
-        return null;
-      }
-
-      let severity = null;
       const readingValue = reading.value;
+      const sensorKey = `${String(reading.sensorId)}:${String(reading.PolluantId)}`;
+      const now = Date.now();
 
-      dlog(`   Threshold checks:`);
-      dlog(
-        `     Critical? ${readingValue} > ${polluant.regulatoryLimit * 1.5} = ${readingValue > polluant.regulatoryLimit * 1.5}`,
-      );
-      dlog(
-        `     High?     ${readingValue} > ${polluant.regulatoryLimit} = ${readingValue > polluant.regulatoryLimit}`,
-      );
-      dlog(
-        `     Warning?  ${readingValue} > ${polluant.warningThreshold} = ${readingValue > polluant.warningThreshold}`,
-      );
-
+      // Determine current severity
+      let severity = null;
       if (readingValue > polluant.regulatoryLimit * 1.5) {
         severity = alert_severity.Critical;
       } else if (readingValue > polluant.regulatoryLimit) {
@@ -114,52 +98,124 @@ class ReadingService {
         severity = alert_severity.Warning;
       }
 
+      const cached = this._activeAlerts.get(sensorKey);
+
+      // ── Case 1: Value back within limits ──────────────────
       if (!severity) {
-        dlog(`   ✅ No alert needed (value is within acceptable range)`);
+        if (cached) {
+          // Auto-resolve: value dropped below threshold — mark as resolved
+          // but do NOT set isAcknowledged (operator may not have seen it yet)
+          await alertRepository.autoResolve(
+            cached.alertId,
+            "Valeur revenue dans les limites réglementaires"
+          );
+          this._activeAlerts.delete(sensorKey);
+          dlog(`   ✅ Alert auto-resolved — ${polluant.name}: ${readingValue}`);
+        }
         return null;
       }
 
-      // Debounce: suppress repeated alerts for the same (sensor, polluant)
-      // at the same or lower severity within the cooldown window.
-      const sensorKey = String(reading.sensorId);
-      const polluantKey = String(reading.PolluantId);
-      if (!this._shouldCreateAlert(sensorKey, polluantKey, severity)) {
-        dlog(`   🔕 ALERT SUPPRESSED (debounced): ${severity} ${polluant.name}`);
+      // ── Case 2: No open alert → create one ────────────────
+      if (!cached) {
+        const alert = await this._createAlert(reading, polluant, severity);
+        this._activeAlerts.set(sensorKey, {
+          alertId: alert._id,
+          severity,
+          lastUpdatedAt: now,
+        });
+        console.log(`🚨 Alerte ${severity} créée — ${polluant.name}: ${readingValue} ${polluant.unit}`);
+        return alert;
+      }
+
+      // ── Case 3: Open alert exists ─────────────────────────
+      const cachedRank = SEVERITY_RANK[cached.severity] || 0;
+      const newRank = SEVERITY_RANK[severity] || 0;
+      const windowExpired = now - cached.lastUpdatedAt >= UPDATE_WINDOW_MS;
+      const escalated = newRank > cachedRank;
+
+      if (!escalated && !windowExpired) {
+        // Still within update window, same severity → skip
+        dlog(`   🔕 Alert update skipped (window: ${Math.round((now - cached.lastUpdatedAt) / 1000)}s < ${UPDATE_WINDOW_MS / 1000}s)`);
         return null;
       }
 
-      dlog(`   ⚠️  ALERT TRIGGERED: ${severity}`);
+      // Update the existing alert in place
+      const { message } = this._buildMessage(readingValue, polluant, severity);
 
-      const exceedancePercentage = (
-        ((readingValue - polluant.regulatoryLimit) / polluant.regulatoryLimit) *
-        100
-      ).toFixed(2);
-
-      const alert = await alertRepository.create({
-        PolluantId: reading.PolluantId,
-        SensorId: reading.sensorId,
-        ReadingId: reading._id,
+      const updated = await alertRepository.updateActive(cached.alertId, {
         severity,
-        type: alert_types.Threshold,
-        value: reading.value,
-        threshold: polluant.regulatoryLimit,
-        message: `${polluant.name} dépasse le seuil réglementaire ANPE (NT 106.04) — Dépassement : +${exceedancePercentage}%`,
+        value: readingValue,
+        ReadingId: reading._id,
+        message,
         timestamp: reading.timestamp,
       });
 
-      this._rememberAlert(sensorKey, polluantKey, severity);
+      this._activeAlerts.set(sensorKey, {
+        alertId: cached.alertId,
+        severity,
+        lastUpdatedAt: now,
+      });
 
-      console.log(
-        `Alerte ${severity} créée — ${polluant.name}: ${reading.value} ${polluant.unit}`,
-      );
-      return alert;
+      if (escalated) {
+        console.log(`⬆️  Alerte escaladée ${cached.severity}→${severity} — ${polluant.name}: ${readingValue}`);
+      } else {
+        dlog(`   🔄 Alert updated — ${polluant.name}: ${readingValue}`);
+      }
+
+      return updated;
     } catch (error) {
-      console.error(
-        "Erreur lors de la création de l'alerte automatique:",
-        error,
-      );
+      console.error("Erreur moteur alertes:", error.message);
       return null;
     }
+  }
+
+  async _createAlert(reading, polluant, severity) {
+    const { message, exceedance } = this._buildMessage(reading.value, polluant, severity);
+
+    return await alertRepository.create({
+      PolluantId: reading.PolluantId,
+      SensorId: reading.sensorId,
+      ReadingId: reading._id,
+      severity,
+      type: alert_types.Threshold,
+      value: reading.value,
+      threshold: polluant.regulatoryLimit,
+      message,
+      timestamp: reading.timestamp,
+      isAcknowledged: false,
+    });
+  }
+
+  /**
+   * Build a human-readable alert message with the correct sign and context.
+   *
+   * Warning  (value > warningThreshold but ≤ regulatoryLimit):
+   *   "NOX approche le seuil réglementaire — Risque de dépassement : -12.50%"
+   *   (negative % = still X% below the limit)
+   *
+   * High / Critical (value > regulatoryLimit):
+   *   "NOX dépasse le seuil réglementaire ANPE (NT 106.04) — Dépassement : +18.30%"
+   *   (positive % = X% above the limit)
+   */
+  _buildMessage(value, polluant, severity) {
+    const limit = polluant.regulatoryLimit;
+    const diff = value - limit;
+    const pct = ((diff / limit) * 100).toFixed(2);
+    const sign = diff >= 0 ? "+" : "";   // negative numbers already carry "-"
+
+    if (severity === alert_severity.Warning) {
+      // Value is between warningThreshold and regulatoryLimit → approaching
+      return {
+        message: `${polluant.name} approche le seuil réglementaire ANPE (NT 106.04) — Risque de dépassement : ${sign}${pct}%`,
+        exceedance: pct,
+      };
+    }
+
+    // High or Critical → already exceeded
+    return {
+      message: `${polluant.name} dépasse le seuil réglementaire ANPE (NT 106.04) — Dépassement : ${sign}${pct}%`,
+      exceedance: pct,
+    };
   }
 
   /**
@@ -182,16 +238,22 @@ class ReadingService {
     // Vérifier que le capteur existe et est actif
     const sensor = await sensorRepository.findById(sensorId);
     if (!sensor) {
-      throw new Error("Capteur non trouvé");
+      const err = new Error("Capteur non trouvé");
+      err.statusCode = 404;
+      throw err;
     }
     if (sensor.isActive === false) {
-      throw new Error("Le capteur est inactif");
+      const err = new Error("Le capteur est inactif");
+      err.statusCode = 400;
+      throw err;
     }
 
     // Récupérer les seuils du polluant
     const polluant = await polluantRepository.findById(polluantId);
     if (!polluant) {
-      throw new Error("Polluant non trouvé");
+      const err = new Error("Polluant non trouvé");
+      err.statusCode = 404;
+      throw err;
     }
 
     dlog(`   Fetched polluant:`, {
@@ -253,7 +315,9 @@ class ReadingService {
   async getReadingById(id) {
     const reading = await readingRepository.findById(id);
     if (!reading) {
-      throw new Error("Mesure non trouvée");
+      const err = new Error("Mesure non trouvée");
+      err.statusCode = 404;
+      throw err;
     }
     return reading;
   }
@@ -288,7 +352,9 @@ class ReadingService {
   async reEvaluateReading(readingId) {
     const reading = await readingRepository.findById(readingId);
     if (!reading) {
-      throw new Error("Mesure non trouvée");
+      const err = new Error("Mesure non trouvée");
+      err.statusCode = 404;
+      throw err;
     }
 
     const polluant = await polluantRepository.findById(reading.PolluantId._id);

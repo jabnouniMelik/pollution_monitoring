@@ -63,6 +63,37 @@ const SiteSchema = new mongoose.Schema(
       default: true,
     },
 
+    // ── Approval workflow ─────────────────────────────────────
+    // SUPER_ADMIN creates → APPROVED immediately
+    // HEAD_SUPERVISOR creates → PENDING until SUPER_ADMIN approves
+    approvalStatus: {
+      type: String,
+      enum: ["PENDING", "PREPARING", "APPROVED", "REJECTED"],
+      default: "PENDING",
+    },
+    approvalRequestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    approvalRequestedAt: {
+      type: Date,
+      default: null,
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    approvedAt: {
+      type: Date,
+      default: null,
+    },
+    rejectionReason: {
+      type: String,
+      default: null,
+    },
+
     // Nombre de zones (dénormalisé pour rapidité)
     zoneCount: {
       type: Number,
@@ -71,6 +102,12 @@ const SiteSchema = new mongoose.Schema(
 
     // Métadonnées
     description: String,
+
+    // Note d'installation du nœud capteur (renseignée par SUPER_ADMIN lors de la préparation)
+    sensorNodeNote: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true },
 );
@@ -89,5 +126,7 @@ SiteSchema.index({ actif: 1 });
 
 // Index combiné pour filtrer par industrie et statut
 SiteSchema.index({ industrieId: 1, actif: 1 });
+SiteSchema.index({ approvalStatus: 1 });
+SiteSchema.index({ approvalStatus: 1, industrieId: 1 });
 
 module.exports = mongoose.model("Site", SiteSchema);

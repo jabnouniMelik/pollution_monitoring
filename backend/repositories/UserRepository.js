@@ -7,11 +7,17 @@ const User = require("../models/User");
 
 class UserRepository {
   /**
-   * Récupère tous les utilisateurs
+   * Récupère tous les utilisateurs avec filtre optionnel
+   * @param {Object} filter - Filtre MongoDB
    * @returns {Promise<Array>} Array d'utilisateurs
    */
-  async findAll() {
-    return await User.find().select("-password").sort({ createdAt: -1 });
+  async findAll(filter = {}) {
+    return await User.find(filter)
+      .select("-password")
+      .populate("industryId", "nom secteur")
+      .populate("sitesManaging", "nom localisation")
+      .populate({ path: "zonesAssigned", select: "code nom siteId", populate: { path: "siteId", select: "nom" } })
+      .sort({ createdAt: -1 });
   }
 
   /**
@@ -20,7 +26,11 @@ class UserRepository {
    * @returns {Promise<Object>} Document utilisateur ou null
    */
   async findById(id) {
-    return await User.findById(id).select("-password");
+    return await User.findById(id)
+      .select("-password")
+      .populate("industryId", "nom secteur")
+      .populate("sitesManaging", "nom localisation")
+      .populate({ path: "zonesAssigned", select: "code nom siteId", populate: { path: "siteId", select: "nom" } });
   }
 
   /**

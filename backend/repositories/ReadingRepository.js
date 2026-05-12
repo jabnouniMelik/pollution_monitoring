@@ -66,6 +66,29 @@ class ReadingRepository {
           latestReading: { $first: "$$ROOT" },
         },
       },
+      // Join polluants to get code and other details
+      {
+        $lookup: {
+          from: "polluants",
+          localField: "latestReading.PolluantId",
+          foreignField: "_id",
+          as: "polluantData",
+        },
+      },
+      // Add polluant details to latestReading
+      {
+        $addFields: {
+          "latestReading.PolluantId": {
+            $cond: {
+              if: { $gt: [{ $size: "$polluantData" }, 0] },
+              then: { $arrayElemAt: ["$polluantData", 0] },
+              else: "$latestReading.PolluantId",
+            },
+          },
+        },
+      },
+      // Remove temporary polluantData array
+      { $project: { polluantData: 0 } },
     ]);
   }
 
@@ -89,15 +112,20 @@ class ReadingRepository {
    * @param {Date} periodEnd - Date fin
    * @returns {Promise<Object>} Statistiques (avg, min, max, count)
    */
-  async aggregateByPolluantPeriod(polluantId, periodStart, periodEnd) {
+  async aggregateByPolluantPeriod(polluantId, periodStart, periodEnd, nodeIdFilter = null) {
+    const match = {
+      PolluantId: polluantId,
+      timestamp: { $gte: periodStart, $lte: periodEnd },
+      isValid: true,
+    };
+
+    // Filter by zone's nodes if provided
+    if (nodeIdFilter && nodeIdFilter.length > 0) {
+      match.nodeId = { $in: nodeIdFilter };
+    }
+
     const result = await Reading.aggregate([
-      {
-        $match: {
-          PolluantId: polluantId,
-          timestamp: { $gte: periodStart, $lte: periodEnd },
-          isValid: true,
-        },
-      },
+      { $match: match },
       {
         $group: {
           _id: null,

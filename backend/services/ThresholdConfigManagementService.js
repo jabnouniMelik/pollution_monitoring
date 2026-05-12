@@ -148,7 +148,7 @@ class ThresholdConfigManagementService {
         continue; // Ignorer les polluants invalides
       }
 
-      const { min, max, unit, reference } = data;
+      const { min, max, unit, reference, warning, critical } = data;
 
       if (min === undefined || max === undefined) {
         continue;
@@ -161,15 +161,36 @@ class ThresholdConfigManagementService {
       }
 
       const maxValue = parseFloat(max);
-      const warning = maxValue - (maxValue * config.warningOffsetPercent) / 100;
-      const critical =
-        maxValue + (maxValue * config.criticalOffsetPercent) / 100;
+      let warningVal;
+      let criticalVal;
+
+      if (warning !== undefined && critical !== undefined) {
+        warningVal = parseFloat(warning);
+        criticalVal = parseFloat(critical);
+        if (Number.isNaN(warningVal) || Number.isNaN(criticalVal)) {
+          throw new Error(
+            `Pour ${pollutantName}: warning et critical doivent être numériques`
+          );
+        }
+        if (warningVal >= criticalVal) {
+          throw new Error(
+            `Pour ${pollutantName}: le seuil critique doit être supérieur au seuil d'alerte`
+          );
+        }
+      } else {
+        const w =
+          maxValue - (maxValue * config.warningOffsetPercent) / 100;
+        const c =
+          maxValue + (maxValue * config.criticalOffsetPercent) / 100;
+        warningVal = parseFloat(w.toFixed(2));
+        criticalVal = parseFloat(c.toFixed(2));
+      }
 
       updatedPollutants[pollutantName] = {
         min: parseFloat(min),
         max: maxValue,
-        warning: parseFloat(warning.toFixed(2)),
-        critical: parseFloat(critical.toFixed(2)),
+        warning: warningVal,
+        critical: criticalVal,
         unit: unit || "mg/Nm³",
         reference: reference || "Décret 2010-2516",
       };

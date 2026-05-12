@@ -14,7 +14,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
     <div
       ref={ref}
       className={cn(
-        'bg-card border border-border rounded-card',
+        'rounded-card border border-border bg-card',
         elevated ? 'shadow-elevated' : 'shadow-card',
         padded && 'p-4',
         className,
@@ -26,7 +26,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
   )
 })
 
-interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
+interface CardHeaderProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   title: ReactNode
   subtitle?: ReactNode
   action?: ReactNode

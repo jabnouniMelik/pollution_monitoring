@@ -1,4 +1,3 @@
-import { Search } from 'lucide-react'
 import { Select, type SelectOption } from '@/components/ui/Select/Select'
 import type { AlertFilters, AlertSeverity, AlertStatus } from '@/features/alerts/types/alert.types'
 import { POLLUTANT_CODES, POLLUTANTS } from '@/lib/constants/pollutants'
@@ -34,20 +33,6 @@ export function AlertFiltersBar({ value, onChange }: AlertFiltersBarProps) {
 
   return (
     <div className="flex flex-wrap items-end gap-2">
-      <div className="relative min-w-[220px] flex-1">
-        <Search
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary"
-          aria-hidden="true"
-        />
-        <input
-          type="search"
-          aria-label="Rechercher une alerte"
-          placeholder="Rechercher…"
-          className="input pl-9"
-          value={value.search ?? ''}
-          onChange={(e) => onChange({ ...value, search: e.target.value || undefined })}
-        />
-      </div>
       <Select
         aria-label="Filtrer par sévérité"
         options={SEVERITY_OPTIONS as SelectOption[]}

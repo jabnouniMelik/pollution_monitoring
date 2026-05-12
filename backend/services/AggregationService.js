@@ -14,7 +14,7 @@ class AggregationService {
   /**
    * Agrège les données pour un polluant sur une période
    * Calcule statistiques + KPIs et stocke dans AggregateData
-   * 
+   *
    * @param {String} polluantId - ID du polluant
    * @param {String} period - Type période (HOURLY, DAILY, WEEKLY, MONTHLY)
    * @param {Date} periodStart - Date début
@@ -108,10 +108,7 @@ class AggregationService {
 
       return result;
     } catch (error) {
-      console.error(
-        `Erreur agrégation polluant ${polluantId}:`,
-        error.message,
-      );
+      console.error(`Erreur agrégation polluant ${polluantId}:`, error.message);
       throw error;
     }
   }
@@ -221,7 +218,9 @@ class AggregationService {
       const referencePeriodStart = new Date(
         currentPeriodStart.getTime() - duration,
       );
-      const referencePeriodEnd = new Date(currentPeriodEnd.getTime() - duration);
+      const referencePeriodEnd = new Date(
+        currentPeriodEnd.getTime() - duration,
+      );
 
       // Calculer RCO2
       const rco2 = await kpiService.calculateRCO2(
@@ -320,7 +319,85 @@ class AggregationService {
       const aggregates = await aggregateDataRepository.findByPeriod(
         period,
         periodStart,
+        periodEnd,
       );
+
+      if (aggregates.length === 0) {
+        const polluants = await polluantRepository.findAll();
+        const polluantSummaries = [];
+        const emj = {};
+        let tdTotal = 0;
+        let tdCount = 0;
+        let rco2 = 0;
+
+        for (const polluant of polluants) {
+          const [stats, td, emjValue] = await Promise.all([
+            readingRepository.aggregateByPolluantPeriod(
+              polluant._id,
+              periodStart,
+              periodEnd,
+            ),
+            kpiService.calculateTD(polluant._id, periodStart, periodEnd),
+            kpiService.calculateEMJ(polluant._id, periodStart, periodEnd),
+          ]);
+
+          if (!stats || stats.count === 0) continue;
+
+          const avgValue = stats.avgValue;
+          polluantSummaries.push({
+            name: polluant.name,
+            tauxDepassement: td.tauxDepassement,
+            emissionKgDay: emjValue.emissionKgDay,
+            score:
+              polluant.regulatoryLimit && avgValue <= polluant.regulatoryLimit
+                ? 100
+                : Math.max(
+                    0,
+                    Math.round(
+                      (1 -
+                        (avgValue - (polluant.regulatoryLimit ?? avgValue)) /
+                          (polluant.regulatoryLimit ?? avgValue)) *
+                        100,
+                    ),
+                  ),
+            avgValue,
+            dataQuality: "LIVE",
+          });
+
+          emj[polluant.name] = emjValue.emissionKgDay;
+          tdTotal += td.tauxDepassement;
+          tdCount += 1;
+
+          if (polluant.name === "CO2") {
+            const current = await kpiService.calculateRCO2(
+              polluant._id,
+              periodStart,
+              periodEnd,
+              new Date(
+                periodStart.getTime() -
+                  (periodEnd.getTime() - periodStart.getTime()),
+              ),
+              periodStart,
+            );
+            rco2 = current.reductionPct;
+          }
+        }
+
+        const ipeResult = await kpiService.calculateIPE(periodStart, periodEnd);
+
+        return {
+          period,
+          periodStart,
+          periodEnd,
+          polluants: polluantSummaries,
+          globalIPE: ipeResult.ipe,
+          td: tdCount > 0 ? Number((tdTotal / tdCount).toFixed(2)) : 0,
+          emj,
+          ipe: ipeResult.ipe,
+          rco2,
+          timestamp: new Date().toISOString(),
+        };
+      }
 
       const summary = {
         period,
@@ -344,6 +421,27 @@ class AggregationService {
           summary.globalIPE = agg.overallScore;
         }
       }
+
+      const tdValues = summary.polluants
+        .map((polluant) => Number(polluant.tauxDepassement ?? 0))
+        .filter((value) => Number.isFinite(value));
+      const emj = summary.polluants.reduce((accumulator, polluant) => {
+        accumulator[polluant.name] = Number(polluant.emissionKgDay ?? 0);
+        return accumulator;
+      }, {});
+
+      summary.td =
+        tdValues.length > 0
+          ? Number(
+              (tdValues.reduce((a, b) => a + b, 0) / tdValues.length).toFixed(
+                2,
+              ),
+            )
+          : 0;
+      summary.emj = emj;
+      summary.ipe = Number(summary.globalIPE ?? 0);
+      summary.rco2 = 0;
+      summary.timestamp = new Date().toISOString();
 
       return summary;
     } catch (error) {

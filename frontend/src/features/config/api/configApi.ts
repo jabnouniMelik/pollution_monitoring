@@ -1,31 +1,57 @@
 import { api, unwrap } from '@/lib/api/axios'
 import { endpoints } from '@/lib/api/endpoints'
-import type { ThresholdConfig } from '@/features/kpi/types/kpi.types'
+import type { PollutantThresholdLimits, ThresholdConfig } from '@/features/kpi/types/kpi.types'
 
 // Backend returns a single Mongoose doc with French keys (`polluants`) and no
-// `siteId` (config is global). The UI expects an array of `ThresholdConfig`
-// with `pollutants`, so we normalize here. Returning [] on a 404 keeps the
-// Compliance page rendering with regulatory limits even when no site config
-// has been provisioned yet.
+// `siteId` (config is global). The UI expects `ThresholdConfig` with `pollutants`,
+// so we normalize here. Returning [] on a 404 keeps the Compliance page
+// rendering with regulatory limits even when no site config has been provisioned yet.
 type RawThresholdConfig = {
   _id?: string
   siteId?: string
-  polluants?: Record<string, { min: number; max: number; warning: number; critical: number; unit: string }>
+  polluants?: Record<string, PollutantThresholdLimits>
   pollutants?: ThresholdConfig['pollutants']
+}
+
+/** Merge backend keys (NOx) with frontend codes (NOX) for lookups. */
+function aliasPollutantKeys(
+  pollutants: Record<string, PollutantThresholdLimits>,
+): Record<string, PollutantThresholdLimits> {
+  const out = { ...pollutants }
+  if (pollutants.NOx && !pollutants.NOX) {
+    out.NOX = pollutants.NOx
+  }
+  return out
 }
 
 function normalize(raw: RawThresholdConfig | RawThresholdConfig[] | null | undefined): ThresholdConfig[] {
   if (!raw) return []
   const list = Array.isArray(raw) ? raw : [raw]
   return list.map((cfg) => ({
+    _id: cfg._id,
     siteId: cfg.siteId,
-    pollutants: cfg.pollutants ?? cfg.polluants ?? {},
+    pollutants: aliasPollutantKeys(
+      (cfg.pollutants ?? cfg.polluants ?? {}) as Record<string, PollutantThresholdLimits>,
+    ),
   }))
 }
 
+export type PollutantsPayload = Record<
+  string,
+  {
+    min: number
+    max: number
+    warning: number
+    critical: number
+    unit: string
+    reference?: string
+  }
+>
+
 export const thresholdApi = {
-  async list(siteId?: string): Promise<ThresholdConfig[]> {
-    const url = siteId ? endpoints.thresholds.bySite(siteId) : endpoints.thresholds.base
+  /** Active global threshold config. Backend has no `GET /thresholds/site/:id`; `siteId` is ignored. */
+  async list(_siteId?: string): Promise<ThresholdConfig[]> {
+    const url = endpoints.thresholds.base
     try {
       const resp = await api.get<ApiSuccess<RawThresholdConfig | RawThresholdConfig[]>>(url)
       return normalize(unwrap(resp.data))
@@ -35,8 +61,17 @@ export const thresholdApi = {
       throw err
     }
   },
-  async update(id: string, payload: Partial<ThresholdConfig>): Promise<ThresholdConfig> {
-    const resp = await api.put<ApiSuccess<RawThresholdConfig>>(endpoints.thresholds.byId(id), payload)
+
+  async updateAllPollutants(configId: string, pollutantsData: PollutantsPayload): Promise<ThresholdConfig> {
+    const resp = await api.put<ApiSuccess<RawThresholdConfig>>(
+      endpoints.thresholds.allPollutants(configId),
+      { pollutantsData },
+    )
+    return normalize(unwrap(resp.data))[0]
+  },
+
+  async resetToDefaults(configId: string): Promise<ThresholdConfig> {
+    const resp = await api.put<ApiSuccess<RawThresholdConfig>>(endpoints.thresholds.reset(configId))
     return normalize(unwrap(resp.data))[0]
   },
 }

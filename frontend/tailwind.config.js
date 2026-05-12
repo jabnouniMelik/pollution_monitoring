@@ -34,6 +34,10 @@ export default {
         bg: '#F8FAFC',
         card: '#FFFFFF',
         border: '#E0E7EF',
+        surface: {
+          secondary: '#F5F5F5',
+          tertiary: '#E0E7EF',
+        },
         text: {
           primary: '#1E293B',
           secondary: '#64748B',

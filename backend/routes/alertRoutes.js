@@ -11,6 +11,7 @@
 
 const express = require("express");
 const router = express.Router();
+const verifyToken = require("../middleware/verifyToken");
 
 const {
   getAllAlerts,
@@ -20,6 +21,9 @@ const {
   escalateAlert,
   resolveAlert,
 } = require("../controllers/alertController");
+
+// All alert routes require authentication
+router.use(verifyToken);
 
 // Routes spéciales AVANT /:id
 router.get("/stats", getAlertStats);

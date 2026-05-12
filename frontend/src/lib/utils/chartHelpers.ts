@@ -7,6 +7,9 @@ export function lineChartOptions(overrides: Partial<ChartOptions<'line'>> = {}):
   return {
     responsive: true,
     maintainAspectRatio: false,
+    // Disable the full redraw animation so live data updates don't cause the
+    // "disappear and reappear" flash. Individual point additions still animate.
+    animation: false,
     interaction: { mode: 'index', intersect: false },
     plugins: {
       legend: {
@@ -45,6 +48,7 @@ export function miniChartOptions(): ChartOptions<'line'> {
   return {
     responsive: true,
     maintainAspectRatio: false,
+    animation: false,
     plugins: { legend: { display: false }, tooltip: { enabled: false } },
     scales: {
       x: { display: false },

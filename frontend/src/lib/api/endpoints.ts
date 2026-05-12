@@ -1,11 +1,8 @@
 /**
- * Centralized API endpoint map. Keep one source of truth per backend route.
- * Backend mount points (see backend/server.js):
- *   /api/auth, /api/users, /api/sites, /api/zones,
- *   /api/industries, /api/sensors, /api/sensor-nodes, /api/polluants,
- *   /api/readings, /api/alerts, /api/reports, /api/kpi,
- *   /api/ws/stats
+ * Centralized API paths aligned with `backend/routes/*.js` and `backend/server.js`.
+ * If you add a route on the server, add it here and document it in `docs/API_CONTRACT.md`.
  */
+
 export const endpoints = {
   auth: {
     login: '/api/auth/login',
@@ -14,31 +11,56 @@ export const endpoints = {
     me: '/api/auth/me',
     register: '/api/auth/register',
   },
+
   users: {
     base: '/api/users',
     byId: (id: string) => `/api/users/${id}`,
+    /** GET — SUPER_ADMIN */
+    byRole: (role: string) => `/api/users/role/${role}`,
+    /** PUT — SUPER_ADMIN */
     role: (id: string) => `/api/users/${id}/role`,
-    sites: (id: string) => `/api/users/${id}/sites`,
-    zones: (id: string) => `/api/users/${id}/zones`,
+    /** POST assign sites — SUPER_ADMIN */
+    assignSites: (id: string) => `/api/users/${id}/sites`,
+    /** POST assign zones — SUPER_ADMIN | SITE_SUPERVISOR */
+    assignZones: (id: string) => `/api/users/${id}/zones`,
   },
+
   sites: {
     base: '/api/sites',
     byId: (id: string) => `/api/sites/${id}`,
+    pending: '/api/sites/pending',
+    myRequests: '/api/sites/my-requests',
+    approve: (id: string) => `/api/sites/${id}/approve`,
+    reject: (id: string) => `/api/sites/${id}/reject`,
+    prepare: (id: string) => `/api/sites/${id}/prepare`,
+    /** PUT — SUPER_ADMIN */
     supervisor: (id: string) => `/api/sites/${id}/supervisor`,
-    byIndustry: (industryId: string) => `/api/sites/industrie/${industryId}`,
+    byIndustry: (industrieId: string) => `/api/sites/industrie/${industrieId}`,
     zonesCount: (id: string) => `/api/sites/${id}/zones-count`,
   },
+
   zones: {
     base: '/api/zones',
     byId: (id: string) => `/api/zones/${id}`,
-    operator: (id: string) => `/api/zones/${id}/operator`,
+    pending: '/api/zones/pending',
+    approve: (id: string) => `/api/zones/${id}/approve`,
+    reject: (id: string) => `/api/zones/${id}/reject`,
+    prepare: (id: string) => `/api/zones/${id}/prepare`,
     bySite: (siteId: string) => `/api/zones/site/${siteId}`,
+    /** POST assign operators */
+    assignOperators: (id: string) => `/api/zones/${id}/operators`,
+    removeOperator: (zoneId: string, operatorId: string) =>
+      `/api/zones/${zoneId}/operators/${operatorId}`,
+    sensorsCount: (id: string) => `/api/zones/${id}/sensors-count`,
   },
+
   readings: {
     base: '/api/readings',
     latest: '/api/readings/latest',
-    history: '/api/readings/history',
+    ingest: '/api/readings/ingest',
+    byId: (id: string) => `/api/readings/${id}`,
   },
+
   alerts: {
     base: '/api/alerts',
     stats: '/api/alerts/stats',
@@ -47,30 +69,80 @@ export const endpoints = {
     escalate: (id: string) => `/api/alerts/${id}/escalate`,
     resolve: (id: string) => `/api/alerts/${id}/resolve`,
   },
+
   kpi: {
-    td: (pollutantId: string) => `/api/kpi/td/${pollutantId}`,
-    emj: (pollutantId: string) => `/api/kpi/emj/${pollutantId}`,
+    td: (polluantId: string) => `/api/kpi/td/${polluantId}`,
+    emj: (polluantId: string) => `/api/kpi/emj/${polluantId}`,
     ipe: '/api/kpi/ipe',
-    rco2: (pollutantId: string) => `/api/kpi/rco2/${pollutantId}`,
+    rco2: (polluantId: string) => `/api/kpi/rco2/${polluantId}`,
     summary: '/api/kpi/summary',
-    history: (pollutantId: string) => `/api/kpi/history/${pollutantId}`,
+    history: (polluantId: string) => `/api/kpi/history/${polluantId}`,
     config: '/api/kpi/config',
     configAirflow: '/api/kpi/config/airflow',
     configWeights: '/api/kpi/config/weights',
     configTargets: '/api/kpi/config/targets',
     aggregate: '/api/kpi/aggregate',
   },
+
+  /**
+   * `thresholdConfigManagementRoutes.js` — no `GET /site/:siteId` (use active config only).
+   */
   thresholds: {
     base: '/api/thresholds',
+    all: '/api/thresholds/all',
+    pollutant: (pollutantName: string) => `/api/thresholds/pollutant/${pollutantName}`,
+    complianceReport: '/api/thresholds/report',
     byId: (id: string) => `/api/thresholds/${id}`,
-    bySite: (siteId: string) => `/api/thresholds/site/${siteId}`,
+    pollutantLimits: (id: string, pollutantName: string) =>
+      `/api/thresholds/${id}/pollutant/${pollutantName}`,
+    offsets: (id: string) => `/api/thresholds/${id}/offsets`,
+    allPollutants: (id: string) => `/api/thresholds/${id}/all-pollutants`,
+    clone: (id: string) => `/api/thresholds/${id}/clone`,
+    reset: (id: string) => `/api/thresholds/${id}/reset`,
   },
+
+  /** `siteConfigManagementRoutes.js` — parallel to parts of `/api/kpi/config` */
+  siteConfig: {
+    base: '/api/site-config',
+    targets: '/api/site-config/targets',
+    weights: '/api/site-config/weights',
+    airflow: '/api/site-config/airflow',
+    updateAirflow: (id: string) => `/api/site-config/${id}/airflow`,
+    updateWeights: (id: string) => `/api/site-config/${id}/weights`,
+    updateTargets: (id: string) => `/api/site-config/${id}/targets`,
+    updateComplete: (id: string) => `/api/site-config/${id}`,
+  },
+
+  industries: {
+    base: '/api/industries',
+    byId: (id: string) => `/api/industries/${id}`,
+  },
+
+  polluants: {
+    base: '/api/polluants',
+    byId: (id: string) => `/api/polluants/${id}`,
+    seuils: (id: string) => `/api/polluants/${id}/seuils`,
+  },
+
+  sensors: {
+    base: '/api/sensors',
+    byId: (id: string) => `/api/sensors/${id}`,
+    calibrate: (id: string) => `/api/sensors/${id}/calibrate`,
+  },
+
+  sensorNodes: {
+    base: '/api/sensor-nodes',
+    byId: (id: string) => `/api/sensor-nodes/${id}`,
+    status: (id: string) => `/api/sensor-nodes/${id}/status`,
+  },
+
   reports: {
     base: '/api/reports',
     byId: (id: string) => `/api/reports/${id}`,
     generate: '/api/reports/generate',
-    export: (id: string) => `/api/reports/${id}/export`,
+    submit: (id: string) => `/api/reports/${id}/submit`,
   },
+
   websocket: {
     stats: '/api/ws/stats',
   },

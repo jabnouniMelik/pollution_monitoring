@@ -20,11 +20,13 @@ console.log("[ROUTE FILE] verifyToken middleware applied");
 
 /**
  * POST /api/users
- * Créer un utilisateur (SUPER_ADMIN only)
+ * Créer un utilisateur
+ * SUPER_ADMIN → any role
+ * SITE_SUPERVISOR → OPERATOR only (in their industry)
  */
 router.post(
   "/",
-  checkRole("SUPER_ADMIN"),
+  checkRole("SUPER_ADMIN", "HEAD_SUPERVISOR", "SITE_SUPERVISOR"),
   userManagementController.createUser
 );
 
@@ -33,7 +35,7 @@ router.post(
  * Récupérer utilisateurs (filtrage par rôle)
  * SUPER_ADMIN → tous
  * HEAD_SUPERVISOR → son industrie
- * SITE_SUPERVISOR → ses sites
+ * SITE_SUPERVISOR → opérateurs de son industrie
  * OPERATOR/AUDITOR → accès refusé
  */
 router.get("/", userManagementController.getUsers);
@@ -56,31 +58,25 @@ router.put(
 
 /**
  * DELETE /api/users/:id
- * Supprimer un utilisateur (SUPER_ADMIN only)
+ * Supprimer un utilisateur
+ * SUPER_ADMIN → any user
+ * SITE_SUPERVISOR → OPERATOR in their industry only
  */
 router.delete(
   "/:id",
-  checkRole("SUPER_ADMIN"),
+  checkRole("SUPER_ADMIN", "HEAD_SUPERVISOR", "SITE_SUPERVISOR"),
   userManagementController.deleteUser
 );
 
-/**
- * POST /api/users/:id/sites
- * Assigner des sites à un HEAD_SUPERVISOR (SUPER_ADMIN only)
- */
 router.post(
   "/:id/sites",
-  checkRole("SUPER_ADMIN"),
+  checkRole("SUPER_ADMIN", "HEAD_SUPERVISOR"),
   userManagementController.assignSites
 );
 
-/**
- * POST /api/users/:id/zones
- * Assigner des zones à un OPERATOR
- */
 router.post(
   "/:id/zones",
-  checkRole("SUPER_ADMIN", "SITE_SUPERVISOR"),
+  checkRole("SUPER_ADMIN", "HEAD_SUPERVISOR", "SITE_SUPERVISOR"),
   userManagementController.assignZones
 );
 

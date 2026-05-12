@@ -1,14 +1,31 @@
 import { cn } from '@/lib/utils/cn'
 import { formatNumber } from '@/lib/utils/formatters'
-import { statusFromLimit, STATUS_TEXT } from '@/lib/utils/colorUtils'
+import { statusFromLimit, STATUS_TEXT, type Status } from '@/lib/utils/colorUtils'
 import { MiniTrendChart } from '@/components/charts/MiniTrendChart/MiniTrendChart'
-import { POLLUTANTS, type PollutantCode } from '@/lib/constants/pollutants'
+import { POLLUTANTS } from '@/lib/constants/pollutants'
+
+export interface PollutantCardMeta {
+  label: string
+  longLabel: string
+  unit: string
+  color: string
+}
 
 interface PollutantCardProps {
-  code: PollutantCode
+  /** Pollutant code (e.g. "CO2") or any metric code like "TEMPERATURE". */
+  code: string
   value: number
+  /** Regulatory limit for pollutants, or upper bound of normal range for env metrics. */
   limit: number
+  /** Optional lower bound (used for env metrics with a normal range). */
+  min?: number
   trend?: number[]
+  /** Override label/unit/color when `code` isn't a known pollutant. */
+  meta?: PollutantCardMeta
+  /** Custom label for the bottom-right "Limite" text (defaults to "Limite"). */
+  limitLabel?: string
+  /** Override the computed status (e.g. for env metrics using a range). */
+  status?: Status
   className?: string
   onClick?: () => void
   selected?: boolean
@@ -18,23 +35,37 @@ export function PollutantCard({
   code,
   value,
   limit,
+  min,
   trend,
+  meta: metaOverride,
+  limitLabel = 'Limite',
+  status: statusOverride,
   className,
   onClick,
   selected,
 }: PollutantCardProps) {
-  const meta =
-    POLLUTANTS[code] ??
-    ({
-      code,
+  const knownMeta = (POLLUTANTS as Record<string, PollutantCardMeta | undefined>)[code]
+  const meta: PollutantCardMeta =
+    metaOverride ??
+    knownMeta ?? {
       label: String(code ?? '—'),
       longLabel: String(code ?? '—'),
-      unit: 'mg/Nm³',
+      unit: '',
       color: '#64748B',
-      tailwindColor: 'text-text-secondary',
-    } as (typeof POLLUTANTS)[PollutantCode])
-  const status = statusFromLimit(value, limit)
-  const percent = limit > 0 ? (value / limit) * 100 : 0
+    }
+
+  const status: Status = statusOverride ?? statusFromLimit(value, limit)
+
+  // Progress bar: relative position within [min, limit] if min provided,
+  // otherwise simple value/limit ratio (regulatory mode).
+  const percent = (() => {
+    if (min !== undefined && limit > min) {
+      const pct = ((value - min) / (limit - min)) * 100
+      return Math.max(0, Math.min(100, pct))
+    }
+    if (limit <= 0) return 0
+    return Math.min(100, (value / limit) * 100)
+  })()
 
   const interactive = typeof onClick === 'function'
   const Tag = interactive ? 'button' : 'article'
@@ -47,9 +78,10 @@ export function PollutantCard({
       aria-pressed={interactive ? !!selected : undefined}
       onClick={onClick}
       className={cn(
-        'card p-3 text-left w-full',
-        interactive && 'cursor-pointer transition-smooth hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-accent',
-        selected && 'ring-2 ring-accent shadow-md',
+        'card w-full p-3 text-left',
+        interactive &&
+          'transition-smooth cursor-pointer hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+        selected && 'shadow-md ring-2 ring-accent',
         className,
       )}
     >
@@ -88,7 +120,7 @@ export function PollutantCard({
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.min(100, percent)}
-          aria-label={`Charge vs limite: ${formatNumber(percent, 0)} %`}
+          aria-label={`Charge vs ${limitLabel.toLowerCase()}: ${formatNumber(percent, 0)} %`}
         >
           <div
             className="transition-smooth h-full rounded-full"
@@ -100,9 +132,9 @@ export function PollutantCard({
           />
         </div>
         <div className="mt-1 flex justify-between text-[10px] text-text-tertiary">
-          <span>0</span>
+          <span>{min !== undefined ? formatNumber(min, 0) : '0'}</span>
           <span>
-            Limite: {formatNumber(limit, 0)} {meta.unit}
+            {limitLabel}: {formatNumber(limit, 0)} {meta.unit}
           </span>
         </div>
       </div>

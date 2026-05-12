@@ -1,19 +1,154 @@
-/**
+﻿/**
  * REPOSITORY : ALERT
- * Gère toutes les opérations DB pour les alertes
+ * Gere toutes les operations DB pour les alertes
  */
 
 const Alert = require("../models/Alert");
 
 class AlertRepository {
+  async _resolveSensorIds(zoneCodes) {
+    if (!zoneCodes || zoneCodes.length === 0) return null;
+
+    const SensorNode = require("../models/SensorNode");
+    const Sensor = require("../models/Sensor");
+
+    const orConditions = zoneCodes.map((c) => ({
+      zone: {
+        $regex: "^" + c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$",
+        $options: "i",
+      },
+    }));
+
+    const nodes = await SensorNode.find({ $or: orConditions }).select("_id").lean();
+    if (nodes.length === 0) return null;
+
+    const sensors = await Sensor.find({ sensorNodeId: { $in: nodes.map((n) => n._id) } })
+      .select("_id")
+      .lean();
+
+    return sensors.length > 0 ? sensors.map((s) => s._id) : null;
+  }
+
+  async _buildScopedFilter(filter = {}) {
+    const pollutantName = filter._pollutantName;
+    const zoneId = filter._zoneId;
+    const siteId = filter._siteId;
+    const siteIds = filter._siteIds;
+    const industryId = filter._industryId;
+
+    const dbFilter = { ...filter };
+    delete dbFilter._pollutantName;
+    delete dbFilter._zoneId;
+    delete dbFilter._siteId;
+    delete dbFilter._siteIds;
+    delete dbFilter._industryId;
+
+    if (pollutantName) {
+      const Polluant = require("../models/Polluant");
+      const aliases = [pollutantName];
+      if (pollutantName.toUpperCase() === "PM") aliases.push("PM25", "PM2.5");
+      if (pollutantName.toUpperCase() === "PM25") aliases.push("PM");
+      const polluants = await Polluant.find({
+        $or: aliases.flatMap((alias) => [
+          { code: new RegExp("^" + alias + "$", "i") },
+          { name: new RegExp("^" + alias + "$", "i") },
+        ]),
+      }).select("_id");
+      dbFilter.PolluantId = { $in: polluants.map((p) => p._id) };
+    }
+
+    if (zoneId && !dbFilter.SensorId) {
+      const Zone = require("../models/Zone");
+      const zone = await Zone.findById(zoneId).select("code nom").lean();
+      if (zone) {
+        const codes = [zone.code, zone.nom].filter(Boolean);
+        const sensorIds = await this._resolveSensorIds(codes);
+        if (sensorIds !== null) {
+          dbFilter.SensorId = { $in: sensorIds };
+        }
+      }
+    }
+
+    if (siteId && !dbFilter.SensorId) {
+      const Zone = require("../models/Zone");
+      const zones = await Zone.find({ siteId }).select("code nom").lean();
+      if (zones.length > 0) {
+        const codes = zones.flatMap((z) => [z.code, z.nom].filter(Boolean));
+        const sensorIds = await this._resolveSensorIds(codes);
+        if (sensorIds !== null) {
+          dbFilter.SensorId = { $in: sensorIds };
+        }
+      }
+    }
+
+    if (siteIds && siteIds.length > 0 && !dbFilter.SensorId) {
+      const Zone = require("../models/Zone");
+      const zones = await Zone.find({ siteId: { $in: siteIds } })
+        .select("code nom")
+        .lean();
+      if (zones.length > 0) {
+        const codes = zones.flatMap((z) => [z.code, z.nom].filter(Boolean));
+        const sensorIds = await this._resolveSensorIds(codes);
+        if (sensorIds !== null) {
+          dbFilter.SensorId = { $in: sensorIds };
+        }
+      }
+    }
+
+    if (industryId && !dbFilter.SensorId) {
+      const Zone = require("../models/Zone");
+      const zones = await Zone.find({ industrieId: industryId })
+        .select("code nom")
+        .lean();
+      if (zones.length > 0) {
+        const codes = zones.flatMap((z) => [z.code, z.nom].filter(Boolean));
+        const sensorIds = await this._resolveSensorIds(codes);
+        if (sensorIds !== null) {
+          dbFilter.SensorId = { $in: sensorIds };
+        }
+      }
+    }
+
+    return dbFilter;
+  }
+
   /**
-   * Récupère toutes les alertes avec filtres
-   * @param {Object} filter - Filtre MongoDB
-   * @param {Number} limit - Nombre de résultats max
-   * @returns {Promise<Array>} Array d'alertes
+   * Recupere toutes les alertes avec filtres et pagination
    */
+  async findAllPaginated(filter = {}, page = 1, pageSize = 20) {
+    const skip = (page - 1) * pageSize;
+    const dbFilter = await this._buildScopedFilter(filter);
+
+    const [items, total] = await Promise.all([
+      Alert.find(dbFilter)
+        .populate("PolluantId", "name unit regulatoryLimit")
+        .populate({
+          path: "SensorId",
+          select: "model type sensorNodeId",
+          populate: {
+            path: "sensorNodeId",
+            select: "nom zone IndustrieId",
+          },
+        })
+        .populate("ReadingId", "value unit timestamp")
+        .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(pageSize),
+      Alert.countDocuments(dbFilter),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
+
   async findAll(filter = {}, limit = 50) {
-    return await Alert.find(filter)
+    const dbFilter = await this._buildScopedFilter(filter);
+    return await Alert.find(dbFilter)
       .populate("PolluantId", "name unit regulatoryLimit")
       .populate("SensorId", "model type")
       .populate("ReadingId", "value unit timestamp")
@@ -21,34 +156,25 @@ class AlertRepository {
       .limit(limit);
   }
 
-  /**
-   * Récupère une alerte par ID
-   * @param {String} id - ID MongoDB
-   * @returns {Promise<Object>} Document alerte ou null
-   */
   async findById(id) {
     return await Alert.findById(id)
       .populate("PolluantId", "name unit regulatoryLimit warningThreshold")
-      .populate("SensorId", "model type")
+      .populate({
+        path: "SensorId",
+        select: "model type sensorNodeId",
+        populate: {
+          path: "sensorNodeId",
+          select: "nom zone IndustrieId",
+        },
+      })
       .populate("ReadingId", "value unit timestamp rawValue")
       .populate("acknowledgedBy", "username email");
   }
 
-  /**
-   * Crée une nouvelle alerte
-   * @param {Object} data - Données alerte
-   * @returns {Promise<Object>} Document créé
-   */
   async create(data) {
     return await Alert.create(data);
   }
 
-  /**
-   * Acquitte une alerte
-   * @param {String} id - ID de l'alerte
-   * @param {String} userId - ID de l'utilisateur qui acquitte
-   * @returns {Promise<Object>} Document mis à jour
-   */
   async acknowledge(id, userId) {
     return await Alert.findByIdAndUpdate(
       id,
@@ -56,43 +182,28 @@ class AlertRepository {
         isAcknowledged: true,
         acknowledgedAt: new Date(),
         acknowledgedBy: userId,
+        // resolvedAt is NOT set here — acknowledging ≠ resolving
       },
       { new: true },
     );
   }
 
-  /**
-   * Escalade une alerte (change sa sévérité)
-   * @param {String} id - ID de l'alerte
-   * @param {String} newSeverity - Nouvelle sévérité
-   * @param {String} reason - Raison de l'escalade
-   * @returns {Promise<Object>} Document mis à jour
-   */
   async escalate(id, newSeverity, reason) {
     return await Alert.findByIdAndUpdate(
       id,
-      {
-        severity: newSeverity,
-        escalationReason: reason,
-      },
+      { severity: newSeverity, escalationReason: reason },
       { new: true },
     );
   }
 
   /**
-   * Résout une alerte — implique acquittement et marque la fin du traitement
-   * @param {String} id - ID de l'alerte
-   * @param {String} userId - ID de l'utilisateur qui résout
-   * @param {String} note - Note de résolution
-   * @returns {Promise<Object>} Document mis à jour
+   * Manual resolution by a user — sets resolvedAt + resolutionNote.
+   * Does NOT force isAcknowledged (operator may resolve without acknowledging first).
    */
   async resolve(id, userId, note) {
     return await Alert.findByIdAndUpdate(
       id,
       {
-        isAcknowledged: true,
-        acknowledgedAt: new Date(),
-        acknowledgedBy: userId,
         resolvedAt: new Date(),
         resolvedBy: userId,
         resolutionNote: note,
@@ -102,30 +213,64 @@ class AlertRepository {
   }
 
   /**
-   * Compte les alertes non acquittées
-   * @returns {Promise<Number>} Nombre d'alertes non acquittées
+   * Automatic resolution by the alert engine when the measured value
+   * drops back below the threshold. Sets resolvedAt only — does NOT
+   * touch isAcknowledged (the operator may not have seen it yet).
    */
-  async countUnacknowledged() {
-    return await Alert.countDocuments({ isAcknowledged: false });
+  async autoResolve(id, note) {
+    return await Alert.findByIdAndUpdate(
+      id,
+      {
+        resolvedAt: new Date(),
+        resolvedBy: null,   // system-resolved, no user
+        resolutionNote: note || "Valeur revenue dans les limites réglementaires",
+      },
+      { new: true },
+    );
   }
 
   /**
-   * Compte les alertes critiques non acquittées
-   * @returns {Promise<Number>} Nombre d'alertes critiques non acquittées
+   * Update an active (open) alert in place — new value, severity, timestamp.
+   * Used by the alert engine to refresh a breach without creating duplicates.
    */
-  async countCriticalUnacknowledged() {
+  async updateActive(id, { severity, value, ReadingId, message, timestamp }) {
+    return await Alert.findByIdAndUpdate(
+      id,
+      {
+        severity,
+        value,
+        ReadingId,
+        message,
+        timestamp,
+        // Keep isAcknowledged as-is — operator may have already seen it
+      },
+      { new: true },
+    );
+  }
+
+  async countUnacknowledged(filters = {}) {
+    const dbFilter = await this._buildScopedFilter(filters);
+    return await Alert.countDocuments({ ...dbFilter, isAcknowledged: false });
+  }
+
+  async countCriticalUnacknowledged(filters = {}) {
+    const dbFilter = await this._buildScopedFilter(filters);
     return await Alert.countDocuments({
+      ...dbFilter,
       isAcknowledged: false,
-      severity: "CRITICAL",
+      severity: { $in: ["Critical", "High", "HIGH", "CRITICAL"] },
     });
   }
 
-  /**
-   * Agrégation pour statistiques par sévérité
-   * @returns {Promise<Array>} Statistiques par sévérité
-   */
-  async statsBySeverity() {
+  async countResolved(filters = {}) {
+    const dbFilter = await this._buildScopedFilter(filters);
+    return await Alert.countDocuments({ ...dbFilter, resolvedAt: { $ne: null } });
+  }
+
+  async statsBySeverity(filters = {}) {
+    const dbFilter = await this._buildScopedFilter(filters);
     return await Alert.aggregate([
+      { $match: dbFilter },
       {
         $group: {
           _id: "$severity",
@@ -138,18 +283,11 @@ class AlertRepository {
     ]);
   }
 
-  /**
-   * Agrégation pour statistiques par polluant
-   * @returns {Promise<Array>} Statistiques par polluant
-   */
-  async statsByPolluant() {
+  async statsByPolluant(filters = {}) {
+    const dbFilter = await this._buildScopedFilter(filters);
     return await Alert.aggregate([
-      {
-        $group: {
-          _id: "$PolluantId",
-          count: { $sum: 1 },
-        },
-      },
+      { $match: dbFilter },
+      { $group: { _id: "$PolluantId", count: { $sum: 1 } } },
       {
         $lookup: {
           from: "polluants",
@@ -159,12 +297,7 @@ class AlertRepository {
         },
       },
       { $unwind: "$polluant" },
-      {
-        $project: {
-          polluantName: "$polluant.name",
-          count: 1,
-        },
-      },
+      { $project: { polluantName: "$polluant.name", count: 1 } },
     ]);
   }
 }

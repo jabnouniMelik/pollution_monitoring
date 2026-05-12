@@ -65,16 +65,58 @@ const ZoneSchema = new mongoose.Schema(
       },
     ],
 
+    // Polluants surveillés dans cette zone
+    pollutants: {
+      type: [String],
+      default: [],
+      enum: ["CO2", "NOX", "SO2", "PM", "COV"],
+    },
+
     // Statut de la zone
     actif: {
       type: Boolean,
-      default: true,
+      default: false,  // inactive until approved
+    },
+
+    // ── Approval workflow ─────────────────────────────────────
+    approvalStatus: {
+      type: String,
+      enum: ["PENDING", "PREPARING", "APPROVED", "REJECTED"],
+      default: "PENDING",
+    },
+    approvalRequestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    approvalRequestedAt: {
+      type: Date,
+      default: null,
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    approvedAt: {
+      type: Date,
+      default: null,
+    },
+    rejectionReason: {
+      type: String,
+      default: null,
     },
 
     // Nombre de nœuds capteurs (dénormalisé)
     sensorNodeCount: {
       type: Number,
       default: 0,
+    },
+
+    // Note d'installation du nœud capteur (renseignée par SUPER_ADMIN lors de la préparation)
+    sensorNodeNote: {
+      type: String,
+      default: null,
     },
   },
   { timestamps: true },
@@ -97,5 +139,9 @@ ZoneSchema.index({ siteId: 1, actif: 1 });
 
 // Index pour recherche par code
 ZoneSchema.index({ code: 1, siteId: 1 });
+
+// Index pour le workflow d'approbation
+ZoneSchema.index({ approvalStatus: 1 });
+ZoneSchema.index({ approvalStatus: 1, industrieId: 1 });
 
 module.exports = mongoose.model("Zone", ZoneSchema);

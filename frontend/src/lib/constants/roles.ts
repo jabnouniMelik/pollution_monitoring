@@ -66,6 +66,8 @@ export const Permission = {
 
   VIEW_AI: 'VIEW_AI',
   RETRAIN_MODEL: 'RETRAIN_MODEL',
+  MANAGE_OPERATORS: 'MANAGE_OPERATORS',
+  MANAGE_TEAM: 'MANAGE_TEAM',
 } as const
 
 export type Permission = (typeof Permission)[keyof typeof Permission]
@@ -73,7 +75,34 @@ export type Permission = (typeof Permission)[keyof typeof Permission]
 const allPermissions = Object.values(Permission) as Permission[]
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  SUPER_ADMIN: allPermissions,
+  // SUPER_ADMIN: system administrator — manages users, sites, zones, config
+  // Does NOT have access to operational dashboards (KPI, alerts, reports, AI)
+  // Can view KPI summary only when inspecting a zone from the Sites & Zones page
+  SUPER_ADMIN: [
+    'VIEW_ALL_USERS',
+    'CREATE_USER',
+    'UPDATE_USER',
+    'DELETE_USER',
+    'CHANGE_USER_ROLE',
+    'ASSIGN_SITES',
+    'ASSIGN_ZONES',
+    'VIEW_ALL_SITES',
+    'CREATE_SITE',
+    'UPDATE_SITE',
+    'DELETE_SITE',
+    'ASSIGN_SUPERVISOR',
+    'VIEW_ALL_ZONES',
+    'CREATE_ZONE',
+    'UPDATE_ZONE',
+    'DELETE_ZONE',
+    'ASSIGN_OPERATOR',
+    'VIEW_CONFIG',
+    'UPDATE_AIRFLOW',
+    'UPDATE_WEIGHTS',
+    'UPDATE_TARGETS',
+    'VIEW_THRESHOLDS',
+    'UPDATE_THRESHOLDS',
+  ],
 
   HEAD_SUPERVISOR: [
     'VIEW_ALL_USERS',
@@ -85,6 +114,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'UPDATE_ZONE',
     'ASSIGN_SUPERVISOR',
     'ASSIGN_OPERATOR',
+    'MANAGE_TEAM',
     'VIEW_CONFIG',
     'VIEW_THRESHOLDS',
     'VIEW_ALERTS',
@@ -98,12 +128,14 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   ],
 
   SITE_SUPERVISOR: [
+    'VIEW_ALL_USERS',
     'VIEW_OWN_SITES',
     'VIEW_OWN_ZONES',
     'UPDATE_SITE',
     'CREATE_ZONE',
     'UPDATE_ZONE',
     'ASSIGN_OPERATOR',
+    'MANAGE_OPERATORS',
     'VIEW_CONFIG',
     'VIEW_THRESHOLDS',
     'VIEW_ALERTS',
@@ -131,5 +163,6 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'VIEW_ALERTS',
     'ACKNOWLEDGE_ALERT',
     'VIEW_KPI',
+    'VIEW_AI',
   ],
 }

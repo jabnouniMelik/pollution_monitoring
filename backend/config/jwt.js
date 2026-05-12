@@ -21,6 +21,15 @@ const JWT_CONFIG = {
   },
 };
 
+const requireSecret = (value, envName) => {
+  if (!value) {
+    const err = new Error(`Missing required env var: ${envName}`);
+    err.statusCode = 500;
+    throw err;
+  }
+  return value;
+};
+
 // ── Générer un Access Token ───────────────────────────────────
 // Payload : données de l'utilisateur encodées dans le token
 // Ces données sont lisibles par le frontend (pas le secret !)
@@ -32,7 +41,7 @@ const generateAccessToken = (user) => {
     zone: user.zone || null, // utilisé pour filtrer par zone (OPERATOR)
   };
 
-  return jwt.sign(payload, JWT_CONFIG.access.secret, {
+  return jwt.sign(payload, requireSecret(JWT_CONFIG.access.secret, "JWT_ACCESS_SECRET"), {
     expiresIn: JWT_CONFIG.access.expires,
   });
 };
@@ -44,7 +53,7 @@ const generateRefreshToken = (user) => {
     userId: user._id,
   };
 
-  return jwt.sign(payload, JWT_CONFIG.refresh.secret, {
+  return jwt.sign(payload, requireSecret(JWT_CONFIG.refresh.secret, "JWT_REFRESH_SECRET"), {
     expiresIn: JWT_CONFIG.refresh.expires,
   });
 };
@@ -52,12 +61,12 @@ const generateRefreshToken = (user) => {
 // ── Vérifier un Access Token ──────────────────────────────────
 // Retourne le payload décodé ou lève une erreur
 const verifyAccessToken = (token) => {
-  return jwt.verify(token, JWT_CONFIG.access.secret);
+  return jwt.verify(token, requireSecret(JWT_CONFIG.access.secret, "JWT_ACCESS_SECRET"));
 };
 
 // ── Vérifier un Refresh Token ─────────────────────────────────
 const verifyRefreshToken = (token) => {
-  return jwt.verify(token, JWT_CONFIG.refresh.secret);
+  return jwt.verify(token, requireSecret(JWT_CONFIG.refresh.secret, "JWT_REFRESH_SECRET"));
 };
 
 // ── Options du Cookie HttpOnly ────────────────────────────────

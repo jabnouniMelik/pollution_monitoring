@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
-import { AlertTriangle, Gauge, Leaf, Wind, X } from 'lucide-react'
+import { AlertTriangle, Eye, EyeOff, Gauge, Leaf, Wind, X } from 'lucide-react'
+import { HistoryChartSettings } from './HistoryChartSettings'
 import { PageHeader } from '@/components/layout/PageHeader/PageHeader'
 import { KPICard } from '@/components/kpi/KPICard/KPICard'
 import { PollutantCard } from '@/components/kpi/PollutantCard/PollutantCard'
@@ -7,10 +8,12 @@ import { ChartWrapper } from '@/components/charts/ChartWrapper/ChartWrapper'
 import { IPEGauge } from '@/components/charts/IPEGauge/IPEGauge'
 import { HistoryChart } from '@/components/charts/HistoryChart/HistoryChart'
 import { MTDTrendChart } from '@/components/charts/MTDTrendChart/MTDTrendChart'
+import { ENVIRONMENT_PARAMS, type EnvParamCode } from '@/lib/constants/environment'
+import { statusFromRange } from '@/lib/utils/colorUtils'
 import { AlertList } from '@/components/alerts/AlertList/AlertList'
 import { Card } from '@/components/ui/Card/Card'
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
-import { useKPIConfig, useKPISummary } from '@/features/kpi/hooks/useKPISummary'
+import { useKPIConfig, useKPIHistory, useKPISummary } from '@/features/kpi/hooks/useKPISummary'
 import { useAlerts } from '@/features/alerts/hooks/useAlerts'
 import { useLatestReadings } from '@/features/readings/hooks/useReadings'
 import { useSelectionStore } from '@/store/selectionStore'
@@ -27,14 +30,57 @@ export default function Overview() {
 
   const summary = useKPISummary(queryParams)
   const config = useKPIConfig()
+  const noxMtdHistory = useKPIHistory('NOX', {
+    siteId: siteId ?? undefined,
+    zoneId: zoneId ?? undefined,
+    period: 'day',
+  })
   const alerts = useAlerts({ pageSize: 5, status: 'open' })
   const latest = useLatestReadings(queryParams)
 
+  type MetricSelection = PollutantCode | EnvParamCode | 'all'
+
   const [selectedKPI, setSelectedKPI] = useState<KPIKind | null>(null)
-  const [selectedPollutant, setSelectedPollutant] = useState<PollutantCode | 'all'>('all')
+  const [selectedMetric, setSelectedMetric] = useState<MetricSelection>('all')
+  const [visiblePollutants, setVisiblePollutants] = useState<Set<PollutantCode>>(
+    () => new Set(POLLUTANT_CODES),
+  )
+  const [visibleEnv, setVisibleEnv] = useState<Set<EnvParamCode>>(
+    () => new Set(['TEMPERATURE', 'HUMIDITY'] as EnvParamCode[]),
+  )
+  const [historyHidden, setHistoryHidden] = useState(false)
 
   const detailRef = useRef<HTMLDivElement>(null)
   const historyRef = useRef<HTMLDivElement>(null)
+
+  const togglePollutantVisibility = useCallback((code: PollutantCode) => {
+    setVisiblePollutants((prev) => {
+      const next = new Set(prev)
+      if (next.has(code)) next.delete(code)
+      else next.add(code)
+      return next
+    })
+  }, [])
+
+  const toggleEnvVisibility = useCallback((code: EnvParamCode) => {
+    setVisibleEnv((prev) => {
+      const next = new Set(prev)
+      if (next.has(code)) next.delete(code)
+      else next.add(code)
+      return next
+    })
+  }, [])
+
+  const selectAllMetrics = useCallback(() => {
+    setVisiblePollutants(new Set(POLLUTANT_CODES))
+    setVisibleEnv(new Set(['TEMPERATURE', 'HUMIDITY'] as EnvParamCode[]))
+  }, [])
+
+  const resetMetrics = useCallback(() => {
+    setVisiblePollutants(new Set(POLLUTANT_CODES))
+    setVisibleEnv(new Set(['TEMPERATURE', 'HUMIDITY'] as EnvParamCode[]))
+    setSelectedMetric('all')
+  }, [])
 
   const handleKPIClick = useCallback((kind: KPIKind) => {
     setSelectedKPI((prev) => (prev === kind ? null : kind))
@@ -43,12 +89,14 @@ export default function Overview() {
     })
   }, [])
 
-  const handlePollutantClick = useCallback((code: PollutantCode) => {
-    setSelectedPollutant((prev) => (prev === code ? 'all' : code))
+  const handleMetricClick = useCallback((code: PollutantCode | EnvParamCode) => {
+    setSelectedMetric((prev) => (prev === code ? 'all' : code))
     requestAnimationFrame(() => {
       historyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     })
   }, [])
+
+  const isEnvCode = (c: string): c is EnvParamCode => c === 'TEMPERATURE' || c === 'HUMIDITY'
 
   useWebSocketSubscription([siteId ? `kpi:site:${siteId}` : 'kpi:global', 'alerts:all'])
 
@@ -98,37 +146,62 @@ export default function Overview() {
   }, [latest.data])
 
   const filteredHistory = useMemo(() => {
-    if (selectedPollutant === 'all') return history
-    const match = history.find((s) => s.code === selectedPollutant)
+    const inVisible = (c: string) => visiblePollutants.has(c as PollutantCode)
+    if (selectedMetric === 'all' || isEnvCode(selectedMetric)) {
+      return history.filter((s) => inVisible(s.code))
+    }
+    const pollutantCode = selectedMetric as PollutantCode
+    if (!visiblePollutants.has(pollutantCode)) return []
+    const match = history.find((s) => s.code === pollutantCode)
     if (match) return [match]
-    const meta = POLLUTANTS[selectedPollutant]
+    const meta = POLLUTANTS[pollutantCode]
     if (!meta || !latest.data || latest.data.length === 0) return []
     return [
       {
-        code: selectedPollutant,
+        code: pollutantCode,
         label: meta.label,
         color: meta.color,
-        points: latest
-          .data.slice()
+        points: latest.data
+          .slice()
           .reverse()
           .map((r) => ({
             t: r.timestamp,
-            v: r.measurements[selectedPollutant]?.value ?? 0,
+            v: r.measurements[pollutantCode]?.value ?? 0,
           })),
-        threshold: TUNISIA_DECRET_LIMITS[selectedPollutant]?.limit,
+        threshold: TUNISIA_DECRET_LIMITS[pollutantCode]?.limit,
       },
     ]
-  }, [history, selectedPollutant, latest.data])
+  }, [history, selectedMetric, latest.data, visiblePollutants])
 
-  const mtdLabels = Array.from({ length: 30 }, (_, i) => String(i + 1).padStart(2, '0'))
+  const currentDate = new Date()
+  const currentYear = currentDate.getFullYear()
+  const currentMonth = currentDate.getMonth()
+  const daysInCurrentMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
+
+  const mtdLabels = useMemo(
+    () => Array.from({ length: daysInCurrentMonth }, (_, i) => String(i + 1).padStart(2, '0')),
+    [daysInCurrentMonth],
+  )
+
   const mtdValues = useMemo(() => {
-    let cum = 0
-    return mtdLabels.map(() => {
-      cum += Math.max(0, (summary.data?.emj?.NOX ?? 10) * (0.8 + Math.random() * 0.4))
-      return cum
+    const dailyValues = new Array<number>(daysInCurrentMonth).fill(0)
+
+    for (const point of noxMtdHistory.data?.points ?? []) {
+      const d = new Date(point.timestamp)
+      if (Number.isNaN(d.getTime())) continue
+      if (d.getFullYear() !== currentYear || d.getMonth() !== currentMonth) continue
+
+      const dayIndex = d.getDate() - 1
+      if (dayIndex < 0 || dayIndex >= dailyValues.length) continue
+      dailyValues[dayIndex] += Math.max(0, Number(point.value) || 0)
+    }
+
+    let cumulative = 0
+    return dailyValues.map((v) => {
+      cumulative += v
+      return Number(cumulative.toFixed(2))
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [summary.data?.emj?.NOX])
+  }, [daysInCurrentMonth, noxMtdHistory.data?.points, currentMonth, currentYear])
 
   // Per-KPI synthetic monthly trends (deterministic — no random) for the drill-down panel
   const tdDailyValues = useMemo(
@@ -168,6 +241,39 @@ export default function Overview() {
       })),
     [summary.data?.emj],
   )
+
+  const envSeries = useMemo(() => {
+    if (!latest.data || latest.data.length === 0) return []
+    return latest.data
+      .slice()
+      .reverse()
+      .map((r) => {
+        const m = r?.measurements ?? {}
+        const rawTemp =
+          (m.TEMPERATURE as { value?: number } | undefined)?.value ??
+          (m.TEMP as { value?: number } | undefined)?.value ??
+          (m.temperature as { value?: number } | undefined)?.value
+        const rawHum =
+          (m.HUMIDITY as { value?: number } | undefined)?.value ??
+          (m.HUM as { value?: number } | undefined)?.value ??
+          (m.humidity as { value?: number } | undefined)?.value
+        return {
+          t: r.timestamp,
+          temperature: Number.isFinite(rawTemp) ? (rawTemp as number) : undefined,
+          humidity: Number.isFinite(rawHum) ? (rawHum as number) : undefined,
+        }
+      })
+  }, [latest.data])
+
+  const latestEnv = useMemo(() => {
+    const last = envSeries[envSeries.length - 1]
+    return {
+      temperature: last?.temperature,
+      humidity: last?.humidity,
+    }
+  }, [envSeries])
+
+  const envHasData = envSeries.some((p) => p.temperature !== undefined || p.humidity !== undefined)
 
   const ipeContribByPollutant = useMemo(
     () =>
@@ -325,12 +431,17 @@ export default function Overview() {
                 subtitle="Mois à date vs cible réglementaire"
                 height={240}
                 className="lg:col-span-2"
+                loading={noxMtdHistory.isLoading}
                 action={<CloseDetailButton onClose={() => setSelectedKPI(null)} />}
               >
                 <MTDTrendChart
                   labels={mtdLabels}
                   values={mtdValues}
-                  target={Number.isFinite(targets.EMJ) ? (targets.EMJ as number) * 30 : undefined}
+                  target={
+                    Number.isFinite(targets.EMJ)
+                      ? (targets.EMJ as number) * daysInCurrentMonth
+                      : undefined
+                  }
                   unit="kg"
                   color={POLLUTANTS.NOX.color}
                 />
@@ -398,7 +509,7 @@ export default function Overview() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
         {POLLUTANT_CODES.map((code) => (
           <PollutantCard
             key={code}
@@ -409,49 +520,151 @@ export default function Overview() {
               ?.slice(0, 20)
               .map((r) => r.measurements[code]?.value ?? 0)
               .reverse()}
-            onClick={() => handlePollutantClick(code)}
-            selected={selectedPollutant === code}
+            onClick={() => handleMetricClick(code)}
+            selected={selectedMetric === code}
           />
         ))}
+
+        {/* Environmental parameters — same card, range-based status */}
+        {(Object.keys(ENVIRONMENT_PARAMS) as EnvParamCode[]).map((code) => {
+          const param = ENVIRONMENT_PARAMS[code]
+          const value = latestEnv[code === 'TEMPERATURE' ? 'temperature' : 'humidity'] ?? 0
+          const trend = envSeries
+            .slice(-20)
+            .map((p) => (code === 'TEMPERATURE' ? (p.temperature ?? 0) : (p.humidity ?? 0)))
+          return (
+            <PollutantCard
+              key={code}
+              code={code}
+              value={value}
+              min={param.normalRange[0]}
+              limit={param.normalRange[1]}
+              limitLabel="Plage normale"
+              status={statusFromRange(value, param.normalRange)}
+              trend={trend.length > 1 ? trend : undefined}
+              meta={{
+                label: param.label,
+                longLabel: param.longLabel,
+                unit: param.unit,
+                color: param.color,
+              }}
+              onClick={() => handleMetricClick(code)}
+              selected={selectedMetric === code}
+            />
+          )
+        })}
       </div>
 
       {/* History + Alerts */}
       <div ref={historyRef} className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <ChartWrapper
-          title={
-            selectedPollutant === 'all'
-              ? 'Historique des concentrations'
-              : `Historique — ${POLLUTANTS[selectedPollutant].longLabel}`
-          }
-          subtitle={
-            selectedPollutant === 'all'
-              ? 'Derniers relevés · tous polluants majeurs'
-              : `Derniers relevés · ${POLLUTANTS[selectedPollutant].label} uniquement`
-          }
-          height={320}
-          className="lg:col-span-2"
-          loading={latest.isLoading}
-          action={
-            selectedPollutant !== 'all' ? (
-              <button
-                type="button"
-                onClick={() => setSelectedPollutant('all')}
-                className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-medium text-accent hover:bg-bg"
-                aria-label="Afficher tous les polluants"
-              >
-                Tout afficher
-              </button>
-            ) : undefined
-          }
-        >
-          {filteredHistory.length > 0 ? (
-            <HistoryChart series={filteredHistory} unit="mg/Nm³" />
-          ) : (
-            <div className="flex h-full items-center justify-center text-sm text-text-tertiary">
-              Aucun relevé récent
+        {historyHidden ? (
+          <button
+            type="button"
+            onClick={() => setHistoryHidden(false)}
+            className="card flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-bg lg:col-span-2"
+            aria-label="Afficher le panneau Historique"
+          >
+            <div className="flex items-center gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-md bg-[color:var(--ltblue)] text-accent">
+                <Eye className="h-4 w-4" />
+              </span>
+              <div>
+                <div className="text-sm font-semibold text-text-primary">
+                  Historique des concentrations
+                </div>
+                <div className="text-xs text-text-secondary">
+                  Panneau masqué · cliquer pour réafficher
+                </div>
+              </div>
             </div>
-          )}
-        </ChartWrapper>
+            <span className="text-[11px] font-medium text-accent">Afficher</span>
+          </button>
+        ) : (
+          <ChartWrapper
+            title={
+              selectedMetric === 'all'
+                ? 'Historique des concentrations & conditions'
+                : isEnvCode(selectedMetric)
+                  ? `Historique — polluants × ${ENVIRONMENT_PARAMS[selectedMetric].longLabel}`
+                  : `Historique — ${POLLUTANTS[selectedMetric as PollutantCode].longLabel}`
+            }
+            subtitle={
+              selectedMetric === 'all'
+                ? 'Polluants · température · humidité · axes multiples'
+                : isEnvCode(selectedMetric)
+                  ? `Corrélation entre les polluants et ${ENVIRONMENT_PARAMS[selectedMetric].label.toLowerCase()}`
+                  : `Derniers relevés · ${POLLUTANTS[selectedMetric as PollutantCode].label} vs conditions environnementales`
+            }
+            height={320}
+            className="lg:col-span-2"
+            loading={latest.isLoading}
+            action={
+              <div className="flex items-center gap-1.5">
+                {selectedMetric !== 'all' && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMetric('all')}
+                    className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-medium text-accent hover:bg-bg"
+                    aria-label="Afficher tous les indicateurs"
+                  >
+                    Tout afficher
+                  </button>
+                )}
+                <HistoryChartSettings
+                  visiblePollutants={visiblePollutants}
+                  visibleEnv={visibleEnv}
+                  onTogglePollutant={togglePollutantVisibility}
+                  onToggleEnv={toggleEnvVisibility}
+                  onSelectAll={selectAllMetrics}
+                  onReset={resetMetrics}
+                />
+                <button
+                  type="button"
+                  onClick={() => setHistoryHidden(true)}
+                  className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-md border border-border text-text-secondary transition-colors hover:bg-bg hover:text-text-primary"
+                  aria-label="Masquer le panneau Historique"
+                  title="Masquer"
+                >
+                  <EyeOff className="h-3 w-3" />
+                </button>
+              </div>
+            }
+          >
+            {filteredHistory.length > 0 ||
+            (envHasData && (visibleEnv.has('TEMPERATURE') || visibleEnv.has('HUMIDITY'))) ? (
+              <HistoryChart
+                series={filteredHistory}
+                unit="mg/Nm³"
+                envPoints={envHasData ? envSeries : undefined}
+                showTemperature={
+                  envHasData &&
+                  visibleEnv.has('TEMPERATURE') &&
+                  (selectedMetric === 'all' ||
+                    !isEnvCode(selectedMetric) ||
+                    selectedMetric === 'TEMPERATURE')
+                }
+                showHumidity={
+                  envHasData &&
+                  visibleEnv.has('HUMIDITY') &&
+                  (selectedMetric === 'all' ||
+                    !isEnvCode(selectedMetric) ||
+                    selectedMetric === 'HUMIDITY')
+                }
+              />
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-text-tertiary">
+                <span>Aucune série sélectionnée</span>
+                <button
+                  type="button"
+                  onClick={selectAllMetrics}
+                  className="rounded-md border border-border px-2 py-1 text-[11px] font-medium text-accent hover:bg-bg"
+                >
+                  Tout réafficher
+                </button>
+              </div>
+            )}
+          </ChartWrapper>
+        )}
 
         <Card padded>
           <div className="mb-3 flex items-start justify-between">

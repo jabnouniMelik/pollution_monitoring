@@ -4,7 +4,10 @@ import { PageHeader } from '@/components/layout/PageHeader/PageHeader'
 import { Card } from '@/components/ui/Card/Card'
 import { Badge } from '@/components/ui/Badge/Badge'
 import { ComplianceTable, type ComplianceRow } from '@/components/kpi/ComplianceTable/ComplianceTable'
+import { QueryState } from '@/components/common/QueryState/QueryState'
+import { ComplianceSkeleton } from '@/components/ui/Skeleton/SkeletonBlocks'
 import { POLLUTANT_CODES, POLLUTANTS, type PollutantCode } from '@/lib/constants/pollutants'
+import { getPollutantThresholdRow } from '@/lib/constants/pollutantThresholdKeys'
 import { DECRET_NAME, DECRET_URL, TUNISIA_DECRET_LIMITS } from '@/lib/constants/tunisiaDecret'
 import { useLatestReadings } from '@/features/readings/hooks/useReadings'
 import { useThresholds } from '@/features/config/hooks/useThresholds'
@@ -29,7 +32,7 @@ export default function Compliance() {
 
     return POLLUTANT_CODES.map((code: PollutantCode) => {
       const regulatory = TUNISIA_DECRET_LIMITS[code]
-      const siteThreshold = siteLimits[code]
+      const siteThreshold = getPollutantThresholdRow(siteLimits, code)
       return {
         pollutant: code,
         label: POLLUTANTS[code].longLabel,
@@ -86,7 +89,16 @@ export default function Compliance() {
           </p>
         </div>
         <div className="px-4 pb-4 pt-3">
-          <ComplianceTable rows={rows} />
+          <QueryState
+            query={latest}
+            loadingSkeleton={<ComplianceSkeleton />}
+            emptyTitle="Aucune mesure disponible"
+            emptyDescription="Aucune donnée de mesure n'est disponible pour calculer la conformité."
+            errorTitle="Erreur de chargement"
+            errorDescription="Impossible de charger les données de conformité."
+          >
+            {() => <ComplianceTable rows={rows} />}
+          </QueryState>
         </div>
       </Card>
     </div>

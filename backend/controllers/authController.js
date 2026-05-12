@@ -69,6 +69,9 @@ const login = async (req, res, next) => {
           username: user.username,
           email: user.email,
           role: user.role,
+          industryId: user.industryId ?? null,
+          sitesManaging: user.sitesManaging ?? [],
+          zonesAssigned: user.zonesAssigned ?? [],
           zone: user.zone,
           site: user.site,
         },
@@ -88,6 +91,11 @@ const refresh = async (req, res, next) => {
   try {
     // Lire le refresh token depuis le cookie
     const refreshToken = req.cookies?.refreshToken;
+    if (!refreshToken) {
+      const err = new Error("Refresh token requis");
+      err.statusCode = 401;
+      throw err;
+    }
 
     const { accessToken } = await authService.refresh(refreshToken);
 
@@ -96,6 +104,9 @@ const refresh = async (req, res, next) => {
       data: { accessToken },
     });
   } catch (error) {
+    console.warn(
+      `[AUTH] refresh FAILED — hasCookie=${Boolean(req.cookies?.refreshToken)} message=${error.message}`,
+    );
     next(error);
   }
 };

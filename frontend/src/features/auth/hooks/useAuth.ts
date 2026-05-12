@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useAuthStore } from '../store/authStore'
 import { authApi } from '../api/authApi'
-import { getAccessToken, onUnauthorized } from '@/lib/api/axios'
+import { getAccessToken, onUnauthorized, tryRefreshSession } from '@/lib/api/axios'
 
 /**
  * Primary hook for consuming the authenticated user.
@@ -14,16 +14,17 @@ export function useAuth() {
     let cancelled = false
 
     async function bootstrap() {
-      // Only attempt silent rehydration when we have *some* reason to believe
-      // a session exists: either a persisted user profile (sessionStorage) or
-      // an access token already in memory. Otherwise we'd call /me just to
-      // get a guaranteed 401 — noisy and pointless on a fresh tab.
+      // Rehydrate only when we have a persisted profile, an in-memory access token,
+      // or a chance to rotate via HttpOnly refresh cookie (silent POST /refresh).
       const hasPersistedUser = Boolean(useAuthStore.getState().user)
       const hasToken = Boolean(getAccessToken())
 
       if (!hasPersistedUser && !hasToken) {
-        if (!cancelled) markInitialized()
-        return
+        const refreshed = await tryRefreshSession()
+        if (!refreshed) {
+          if (!cancelled) markInitialized()
+          return
+        }
       }
 
       try {

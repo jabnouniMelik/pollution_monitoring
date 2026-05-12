@@ -11,9 +11,20 @@ export interface ThresholdEntry {
   max?: number
 }
 
+/** One pollutant row in global threshold config (API + UI). */
+export interface PollutantThresholdLimits {
+  min: number
+  max: number
+  warning: number
+  critical: number
+  unit: string
+  reference?: string
+}
+
 export interface ThresholdConfig {
   siteId?: string
-  pollutants: Record<string, { min: number; max: number; warning: number; critical: number; unit: string }>
+  _id?: string
+  pollutants: Record<string, PollutantThresholdLimits>
 }
 
 export interface KPIConfig {
