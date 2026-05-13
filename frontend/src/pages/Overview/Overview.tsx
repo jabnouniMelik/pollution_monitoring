@@ -23,6 +23,7 @@ import { POLLUTANTS, POLLUTANT_CODES, type PollutantCode } from '@/lib/constants
 import { TUNISIA_DECRET_LIMITS } from '@/lib/constants/tunisiaDecret'
 import { useWebSocketSubscription } from '@/features/websocket/useWebSocketSubscription'
 import { formatDate, formatNumber } from '@/lib/utils/formatters'
+import { cn } from '@/lib/utils/cn'
 
 export default function Overview() {
   const { siteId, zoneId, period } = useSelectionStore()
@@ -30,7 +31,8 @@ export default function Overview() {
 
   const summary = useKPISummary(queryParams)
   const config = useKPIConfig()
-  const noxMtdHistory = useKPIHistory('NOX', {
+  const [selectedEmjPollutant, setSelectedEmjPollutant] = useState<PollutantCode>('NOX')
+  const emjHistory = useKPIHistory(selectedEmjPollutant, {
     siteId: siteId ?? undefined,
     zoneId: zoneId ?? undefined,
     period: 'day',
@@ -48,7 +50,7 @@ export default function Overview() {
   const [visibleEnv, setVisibleEnv] = useState<Set<EnvParamCode>>(
     () => new Set(['TEMPERATURE', 'HUMIDITY'] as EnvParamCode[]),
   )
-  const [historyHidden, setHistoryHidden] = useState(false)
+  const [historyHidden, setHistoryHidden] = useState(true)
 
   const detailRef = useRef<HTMLDivElement>(null)
   const historyRef = useRef<HTMLDivElement>(null)
@@ -71,6 +73,36 @@ export default function Overview() {
     })
   }, [])
 
+  const showAllPollutants = useCallback(() => {
+    setSelectedMetric('all')
+    setVisiblePollutants(new Set(POLLUTANT_CODES))
+    setVisibleEnv(new Set(['TEMPERATURE', 'HUMIDITY'] as EnvParamCode[]))
+  }, [])
+
+  const focusPollutant = useCallback(
+    (code: PollutantCode | EnvParamCode) => {
+      if (selectedMetric === code) {
+        showAllPollutants()
+        return
+      }
+
+      setSelectedMetric(code)
+      if (isEnvCode(code)) {
+        setVisibleEnv(new Set([code]))
+        setVisiblePollutants(new Set())
+      } else {
+        setVisiblePollutants(new Set([code]))
+        setVisibleEnv(new Set())
+      }
+
+      setHistoryHidden(false)
+      requestAnimationFrame(() => {
+        historyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    },
+    [selectedMetric, showAllPollutants],
+  )
+
   const selectAllMetrics = useCallback(() => {
     setVisiblePollutants(new Set(POLLUTANT_CODES))
     setVisibleEnv(new Set(['TEMPERATURE', 'HUMIDITY'] as EnvParamCode[]))
@@ -89,12 +121,12 @@ export default function Overview() {
     })
   }, [])
 
-  const handleMetricClick = useCallback((code: PollutantCode | EnvParamCode) => {
-    setSelectedMetric((prev) => (prev === code ? 'all' : code))
-    requestAnimationFrame(() => {
-      historyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    })
-  }, [])
+  const handleMetricClick = useCallback(
+    (code: PollutantCode | EnvParamCode) => {
+      focusPollutant(code)
+    },
+    [focusPollutant],
+  )
 
   const isEnvCode = (c: string): c is EnvParamCode => c === 'TEMPERATURE' || c === 'HUMIDITY'
 
@@ -186,7 +218,7 @@ export default function Overview() {
   const mtdValues = useMemo(() => {
     const dailyValues = new Array<number>(daysInCurrentMonth).fill(0)
 
-    for (const point of noxMtdHistory.data?.points ?? []) {
+    for (const point of emjHistory.data?.points ?? []) {
       const d = new Date(point.timestamp)
       if (Number.isNaN(d.getTime())) continue
       if (d.getFullYear() !== currentYear || d.getMonth() !== currentMonth) continue
@@ -201,7 +233,7 @@ export default function Overview() {
       cumulative += v
       return Number(cumulative.toFixed(2))
     })
-  }, [daysInCurrentMonth, noxMtdHistory.data?.points, currentMonth, currentYear])
+  }, [daysInCurrentMonth, emjHistory.data?.points, currentMonth, currentYear])
 
   // Per-KPI synthetic monthly trends (deterministic — no random) for the drill-down panel
   const tdDailyValues = useMemo(
@@ -290,6 +322,9 @@ export default function Overview() {
     [latestByPollutant],
   )
 
+  const hasTdTrend = tdDailyValues.some((value) => value > 0)
+  const hasEmjTrend = mtdValues.some((value) => value > 0)
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -364,13 +399,22 @@ export default function Overview() {
                 className="lg:col-span-2"
                 action={<CloseDetailButton onClose={() => setSelectedKPI(null)} />}
               >
-                <MTDTrendChart
-                  labels={mtdLabels}
-                  values={tdDailyValues}
-                  target={targets.TD}
-                  unit="%"
-                  color="#E65100"
-                />
+                {hasTdTrend ? (
+                  <MTDTrendChart
+                    labels={mtdLabels}
+                    values={tdDailyValues}
+                    target={targets.TD}
+                    unit="%"
+                    color="#E65100"
+                  />
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-text-tertiary">
+                    <span>Aucune donnée disponible pour le TD</span>
+                    <span className="text-[11px] text-text-secondary">
+                      La série reste vide tant qu’aucun dépassement n’est enregistré.
+                    </span>
+                  </div>
+                )}
               </ChartWrapper>
               <ChartWrapper
                 title="Dépassements par polluant"
@@ -427,24 +471,59 @@ export default function Overview() {
           {selectedKPI === 'EMJ' && (
             <>
               <ChartWrapper
-                title="Émissions cumulées NOₓ"
-                subtitle="Mois à date vs cible réglementaire"
+                title={`Émissions cumulées ${POLLUTANTS[selectedEmjPollutant].label}`}
+                subtitle={`Mois à date vs cible réglementaire · ${POLLUTANTS[selectedEmjPollutant].longLabel}`}
                 height={240}
                 className="lg:col-span-2"
-                loading={noxMtdHistory.isLoading}
+                loading={emjHistory.isLoading}
                 action={<CloseDetailButton onClose={() => setSelectedKPI(null)} />}
               >
-                <MTDTrendChart
-                  labels={mtdLabels}
-                  values={mtdValues}
-                  target={
-                    Number.isFinite(targets.EMJ)
-                      ? (targets.EMJ as number) * daysInCurrentMonth
-                      : undefined
-                  }
-                  unit="kg"
-                  color={POLLUTANTS.NOX.color}
-                />
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-text-tertiary">
+                    Polluant
+                  </span>
+                  {POLLUTANT_CODES.map((code) => (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => setSelectedEmjPollutant(code)}
+                      className={cn(
+                        'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
+                        selectedEmjPollutant === code
+                          ? 'border-transparent text-white'
+                          : 'border-border text-text-secondary hover:bg-bg hover:text-text-primary',
+                      )}
+                      style={
+                        selectedEmjPollutant === code
+                          ? { backgroundColor: POLLUTANTS[code].color }
+                          : undefined
+                      }
+                    >
+                      {POLLUTANTS[code].label}
+                    </button>
+                  ))}
+                </div>
+
+                {hasEmjTrend ? (
+                  <MTDTrendChart
+                    labels={mtdLabels}
+                    values={mtdValues}
+                    target={
+                      Number.isFinite(targets.EMJ)
+                        ? (targets.EMJ as number) * daysInCurrentMonth
+                        : undefined
+                    }
+                    unit="kg"
+                    color={POLLUTANTS[selectedEmjPollutant].color}
+                  />
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-text-tertiary">
+                    <span>Aucune donnée pour {POLLUTANTS[selectedEmjPollutant].label}</span>
+                    <span className="text-[11px] text-text-secondary">
+                      Choisissez un autre polluant pour afficher sa série.
+                    </span>
+                  </div>
+                )}
               </ChartWrapper>
               <ChartWrapper
                 title="Émissions par polluant (jour)"
@@ -509,7 +588,7 @@ export default function Overview() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {POLLUTANT_CODES.map((code) => (
           <PollutantCard
             key={code}
@@ -556,30 +635,8 @@ export default function Overview() {
       </div>
 
       {/* History + Alerts */}
-      <div ref={historyRef} className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {historyHidden ? (
-          <button
-            type="button"
-            onClick={() => setHistoryHidden(false)}
-            className="card flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-bg lg:col-span-2"
-            aria-label="Afficher le panneau Historique"
-          >
-            <div className="flex items-center gap-3">
-              <span className="flex h-8 w-8 items-center justify-center rounded-md bg-[color:var(--ltblue)] text-accent">
-                <Eye className="h-4 w-4" />
-              </span>
-              <div>
-                <div className="text-sm font-semibold text-text-primary">
-                  Historique des concentrations
-                </div>
-                <div className="text-xs text-text-secondary">
-                  Panneau masqué · cliquer pour réafficher
-                </div>
-              </div>
-            </div>
-            <span className="text-[11px] font-medium text-accent">Afficher</span>
-          </button>
-        ) : (
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {!historyHidden && (
           <ChartWrapper
             title={
               selectedMetric === 'all'
@@ -595,15 +652,15 @@ export default function Overview() {
                   ? `Corrélation entre les polluants et ${ENVIRONMENT_PARAMS[selectedMetric].label.toLowerCase()}`
                   : `Derniers relevés · ${POLLUTANTS[selectedMetric as PollutantCode].label} vs conditions environnementales`
             }
-            height={320}
-            className="lg:col-span-2"
+            height={280}
+            className="w-full lg:col-span-2"
             loading={latest.isLoading}
             action={
               <div className="flex items-center gap-1.5">
                 {selectedMetric !== 'all' && (
                   <button
                     type="button"
-                    onClick={() => setSelectedMetric('all')}
+                    onClick={showAllPollutants}
                     className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-medium text-accent hover:bg-bg"
                     aria-label="Afficher tous les indicateurs"
                   >
@@ -630,6 +687,40 @@ export default function Overview() {
               </div>
             }
           >
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-text-tertiary">
+                Polluant affiché
+              </span>
+              <button
+                type="button"
+                onClick={showAllPollutants}
+                className={cn(
+                  'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
+                  selectedMetric === 'all'
+                    ? 'border-accent bg-accent/10 text-accent'
+                    : 'border-border text-text-secondary hover:bg-bg hover:text-text-primary',
+                )}
+              >
+                Tous
+              </button>
+              {POLLUTANT_CODES.map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => focusPollutant(code)}
+                  className={cn(
+                    'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors',
+                    selectedMetric === code
+                      ? 'border-accent bg-accent text-white'
+                      : 'border-border text-text-secondary hover:bg-bg hover:text-text-primary',
+                  )}
+                  style={selectedMetric === code ? { backgroundColor: POLLUTANTS[code].color } : undefined}
+                >
+                  {POLLUTANTS[code].label}
+                </button>
+              ))}
+            </div>
+
             {filteredHistory.length > 0 ||
             (envHasData && (visibleEnv.has('TEMPERATURE') || visibleEnv.has('HUMIDITY'))) ? (
               <HistoryChart
@@ -666,7 +757,7 @@ export default function Overview() {
           </ChartWrapper>
         )}
 
-        <Card padded>
+        <Card padded className={historyHidden ? 'lg:col-span-3' : 'lg:col-span-1'}>
           <div className="mb-3 flex items-start justify-between">
             <div>
               <h3 className="text-sm font-semibold text-text-primary">Alertes actives</h3>
