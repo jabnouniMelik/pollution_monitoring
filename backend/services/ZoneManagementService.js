@@ -275,22 +275,46 @@ class ZoneManagementService {
 
     const siteIndustrieId = (site.industrieId?._id || site.industrieId)?.toString();
 
+    let zones;
     if (requester.role === "SUPER_ADMIN") {
-      return await zoneRepository.findBySite(siteId);
+      zones = await zoneRepository.findBySite(siteId);
     } else if (requester.role === "HEAD_SUPERVISOR") {
       if (siteIndustrieId !== requester.industryId?.toString()) {
         throw new Error("Accès refusé");
       }
-      return await zoneRepository.findBySite(siteId);
+      zones = await zoneRepository.findBySite(siteId);
     } else if (requester.role === "SITE_SUPERVISOR") {
       const requesterId = (requester.userId || requester._id)?.toString();
       if ((site.supervisorId?._id || site.supervisorId)?.toString() !== requesterId) {
         throw new Error("Accès refusé");
       }
-      return await zoneRepository.findBySite(siteId);
+      zones = await zoneRepository.findBySite(siteId);
+    } else {
+      throw new Error("Accès refusé");
     }
 
-    throw new Error("Accès refusé");
+    return this._attachSensorNodeCounts(zones);
+  }
+
+  async _attachSensorNodeCounts(zones) {
+    if (!zones?.length) return zones;
+    const SensorNode = require("../models/SensorNode");
+    const zoneIds = zones.map((z) => z._id);
+    const grouped = await SensorNode.aggregate([
+      { $match: { zoneId: { $in: zoneIds } } },
+      { $group: { _id: "$zoneId", sensorNodeCount: { $sum: 1 } } },
+    ]);
+    const countByZone = new Map(
+      grouped.map((g) => [g._id.toString(), g.sensorNodeCount]),
+    );
+
+    return zones.map((z) => {
+      const plain = z.toObject ? z.toObject() : { ...z };
+      return {
+        ...plain,
+        sensorNodeCount: countByZone.get(z._id.toString()) || 0,
+      };
+    });
   }
 
   /**

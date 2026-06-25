@@ -6,6 +6,22 @@
 const Alert = require("../models/Alert");
 
 class AlertRepository {
+  _applyStandardPopulates(query) {
+    return query
+      .populate("PolluantId", "name unit regulatoryLimit")
+      .populate({
+        path: "SensorId",
+        select: "model type sensorNodeId",
+        populate: {
+          path: "sensorNodeId",
+          select: "nom zone IndustrieId",
+        },
+      })
+      .populate("ReadingId", "value unit timestamp")
+      .populate("acknowledgedBy", "username email")
+      .populate("resolvedBy", "username email");
+  }
+
   async _resolveSensorIds(zoneCodes) {
     if (!zoneCodes || zoneCodes.length === 0) return null;
 
@@ -19,10 +35,14 @@ class AlertRepository {
       },
     }));
 
-    const nodes = await SensorNode.find({ $or: orConditions }).select("_id").lean();
+    const nodes = await SensorNode.find({ $or: orConditions })
+      .select("_id")
+      .lean();
     if (nodes.length === 0) return null;
 
-    const sensors = await Sensor.find({ sensorNodeId: { $in: nodes.map((n) => n._id) } })
+    const sensors = await Sensor.find({
+      sensorNodeId: { $in: nodes.map((n) => n._id) },
+    })
       .select("_id")
       .lean();
 
@@ -46,8 +66,9 @@ class AlertRepository {
     if (pollutantName) {
       const Polluant = require("../models/Polluant");
       const aliases = [pollutantName];
-      if (pollutantName.toUpperCase() === "PM") aliases.push("PM25", "PM2.5");
-      if (pollutantName.toUpperCase() === "PM25") aliases.push("PM");
+      if (pollutantName.toUpperCase() === "PM") aliases.push("PM25", "PM2.5", "PM10");
+      if (pollutantName.toUpperCase() === "PM25") aliases.push("PM", "PM10");
+      if (pollutantName.toUpperCase() === "PM10") aliases.push("PM", "PM25");
       const polluants = await Polluant.find({
         $or: aliases.flatMap((alias) => [
           { code: new RegExp("^" + alias + "$", "i") },
@@ -120,17 +141,7 @@ class AlertRepository {
     const dbFilter = await this._buildScopedFilter(filter);
 
     const [items, total] = await Promise.all([
-      Alert.find(dbFilter)
-        .populate("PolluantId", "name unit regulatoryLimit")
-        .populate({
-          path: "SensorId",
-          select: "model type sensorNodeId",
-          populate: {
-            path: "sensorNodeId",
-            select: "nom zone IndustrieId",
-          },
-        })
-        .populate("ReadingId", "value unit timestamp")
+      this._applyStandardPopulates(Alert.find(dbFilter))
         .sort({ timestamp: -1 })
         .skip(skip)
         .limit(pageSize),
@@ -148,27 +159,13 @@ class AlertRepository {
 
   async findAll(filter = {}, limit = 50) {
     const dbFilter = await this._buildScopedFilter(filter);
-    return await Alert.find(dbFilter)
-      .populate("PolluantId", "name unit regulatoryLimit")
-      .populate("SensorId", "model type")
-      .populate("ReadingId", "value unit timestamp")
+    return await this._applyStandardPopulates(Alert.find(dbFilter))
       .sort({ timestamp: -1 })
       .limit(limit);
   }
 
   async findById(id) {
-    return await Alert.findById(id)
-      .populate("PolluantId", "name unit regulatoryLimit warningThreshold")
-      .populate({
-        path: "SensorId",
-        select: "model type sensorNodeId",
-        populate: {
-          path: "sensorNodeId",
-          select: "nom zone IndustrieId",
-        },
-      })
-      .populate("ReadingId", "value unit timestamp rawValue")
-      .populate("acknowledgedBy", "username email");
+    return await this._applyStandardPopulates(Alert.findById(id));
   }
 
   async create(data) {
@@ -176,7 +173,7 @@ class AlertRepository {
   }
 
   async acknowledge(id, userId) {
-    return await Alert.findByIdAndUpdate(
+    const updated = await Alert.findByIdAndUpdate(
       id,
       {
         isAcknowledged: true,
@@ -184,15 +181,17 @@ class AlertRepository {
         acknowledgedBy: userId,
         // resolvedAt is NOT set here — acknowledging ≠ resolving
       },
-      { new: true },
+      { returnDocument: "after" },
     );
+    if (!updated) return null;
+    return this.findById(id);
   }
 
   async escalate(id, newSeverity, reason) {
     return await Alert.findByIdAndUpdate(
       id,
       { severity: newSeverity, escalationReason: reason },
-      { new: true },
+      { returnDocument: "after" },
     );
   }
 
@@ -201,15 +200,17 @@ class AlertRepository {
    * Does NOT force isAcknowledged (operator may resolve without acknowledging first).
    */
   async resolve(id, userId, note) {
-    return await Alert.findByIdAndUpdate(
+    const updated = await Alert.findByIdAndUpdate(
       id,
       {
         resolvedAt: new Date(),
         resolvedBy: userId,
         resolutionNote: note,
       },
-      { new: true },
+      { returnDocument: "after" },
     );
+    if (!updated) return null;
+    return this.findById(id);
   }
 
   /**
@@ -222,10 +223,11 @@ class AlertRepository {
       id,
       {
         resolvedAt: new Date(),
-        resolvedBy: null,   // system-resolved, no user
-        resolutionNote: note || "Valeur revenue dans les limites réglementaires",
+        resolvedBy: null, // system-resolved, no user
+        resolutionNote:
+          note || "Valeur revenue dans les limites réglementaires",
       },
-      { new: true },
+      { returnDocument: "after" },
     );
   }
 
@@ -244,7 +246,7 @@ class AlertRepository {
         timestamp,
         // Keep isAcknowledged as-is — operator may have already seen it
       },
-      { new: true },
+      { returnDocument: "after" },
     );
   }
 
@@ -264,7 +266,10 @@ class AlertRepository {
 
   async countResolved(filters = {}) {
     const dbFilter = await this._buildScopedFilter(filters);
-    return await Alert.countDocuments({ ...dbFilter, resolvedAt: { $ne: null } });
+    return await Alert.countDocuments({
+      ...dbFilter,
+      resolvedAt: { $ne: null },
+    });
   }
 
   async statsBySeverity(filters = {}) {

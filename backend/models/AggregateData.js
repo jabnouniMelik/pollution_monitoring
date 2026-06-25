@@ -15,10 +15,21 @@ const AggregateDataSchema = new mongoose.Schema(
       required: false, // null pour agrégation globale IPE
       default: null,
     },
+    siteId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Site",
+      required: true, // Chaque agrégation doit être liée à un site
+    },
+    // Zone de l'agrégation (null = agrégation globale site)
+    zoneId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Zone",
+      default: null,
+    },
     sensorNodeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "SensorNode",
-      default: null, // null = agrégation globale site
+      default: null, // null = agrégation globale (zone ou site)
     },
     // ── Période ────────────────────────────────────────────────
     period: {
@@ -120,6 +131,12 @@ AggregateDataSchema.index({ polluantId: 1, period: 1, periodStart: -1 });
 // Index : agrégation globale site (sensorNodeId null)
 AggregateDataSchema.index({ sensorNodeId: 1, period: 1, periodStart: -1 });
 
+// Index : agrégation par zone
+AggregateDataSchema.index({ zoneId: 1, period: 1, periodStart: -1 });
+
+// Index : agrégation par site
+AggregateDataSchema.index({ siteId: 1, period: 1, periodStart: -1 });
+
 // Index : recherche par période
 AggregateDataSchema.index({ periodStart: -1, periodEnd: -1 });
 
@@ -138,12 +155,14 @@ AggregateDataSchema.methods.evaluateDataQuality = function () {
 };
 
 // Calculer le nombre attendu de mesures
-AggregateDataSchema.methods.getExpectedSampleCount = function () {
+AggregateDataSchema.methods.getExpectedSampleCount = function (expectedSampleIntervalSeconds = 30) {
   const duration = this.periodEnd - this.periodStart; // ms
   const hours = duration / (1000 * 60 * 60);
 
-  // Fréquence moyenne : 1 mesure / 30s = 120 mesures/heure
-  return Math.floor(hours * 120);
+  const intervalSeconds = Number(expectedSampleIntervalSeconds) > 0 ? Number(expectedSampleIntervalSeconds) : 30;
+  const samplesPerHour = 3600 / intervalSeconds;
+
+  return Math.floor(hours * samplesPerHour);
 };
 
 // ── Méthodes statiques ─────────────────────────────────────────
@@ -153,15 +172,25 @@ AggregateDataSchema.statics.findPreviousPeriod = async function (
   period,
   currentPeriodStart,
 ) {
-  const periodDurations = {
-    HOURLY: 60 * 60 * 1000,
-    DAILY: 24 * 60 * 60 * 1000,
-    WEEKLY: 7 * 24 * 60 * 60 * 1000,
-    MONTHLY: 30 * 24 * 60 * 60 * 1000,
-  };
+  const previousStart = new Date(currentPeriodStart);
 
-  const duration = periodDurations[period];
-  const previousStart = new Date(currentPeriodStart.getTime() - duration);
+  switch (period) {
+    case "HOURLY":
+      previousStart.setHours(previousStart.getHours() - 1);
+      break;
+    case "DAILY":
+      previousStart.setDate(previousStart.getDate() - 1);
+      break;
+    case "WEEKLY":
+      previousStart.setDate(previousStart.getDate() - 7);
+      break;
+    case "MONTHLY":
+      previousStart.setMonth(previousStart.getMonth() - 1);
+      break;
+    default:
+      previousStart.setDate(previousStart.getDate() - 1);
+      break;
+  }
 
   return await this.findOne({
     polluantId,

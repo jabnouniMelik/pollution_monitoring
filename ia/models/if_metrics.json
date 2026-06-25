@@ -1,0 +1,17 @@
+{
+  "anomalies_detected_val_pct": 5.298353909465021,
+  "anomalies_detected_test_pct": 5.4526748971193415,
+  "contamination_param": 0.05,
+  "feature_cols": [
+    "NOX",
+    "SOX",
+    "PM25",
+    "PM10",
+    "CO2",
+    "COV"
+  ],
+  "n_train": 9072,
+  "n_val": 1944,
+  "n_test": 1944,
+  "dataset": "industrial_hybrid_tunisian"
+}

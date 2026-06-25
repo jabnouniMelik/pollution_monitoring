@@ -1,0 +1,43 @@
+@startuml
+title Pollution Monitoring System - Authentication and Dashboard Access
+
+autonumber
+skinparam shadowing false
+
+actor "User" as User
+participant "Frontend" as Frontend
+participant "Auth API" as AuthAPI
+participant "verifyToken Middleware" as VerifyToken
+participant "User Repository" as UserRepo
+participant "Dashboard API" as DashboardAPI
+participant "KPI Service" as KPI
+participant "Reading Service" as ReadingSvc
+participant "Alert Service" as AlertSvc
+
+User -> Frontend : submit email + password
+Frontend -> AuthAPI : POST /api/auth/login
+AuthAPI -> UserRepo : find user + verify password
+UserRepo --> AuthAPI : user record
+AuthAPI --> Frontend : access token + refresh cookie
+
+User -> Frontend : open dashboard
+Frontend -> DashboardAPI : GET /api/auth/me or KPI/alerts/readings
+DashboardAPI -> VerifyToken : authorize request
+VerifyToken -> UserRepo : load current role and assignments
+UserRepo --> VerifyToken : req.user context
+VerifyToken --> DashboardAPI : allowed
+DashboardAPI -> KPI : compute summary
+DashboardAPI -> ReadingSvc : get latest readings
+DashboardAPI -> AlertSvc : get scoped alerts
+KPI --> DashboardAPI : KPI payload
+ReadingSvc --> DashboardAPI : readings payload
+AlertSvc --> DashboardAPI : alerts payload
+DashboardAPI --> Frontend : dashboard data
+
+alt access token expired
+  Frontend -> AuthAPI : POST /api/auth/refresh
+  AuthAPI --> Frontend : new access token
+  Frontend -> DashboardAPI : retry original request
+end
+
+@enduml

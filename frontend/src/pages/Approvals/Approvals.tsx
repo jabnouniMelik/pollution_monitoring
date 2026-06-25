@@ -1,7 +1,9 @@
+﻿
 import { useState } from 'react'
 import {
   CheckCircle, XCircle, Building2, MapPin, Clock,
   ChevronRight, Cpu, FlaskConical, AlertCircle, Info,
+  Factory, User, Key,
 } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader/PageHeader'
 import { Card } from '@/components/ui/Card/Card'
@@ -21,13 +23,26 @@ interface Localisation {
   coordinates?: [number, number]
   ville?: string
   adresse?: string
+  gouvernorat?: string
 }
 
 interface InitialZone {
   nom: string
   code: string
   pollutants: string[]
-  localisation?: Localisation
+}
+
+interface RequestedZone {
+  nom: string
+  description?: string
+  pollutants: string[]
+}
+
+interface RequestedSite {
+  nom: string
+  description?: string
+  localisation?: { ville?: string; adresse?: string }
+  zones: RequestedZone[]
 }
 
 interface PendingItem {
@@ -37,14 +52,28 @@ interface PendingItem {
   description?: string
   approvalStatus: 'PENDING' | 'PREPARING'
   sensorNodeNote?: string
+  adminNote?: string
   approvalRequestedBy?: { username: string; email: string; role: string }
   approvalRequestedAt?: string
   industrieId?: { nom: string; secteur: string }
   siteId?: { nom: string; localisation?: Localisation }
   localisation?: Localisation
-  pollutants?: string[]       // zones
-  initialZone?: InitialZone   // sites
-  type: 'site' | 'zone'
+  pollutants?: string[]
+  initialZone?: InitialZone
+  // Industry-specific
+  secteur?: string
+  superviseurEmail?: string
+  superviseurNom?: string
+  requestedSites?: RequestedSite[]
+  messageInscription?: string
+  contact?: { telephone?: string; email?: string; responsable?: string }
+  matriculeFiscal?: string
+  type: 'site' | 'zone' | 'industry'
+}
+
+interface ApprovalResult {
+  superviseurUser?: { email: string; username: string; tempPassword: string }
+  sitesCreated?: number
 }
 
 // ── Hooks ─────────────────────────────────────────────────────
@@ -52,13 +81,15 @@ function usePendingApprovals() {
   return useQuery({
     queryKey: ['approvals', 'pending'],
     queryFn: async () => {
-      const [sitesResp, zonesResp] = await Promise.all([
+      const [sitesResp, zonesResp, industriesResp] = await Promise.all([
         api.get<ApiSuccess<any[]>>(endpoints.sites.pending),
         api.get<ApiSuccess<any[]>>(endpoints.zones.pending),
+        api.get<ApiSuccess<any[]>>(endpoints.industries.pending),
       ])
       const sites: PendingItem[] = (unwrap(sitesResp.data) ?? []).map(s => ({ ...s, type: 'site' as const }))
       const zones: PendingItem[] = (unwrap(zonesResp.data) ?? []).map(z => ({ ...z, type: 'zone' as const }))
-      return [...sites, ...zones].sort(
+      const industries: PendingItem[] = (unwrap(industriesResp.data) ?? []).map(i => ({ ...i, type: 'industry' as const }))
+      return [...industries, ...sites, ...zones].sort(
         (a, b) => new Date(b.approvalRequestedAt ?? 0).getTime() - new Date(a.approvalRequestedAt ?? 0).getTime()
       )
     },
@@ -70,13 +101,15 @@ function usePrepare() {
   const qc = useQueryClient()
   const toast = useToast()
   return useMutation({
-    mutationFn: async ({ id, type, note }: { id: string; type: 'site' | 'zone'; note?: string }) => {
-      const url = type === 'site' ? endpoints.sites.prepare(id) : endpoints.zones.prepare(id)
-      const resp = await api.patch<ApiSuccess<any>>(url, { sensorNodeNote: note })
-      return unwrap(resp.data)
+    mutationFn: async ({ id, type, note }: { id: string; type: PendingItem['type']; note?: string }) => {
+      const url = type === 'site' ? endpoints.sites.prepare(id)
+        : type === 'zone' ? endpoints.zones.prepare(id)
+        : endpoints.industries.prepare(id)
+      const body = type === 'industry' ? { adminNote: note } : { sensorNodeNote: note }
+      return unwrap((await api.patch<ApiSuccess<any>>(url, body)).data)
     },
     onSuccess: (_, { type }) => {
-      toast.success(`${type === 'site' ? 'Site' : 'Zone'} marqué(e) en préparation`)
+      toast.success(`${type === 'industry' ? 'Industrie' : type === 'site' ? 'Site' : 'Zone'} marqué(e) en préparation`)
       qc.invalidateQueries({ queryKey: ['approvals'] })
     },
     onError: (e: any) => toast.error(e?.message || 'Erreur'),
@@ -87,16 +120,18 @@ function useApprove() {
   const qc = useQueryClient()
   const toast = useToast()
   return useMutation({
-    mutationFn: async ({ id, type }: { id: string; type: 'site' | 'zone' }) => {
-      const url = type === 'site' ? endpoints.sites.approve(id) : endpoints.zones.approve(id)
-      const resp = await api.post<ApiSuccess<any>>(url)
-      return unwrap(resp.data)
+    mutationFn: async ({ id, type }: { id: string; type: PendingItem['type'] }) => {
+      const url = type === 'site' ? endpoints.sites.approve(id)
+        : type === 'zone' ? endpoints.zones.approve(id)
+        : endpoints.industries.approve(id)
+      return unwrap((await api.post<ApiSuccess<any>>(url)).data)
     },
     onSuccess: (_, { type }) => {
-      toast.success(`${type === 'site' ? 'Site' : 'Zone'} approuvé(e) et activé(e)`)
+      toast.success(`${type === 'industry' ? 'Industrie' : type === 'site' ? 'Site' : 'Zone'} approuvé(e)`)
       qc.invalidateQueries({ queryKey: ['approvals'] })
       qc.invalidateQueries({ queryKey: ['sites'] })
       qc.invalidateQueries({ queryKey: ['zones'] })
+      qc.invalidateQueries({ queryKey: ['industries'] })
     },
     onError: (e: any) => toast.error(e?.message || 'Erreur'),
   })
@@ -106,33 +141,31 @@ function useReject() {
   const qc = useQueryClient()
   const toast = useToast()
   return useMutation({
-    mutationFn: async ({ id, type, reason }: { id: string; type: 'site' | 'zone'; reason: string }) => {
-      const url = type === 'site' ? endpoints.sites.reject(id) : endpoints.zones.reject(id)
-      const resp = await api.post<ApiSuccess<any>>(url, { reason })
-      return unwrap(resp.data)
+    mutationFn: async ({ id, type, reason }: { id: string; type: PendingItem['type']; reason: string }) => {
+      const url = type === 'site' ? endpoints.sites.reject(id)
+        : type === 'zone' ? endpoints.zones.reject(id)
+        : endpoints.industries.reject(id)
+      return unwrap((await api.post<ApiSuccess<any>>(url, { reason })).data)
     },
     onSuccess: (_, { type }) => {
-      toast.success(`${type === 'site' ? 'Site' : 'Zone'} rejeté(e)`)
+      toast.success(`${type === 'industry' ? 'Industrie' : type === 'site' ? 'Site' : 'Zone'} rejeté(e)`)
       qc.invalidateQueries({ queryKey: ['approvals'] })
     },
     onError: (e: any) => toast.error(e?.message || 'Erreur'),
   })
 }
 
-// ── Pollutant pills ───────────────────────────────────────────
+// ── Shared UI ─────────────────────────────────────────────────
 function PollutantPills({ codes }: { codes: string[] }) {
-  if (!codes || codes.length === 0)
-    return <span className="text-xs text-text-tertiary">Aucun polluant défini</span>
+  if (!codes?.length) return <span className="text-xs text-text-tertiary">Aucun polluant défini</span>
   return (
     <div className="flex flex-wrap gap-1.5">
-      {codes.map((code) => {
+      {codes.map(code => {
         const p = POLLUTANTS[code as keyof typeof POLLUTANTS]
         return (
-          <span
-            key={code}
+          <span key={code}
             className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-white"
-            style={{ backgroundColor: p?.color ?? '#888' }}
-          >
+            style={{ backgroundColor: p?.color ?? '#888' }}>
             {p?.label ?? code}
           </span>
         )
@@ -141,15 +174,19 @@ function PollutantPills({ codes }: { codes: string[] }) {
   )
 }
 
-// ── Workflow steps ────────────────────────────────────────────
-function WorkflowSteps({ status }: { status: 'PENDING' | 'PREPARING' }) {
-  const steps = [
-    { key: 'PENDING', label: 'Demande reçue' },
-    { key: 'PREPARING', label: 'Installation capteur' },
-    { key: 'APPROVED', label: 'Activé' },
-  ]
+function WorkflowSteps({ status, type }: { status: 'PENDING' | 'PREPARING'; type: PendingItem['type'] }) {
+  const steps = type === 'industry'
+    ? [
+        { key: 'PENDING', label: 'Demande reçue' },
+        { key: 'PREPARING', label: 'Vérification dossier' },
+        { key: 'APPROVED', label: 'Activée' },
+      ]
+    : [
+        { key: 'PENDING', label: 'Demande reçue' },
+        { key: 'PREPARING', label: 'Installation capteur' },
+        { key: 'APPROVED', label: 'Activé' },
+      ]
   const currentIdx = steps.findIndex(s => s.key === status)
-
   return (
     <div className="flex items-center gap-1.5">
       {steps.map((step, i) => (
@@ -186,38 +223,37 @@ function DetailModal({
   isRejecting: boolean
 }) {
   const [rejectReason, setRejectReason] = useState('')
-  const [prepareNote, setPrepareNote] = useState(item.sensorNodeNote ?? '')
+  const [prepareNote, setPrepareNote] = useState(item.sensorNodeNote ?? item.adminNote ?? '')
   const [view, setView] = useState<'detail' | 'reject'>('detail')
 
   const isPending = item.approvalStatus === 'PENDING'
   const isPreparing_ = item.approvalStatus === 'PREPARING'
 
-  // Resolve pollutants: zones have them directly, sites have them on initialZone
-  const pollutants = item.type === 'zone'
-    ? (item.pollutants ?? [])
-    : (item.initialZone?.pollutants ?? [])
+  const pollutants = item.type === 'zone' ? (item.pollutants ?? []) : (item.initialZone?.pollutants ?? [])
+  const localisation = item.localisation ?? (item.type === 'zone' ? item.siteId?.localisation : undefined)
 
-  // Resolve localisation: zones inherit from site, sites have their own
-  const localisation = item.localisation
-    ?? (item.type === 'zone' ? item.siteId?.localisation : undefined)
+  const modalTitle = item.type === 'industry'
+    ? `Inscription — ${item.nom}`
+    : item.type === 'site' ? 'Demande de création de site'
+    : 'Demande de création de zone'
 
   return (
-    <Modal
-      open
-      onClose={onClose}
-      title={item.nom}
-      description={item.type === 'site' ? 'Demande de création de site' : 'Demande de création de zone'}
-      size="md"
-    >
+    <Modal open onClose={onClose} title={item.nom} description={modalTitle} size="md">
       {view === 'detail' ? (
         <div className="space-y-4 p-1">
-          {/* Workflow steps */}
+          {/* Workflow */}
           <div className="rounded-lg border border-border bg-bg px-4 py-3">
-            <WorkflowSteps status={item.approvalStatus} />
+            <WorkflowSteps status={item.approvalStatus} type={item.type} />
           </div>
 
           {/* Info grid */}
           <div className="grid grid-cols-2 gap-3 text-sm">
+            {item.type === 'industry' && item.secteur && (
+              <div className="rounded-lg border border-border p-3">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Secteur</p>
+                <p className="font-medium text-text-primary">{item.secteur}</p>
+              </div>
+            )}
             {item.industrieId && (
               <div className="rounded-lg border border-border p-3">
                 <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Industrie</p>
@@ -225,46 +261,82 @@ function DetailModal({
                 <p className="text-xs text-text-secondary">{item.industrieId.secteur}</p>
               </div>
             )}
-
             {item.siteId && (
               <div className="rounded-lg border border-border p-3">
                 <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Site</p>
                 <p className="font-medium text-text-primary">{item.siteId.nom}</p>
               </div>
             )}
-
             <div className="rounded-lg border border-border p-3">
               <p className="mb-1 flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
                 <MapPin className="h-3 w-3" /> Localisation
               </p>
-              {localisation?.adresse || localisation?.ville ? (
+              {localisation?.ville || (item.localisation as any)?.gouvernorat ? (
                 <>
-                  {localisation.adresse && <p className="text-xs text-text-primary">{localisation.adresse}</p>}
-                  {localisation.ville && <p className="text-xs text-text-secondary">{localisation.ville}</p>}
+                  {(item.localisation as any)?.gouvernorat && <p className="text-xs text-text-primary">{(item.localisation as any).gouvernorat}</p>}
+                  {localisation?.ville && <p className="text-xs text-text-secondary">{localisation.ville}</p>}
+                  {localisation?.adresse && <p className="text-xs text-text-tertiary">{localisation.adresse}</p>}
                 </>
               ) : (
                 <p className="text-xs text-text-tertiary">Non renseignée</p>
               )}
             </div>
-
-            {item.approvalRequestedBy && (
+            {item.approvalRequestedAt && (
               <div className="rounded-lg border border-border p-3">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Demandé par</p>
-                <p className="font-medium text-text-primary">{item.approvalRequestedBy.username}</p>
-                <p className="text-xs text-text-secondary">{item.approvalRequestedBy.email}</p>
-                {item.approvalRequestedAt && (
-                  <p className="mt-0.5 text-xs text-text-tertiary">{formatDateTime(item.approvalRequestedAt)}</p>
-                )}
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Soumis le</p>
+                <p className="text-xs text-text-primary">{formatDateTime(item.approvalRequestedAt)}</p>
               </div>
             )}
           </div>
 
-          {/* Initial zone (for sites) */}
+          {/* Industry: supervisor + sites */}
+          {item.type === 'industry' && (
+            <>
+              <div className="rounded-lg border border-border p-3 space-y-1.5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5" /> Superviseur principal
+                </p>
+                <p className="text-sm font-medium text-text-primary">{item.superviseurNom || '—'}</p>
+                <p className="text-xs text-text-secondary">{item.superviseurEmail}</p>
+                {item.contact?.telephone && <p className="text-xs text-text-tertiary">📞 {item.contact.telephone}</p>}
+                {item.matriculeFiscal && <p className="text-xs text-text-tertiary">Matricule fiscal : {item.matriculeFiscal}</p>}
+              </div>
+
+              {(item.requestedSites ?? []).length > 0 && (
+                <div className="rounded-lg border border-border p-3 space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5" /> Sites demandés ({item.requestedSites!.length})
+                  </p>
+                  {item.requestedSites!.map((site, si) => (
+                    <div key={si} className="rounded border border-border/60 bg-bg p-2.5 space-y-2">
+                      <p className="text-sm font-medium text-text-primary">
+                        {site.nom}
+                        {site.localisation?.ville && <span className="ml-2 text-xs font-normal text-text-secondary">· {site.localisation.ville}</span>}
+                      </p>
+                      {site.zones.map((zone, zi) => (
+                        <div key={zi} className="ml-3 space-y-1">
+                          <p className="text-xs text-text-secondary">↳ {zone.nom}</p>
+                          <PollutantPills codes={zone.pollutants} />
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {item.messageInscription && (
+                <div className="rounded-lg border border-border bg-bg p-3">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Message</p>
+                  <p className="text-xs text-text-secondary italic">"{item.messageInscription}"</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Site: initial zone */}
           {item.type === 'site' && item.initialZone && (
             <div className="rounded-lg border border-border p-3">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
-                Zone initiale créée avec ce site
-              </p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-tertiary">Zone initiale</p>
               <div className="flex items-center gap-2">
                 <span className="rounded bg-bg px-2 py-0.5 font-mono text-xs">{item.initialZone.code}</span>
                 <span className="text-sm font-medium text-text-primary">{item.initialZone.nom}</span>
@@ -272,60 +344,76 @@ function DetailModal({
             </div>
           )}
 
-          {/* Pollutants */}
-          <div className="rounded-lg border border-border p-3">
-            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
-              <FlaskConical className="h-3.5 w-3.5" />
-              Polluants à surveiller
-            </p>
-            <PollutantPills codes={pollutants} />
-          </div>
+          {/* Pollutants — sites and zones only */}
+          {item.type !== 'industry' && (
+            <div className="rounded-lg border border-border p-3">
+              <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+                <FlaskConical className="h-3.5 w-3.5" /> Polluants à surveiller
+              </p>
+              <PollutantPills codes={pollutants} />
+            </div>
+          )}
 
-          {/* ── Step 1: PENDING → assign sensor node ── */}
+          {/* Step 1 — PENDING: prepare */}
           {isPending && (
             <div className="rounded-lg border border-warning-light bg-warning-light/20 p-3">
               <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-warning-dark">
-                <Cpu className="h-3.5 w-3.5" />
-                Étape 1 — Assigner un nœud capteur
+                {item.type === 'industry' ? <Factory className="h-3.5 w-3.5" /> : <Cpu className="h-3.5 w-3.5" />}
+                {item.type === 'industry' ? 'Étape 1 — Vérification du dossier' : 'Étape 1 — Assigner un nœud capteur'}
               </p>
               <p className="mb-3 text-xs text-text-secondary">
-                Confirmez que le nœud capteur physique (ESP32) est prêt à être installé sur ce{' '}
-                {item.type === 'site' ? 'site' : 'zone'}.
+                {item.type === 'industry'
+                  ? 'Vérifiez les informations, contactez le demandeur si nécessaire, puis marquez en préparation.'
+                  : `Confirmez que le nœud capteur (ESP32) est prêt pour ce ${item.type === 'site' ? 'site' : 'zone'}.`}
               </p>
               <Input
-                label="Note d'installation (optionnel)"
-                placeholder="ex: Nœud ESP32 #42 — MAC: AA:BB:CC:DD:EE:FF"
+                label={item.type === 'industry' ? 'Note interne (optionnel)' : "Note d'installation (optionnel)"}
+                placeholder={item.type === 'industry'
+                  ? 'ex: Visite terrain prévue le 20/06'
+                  : 'ex: Nœud ESP32 #42 — MAC: AA:BB:CC:DD:EE:FF'}
                 value={prepareNote}
                 onChange={e => setPrepareNote(e.target.value)}
               />
               <div className="mt-3 flex justify-end">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  leftIcon={<Cpu className="h-3.5 w-3.5" />}
+                <Button variant="secondary" size="sm"
+                  leftIcon={item.type === 'industry' ? <Factory className="h-3.5 w-3.5" /> : <Cpu className="h-3.5 w-3.5" />}
                   loading={isPreparing}
-                  onClick={() => onPrepare(prepareNote || undefined)}
-                >
+                  onClick={() => onPrepare(prepareNote || undefined)}>
                   Marquer en préparation
                 </Button>
               </div>
             </div>
           )}
 
-          {/* ── Step 2: PREPARING → approve ── */}
+          {/* Step 2 — PREPARING: approve */}
           {isPreparing_ && (
-            <div className="rounded-lg border border-success-light bg-success-light/20 p-3">
-              <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-success">
+            <div className="rounded-lg border border-success-light bg-success-light/20 p-3 space-y-2">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-success">
                 <CheckCircle className="h-3.5 w-3.5" />
-                Étape 2 — Approuver et activer
+                {item.type === 'industry' ? 'Étape 2 — Approuver et créer les accès' : 'Étape 2 — Approuver et activer'}
               </p>
-              <p className="text-xs text-text-secondary">
-                Le nœud capteur est installé. Approuvez pour activer ce{' '}
-                {item.type === 'site' ? 'site et sa zone initiale' : 'zone'}.
-              </p>
-              {item.sensorNodeNote && (
-                <p className="mt-2 rounded bg-bg px-2 py-1 font-mono text-xs text-text-secondary">
-                  📋 {item.sensorNodeNote}
+              {item.type === 'industry' ? (
+                <>
+                  <p className="text-xs text-text-secondary">L'approbation va automatiquement :</p>
+                  <ul className="ml-4 list-disc space-y-0.5 text-xs text-text-secondary">
+                    <li>Activer l'industrie <strong>{item.nom}</strong></li>
+                    <li>Créer le compte <strong>HEAD_SUPERVISOR</strong> pour <strong>{item.superviseurEmail}</strong></li>
+                    <li>Créer les <strong>{item.requestedSites?.length ?? 0} site(s)</strong> et leurs zones</li>
+                  </ul>
+                  <div className="flex items-start gap-1.5 rounded bg-bg px-2 py-1.5 text-xs text-text-secondary">
+                    <Key className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
+                    <span>Un mot de passe temporaire sera affiché après approbation — notez-le pour le transmettre.</span>
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs text-text-secondary">
+                  Le capteur est installé. Approuvez pour activer ce{' '}
+                  {item.type === 'site' ? 'site et sa zone initiale' : 'zone'}.
+                </p>
+              )}
+              {(item.sensorNodeNote || item.adminNote) && (
+                <p className="rounded bg-bg px-2 py-1 font-mono text-xs text-text-secondary">
+                  📋 {item.sensorNodeNote || item.adminNote}
                 </p>
               )}
             </div>
@@ -334,48 +422,100 @@ function DetailModal({
           {/* Actions */}
           <div className="flex justify-end gap-2 border-t border-border pt-3">
             <Button variant="secondary" size="sm" onClick={() => setView('reject')}>
-              <XCircle className="mr-1.5 h-3.5 w-3.5" />
-              Rejeter
+              <XCircle className="mr-1.5 h-3.5 w-3.5" /> Rejeter
             </Button>
             {isPreparing_ && (
-              <Button
-                variant="primary"
-                size="sm"
+              <Button variant="primary" size="sm"
                 leftIcon={<CheckCircle className="h-3.5 w-3.5" />}
-                loading={isApproving}
-                onClick={onApprove}
-              >
-                Approuver et activer
+                loading={isApproving} onClick={onApprove}>
+                {item.type === 'industry' ? 'Approuver et créer les accès' : 'Approuver et activer'}
               </Button>
             )}
           </div>
         </div>
       ) : (
-        /* Reject view */
         <div className="space-y-4 p-1">
           <div className="flex items-start gap-2 rounded-lg border border-danger-light bg-danger-light/20 px-3 py-2.5 text-xs text-danger">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>Cette action est irréversible. Le demandeur sera notifié du rejet.</span>
           </div>
-          <Input
-            label="Raison du rejet"
-            placeholder="ex: Matériel non disponible, informations incomplètes…"
-            value={rejectReason}
-            onChange={e => setRejectReason(e.target.value)}
-          />
+          <Input label="Raison du rejet"
+            placeholder="ex: Informations incomplètes, matériel non disponible…"
+            value={rejectReason} onChange={e => setRejectReason(e.target.value)} />
           <div className="flex justify-end gap-2">
             <Button variant="secondary" size="sm" onClick={() => setView('detail')}>Retour</Button>
-            <Button
-              variant="danger"
-              size="sm"
-              loading={isRejecting}
-              onClick={() => onReject(rejectReason)}
-            >
+            <Button variant="danger" size="sm" loading={isRejecting} onClick={() => onReject(rejectReason)}>
               Confirmer le rejet
             </Button>
           </div>
         </div>
       )}
+    </Modal>
+  )
+}
+
+// ── Temp password modal shown after industry approval ─────────
+function TempPasswordModal({ result, onClose }: { result: ApprovalResult; onClose: () => void }) {
+  const [copied, setCopied] = useState(false)
+  const u = result.superviseurUser
+  if (!u) return null
+
+  const copy = () => {
+    navigator.clipboard.writeText(u.tempPassword)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <Modal open onClose={onClose} title="Industrie approuvée" size="sm">
+      <div className="space-y-4 p-1">
+        <div className="flex items-start gap-2 rounded-lg border border-success-light bg-success-light/20 px-3 py-2.5 text-xs text-success">
+          <CheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            L'industrie a été activée. {result.sitesCreated ?? 0} site(s) et leurs zones ont été créés.
+          </span>
+        </div>
+
+        <div className="rounded-lg border border-border p-4 space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary flex items-center gap-1.5">
+            <Key className="h-3.5 w-3.5 text-accent" /> Identifiants HEAD_SUPERVISOR
+          </p>
+          <div className="space-y-1.5 text-sm">
+            <div className="flex justify-between">
+              <span className="text-text-secondary">Nom d'utilisateur</span>
+              <span className="font-mono font-medium">{u.username}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-text-secondary">Email</span>
+              <span className="font-mono font-medium">{u.email}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-text-secondary">Mot de passe temporaire</span>
+              <div className="flex items-center gap-2">
+                <span className="rounded bg-bg px-2 py-1 font-mono text-sm font-bold tracking-wider text-accent">
+                  {u.tempPassword}
+                </span>
+                <button onClick={copy}
+                  className="text-xs text-accent hover:underline">
+                  {copied ? '✓ Copié' : 'Copier'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-2 rounded-lg border border-warning-light bg-warning-light/20 px-3 py-2.5 text-xs text-warning-dark">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            Transmettez ces identifiants au superviseur par un canal sécurisé.
+            Ce mot de passe temporaire ne sera plus affiché après fermeture de cette fenêtre.
+          </span>
+        </div>
+
+        <div className="flex justify-end">
+          <Button variant="primary" onClick={onClose}>Fermer</Button>
+        </div>
+      </div>
     </Modal>
   )
 }
@@ -387,7 +527,9 @@ export default function Approvals() {
   const approve = useApprove()
   const reject = useReject()
   const [selectedItem, setSelectedItem] = useState<PendingItem | null>(null)
+  const [approvalResult, setApprovalResult] = useState<ApprovalResult | null>(null)
 
+  const industries = items.filter(i => i.type === 'industry')
   const sites = items.filter(i => i.type === 'site')
   const zones = items.filter(i => i.type === 'zone')
   const preparing = items.filter(i => i.approvalStatus === 'PREPARING')
@@ -396,70 +538,85 @@ export default function Approvals() {
     if (!selectedItem) return
     prepare.mutate(
       { id: selectedItem._id, type: selectedItem.type, note },
-      { onSuccess: () => setSelectedItem(prev => prev ? { ...prev, approvalStatus: 'PREPARING', sensorNodeNote: note } : null) }
+      { onSuccess: () => setSelectedItem(prev => prev ? { ...prev, approvalStatus: 'PREPARING' } : null) }
     )
   }
 
   const handleApprove = () => {
     if (!selectedItem) return
-    approve.mutate({ id: selectedItem._id, type: selectedItem.type }, {
-      onSuccess: () => setSelectedItem(null),
-    })
+    approve.mutate(
+      { id: selectedItem._id, type: selectedItem.type },
+      {
+        onSuccess: (data) => {
+          setSelectedItem(null)
+          // For industry approvals, show the temp password modal
+          if (selectedItem.type === 'industry' && data?.superviseurUser) {
+            setApprovalResult(data)
+          }
+        },
+      }
+    )
   }
 
   const handleReject = (reason: string) => {
     if (!selectedItem) return
-    reject.mutate({ id: selectedItem._id, type: selectedItem.type, reason }, {
-      onSuccess: () => setSelectedItem(null),
-    })
+    reject.mutate(
+      { id: selectedItem._id, type: selectedItem.type, reason },
+      { onSuccess: () => setSelectedItem(null) }
+    )
+  }
+
+  const typeIcon = (type: PendingItem['type']) => {
+    if (type === 'industry') return <Factory className="h-5 w-5" />
+    if (type === 'site') return <Building2 className="h-5 w-5" />
+    return <MapPin className="h-5 w-5" />
+  }
+
+  const typeBg = (type: PendingItem['type']) => {
+    if (type === 'industry') return 'bg-orange-50 text-orange-600'
+    if (type === 'site') return 'bg-blue-50 text-blue-600'
+    return 'bg-purple-50 text-purple-600'
+  }
+
+  const typeLabel = (item: PendingItem) => {
+    if (item.type === 'industry') return `Nouvelle industrie · ${item.secteur ?? ''}`
+    if (item.type === 'site') return `Nouveau site · ${item.industrieId?.nom ?? ''}`
+    return `Nouvelle zone · ${item.siteId?.nom ?? ''}`
   }
 
   return (
     <div className="space-y-4">
       <PageHeader
         title="Demandes d'approbation"
-        subtitle="Valider les nouvelles demandes de création de sites et zones"
+        subtitle="Valider les inscriptions et demandes de création de sites et zones"
       />
 
-      {/* Summary */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <div className="card p-3">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-warning" />
-            <span className="text-xs font-semibold text-text-secondary">Total</span>
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+        {[
+          { icon: <Clock className="h-4 w-4 text-warning" />, label: 'Total', value: items.length },
+          { icon: <Factory className="h-4 w-4 text-orange-500" />, label: 'Industries', value: industries.length },
+          { icon: <Building2 className="h-4 w-4 text-accent" />, label: 'Sites', value: sites.length },
+          { icon: <MapPin className="h-4 w-4 text-accent" />, label: 'Zones', value: zones.length },
+          { icon: <Cpu className="h-4 w-4 text-info" />, label: 'En préparation', value: preparing.length },
+        ].map(c => (
+          <div key={c.label} className="card p-3">
+            <div className="flex items-center gap-2">
+              {c.icon}
+              <span className="text-xs font-semibold text-text-secondary">{c.label}</span>
+            </div>
+            <div className="mt-1 text-2xl font-bold text-text-primary">{c.value}</div>
           </div>
-          <div className="mt-1 text-2xl font-bold text-text-primary">{items.length}</div>
-        </div>
-        <div className="card p-3">
-          <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-accent" />
-            <span className="text-xs font-semibold text-text-secondary">Sites</span>
-          </div>
-          <div className="mt-1 text-2xl font-bold text-text-primary">{sites.length}</div>
-        </div>
-        <div className="card p-3">
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-accent" />
-            <span className="text-xs font-semibold text-text-secondary">Zones</span>
-          </div>
-          <div className="mt-1 text-2xl font-bold text-text-primary">{zones.length}</div>
-        </div>
-        <div className="card p-3">
-          <div className="flex items-center gap-2">
-            <Cpu className="h-4 w-4 text-info" />
-            <span className="text-xs font-semibold text-text-secondary">En préparation</span>
-          </div>
-          <div className="mt-1 text-2xl font-bold text-text-primary">{preparing.length}</div>
-        </div>
+        ))}
       </div>
 
       {/* Workflow legend */}
       <div className="flex items-start gap-2 rounded-lg border border-border bg-bg px-4 py-2.5 text-xs text-text-secondary">
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
         <span>
-          Workflow (sites et zones) :{' '}
-          <strong>① Demande reçue</strong> — vérifier localisation, polluants, puis assigner un nœud capteur →{' '}
-          <strong>② En préparation</strong> — installation physique du capteur →{' '}
+          Workflow :{' '}
+          <strong>① Demande reçue</strong> — vérifier le dossier →{' '}
+          <strong>② En préparation</strong> — installation / vérification terrain →{' '}
           <strong>③ Approuver</strong> pour activer
         </span>
       </div>
@@ -468,9 +625,7 @@ export default function Approvals() {
       <Card>
         {isLoading ? (
           <div className="space-y-3 p-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-20 animate-pulse rounded-lg bg-bg" />
-            ))}
+            {[1, 2, 3].map(i => <div key={i} className="h-20 animate-pulse rounded-lg bg-bg" />)}
           </div>
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center py-12 text-center">
@@ -483,50 +638,40 @@ export default function Approvals() {
             {items.map(item => {
               const pollutants = item.type === 'zone'
                 ? (item.pollutants ?? [])
-                : (item.initialZone?.pollutants ?? [])
+                : item.type === 'site'
+                ? (item.initialZone?.pollutants ?? [])
+                : [...new Set((item.requestedSites ?? []).flatMap(s => s.zones.flatMap(z => z.pollutants)))]
 
               return (
-                <div
-                  key={item._id}
+                <div key={item._id}
                   className="flex cursor-pointer items-start gap-4 p-4 transition-colors hover:bg-bg"
-                  onClick={() => setSelectedItem(item)}
-                >
-                  {/* Icon */}
-                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                    item.type === 'site' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'
-                  }`}>
-                    {item.type === 'site' ? <Building2 className="h-5 w-5" /> : <MapPin className="h-5 w-5" />}
+                  onClick={() => setSelectedItem(item)}>
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${typeBg(item.type)}`}>
+                    {typeIcon(item.type)}
                   </div>
-
-                  {/* Info */}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-semibold text-text-primary">{item.nom}</span>
                       <Badge variant={item.approvalStatus === 'PREPARING' ? 'info' : 'warning'}>
-                        {item.approvalStatus === 'PREPARING'
-                          ? '⚙ En préparation'
-                          : item.type === 'site' ? 'Nouveau site' : 'Nouvelle zone'}
+                        {item.approvalStatus === 'PREPARING' ? '⚙ En préparation' : typeLabel(item)}
                       </Badge>
                     </div>
-
                     <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-text-secondary">
+                      {item.type === 'industry' && item.superviseurEmail && <span>👤 {item.superviseurEmail}</span>}
                       {item.industrieId && <span>🏭 {item.industrieId.nom}</span>}
                       {item.siteId && <span>📍 {item.siteId.nom}</span>}
-                      {item.localisation?.ville && <span>🗺 {item.localisation.ville}</span>}
+                      {(item.localisation as any)?.gouvernorat && <span>🗺 {(item.localisation as any).gouvernorat}</span>}
+                      {item.type === 'industry' && item.requestedSites && (
+                        <span>🏗 {item.requestedSites.length} site(s) · {item.requestedSites.reduce((n, s) => n + s.zones.length, 0)} zone(s)</span>
+                      )}
                     </div>
-
                     {pollutants.length > 0 && (
-                      <div className="mt-1.5">
-                        <PollutantPills codes={pollutants} />
-                      </div>
+                      <div className="mt-1.5"><PollutantPills codes={pollutants} /></div>
                     )}
-
                     <div className="mt-1 text-xs text-text-tertiary">
-                      {item.approvalRequestedBy && <span>Par {item.approvalRequestedBy.username} · </span>}
                       {item.approvalRequestedAt && formatDateTime(item.approvalRequestedAt)}
                     </div>
                   </div>
-
                   <div className="shrink-0 text-xs text-accent">Voir détails →</div>
                 </div>
               )
@@ -545,6 +690,13 @@ export default function Approvals() {
           isPreparing={prepare.isPending}
           isApproving={approve.isPending}
           isRejecting={reject.isPending}
+        />
+      )}
+
+      {approvalResult && (
+        <TempPasswordModal
+          result={approvalResult}
+          onClose={() => setApprovalResult(null)}
         />
       )}
     </div>

@@ -197,7 +197,7 @@ const resetToDefaults = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: "Configuration réinitialisée aux valeurs par défaut (Décret 2010-2516)",
+      message: "Configuration réinitialisée aux valeurs par défaut (Décret 2018-928)",
       data: reset,
     });
   } catch (error) {

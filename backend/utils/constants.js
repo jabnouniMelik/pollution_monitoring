@@ -29,6 +29,7 @@ const alert_types = {
   Threshold: "Threshold",
   Anomaly: "Anomaly",
   SensorFault: "SensorFault",
+  Forecast: "Forecast",
 };
 
 //status des rapports reglementaires

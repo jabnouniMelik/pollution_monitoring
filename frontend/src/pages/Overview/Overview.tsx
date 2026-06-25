@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useQueries } from '@tanstack/react-query'
 import { AlertTriangle, Eye, EyeOff, Gauge, Leaf, Wind, X } from 'lucide-react'
 import { HistoryChartSettings } from './HistoryChartSettings'
 import { PageHeader } from '@/components/layout/PageHeader/PageHeader'
@@ -14,6 +15,19 @@ import { AlertList } from '@/components/alerts/AlertList/AlertList'
 import { Card } from '@/components/ui/Card/Card'
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
 import { useKPIConfig, useKPIHistory, useKPISummary } from '@/features/kpi/hooks/useKPISummary'
+import { queryKeys } from '@/lib/api/queryClient'
+import { kpiApi } from '@/features/kpi/api/kpiApi'
+import {
+  averageMtdSeries,
+  buildMtdDailyValues,
+  buildMtdLabels,
+  lookupPollutantMetric,
+  mtdActiveDayCount,
+  truncateMtdSeries,
+} from '@/features/kpi/utils/mtdSeries'
+import { formatKpiTarget } from '@/features/kpi/utils/kpiFormatters'
+import { calculateRCO2GoalAttainment } from '@/features/kpi/utils/kpiCalculations'
+import { useSites } from '@/features/sites/hooks/useSites'
 import { useAlerts } from '@/features/alerts/hooks/useAlerts'
 import { useLatestReadings } from '@/features/readings/hooks/useReadings'
 import { useSelectionStore } from '@/store/selectionStore'
@@ -26,23 +40,64 @@ import { formatDate, formatNumber } from '@/lib/utils/formatters'
 import { cn } from '@/lib/utils/cn'
 
 export default function Overview() {
-  const { siteId, zoneId, period } = useSelectionStore()
-  const queryParams = { siteId: siteId ?? undefined, zoneId: zoneId ?? undefined, period }
+  const { siteId, zoneId, sensorNodeId, period } = useSelectionStore()
+  const queryParams = {
+    siteId: siteId ?? undefined,
+    zoneId: zoneId ?? undefined,
+    sensorNodeId: sensorNodeId ?? undefined,
+    period,
+  }
 
   const summary = useKPISummary(queryParams)
   const config = useKPIConfig()
+  const [selectedKPI, setSelectedKPI] = useState<KPIKind | null>(null)
   const [selectedEmjPollutant, setSelectedEmjPollutant] = useState<PollutantCode>('NOX')
   const emjHistory = useKPIHistory(selectedEmjPollutant, {
     siteId: siteId ?? undefined,
     zoneId: zoneId ?? undefined,
+    sensorNodeId: sensorNodeId ?? undefined,
     period: 'day',
+    metric: 'emissionKgDay',
   })
+  const rco2MonthlyHistory = useKPIHistory('CO2', {
+    siteId: siteId ?? undefined,
+    zoneId: zoneId ?? undefined,
+    sensorNodeId: sensorNodeId ?? undefined,
+    period: 'month',
+    metric: 'reductionPct',
+  })
+  const ipeHistory = useKPIHistory('global', {
+    siteId: siteId ?? undefined,
+    zoneId: zoneId ?? undefined,
+    sensorNodeId: sensorNodeId ?? undefined,
+    period: 'day',
+    metric: 'overallScore',
+  })
+  const tdHistories = useQueries({
+    queries: POLLUTANT_CODES.map((code) => ({
+      queryKey: queryKeys.kpi.history(code, {
+        ...queryParams,
+        period: 'day',
+        metric: 'tauxDepassement',
+      }),
+      queryFn: () =>
+        kpiApi.history(code, {
+          siteId: siteId ?? undefined,
+          zoneId: zoneId ?? undefined,
+          sensorNodeId: sensorNodeId ?? undefined,
+          period: 'day',
+          metric: 'tauxDepassement',
+        }),
+      enabled: Boolean(siteId) && selectedKPI === 'TD',
+      staleTime: 30_000,
+    })),
+  })
+  const sites = useSites({ pageSize: 100 })
   const alerts = useAlerts({ pageSize: 5, status: 'open' })
   const latest = useLatestReadings(queryParams)
 
   type MetricSelection = PollutantCode | EnvParamCode | 'all'
 
-  const [selectedKPI, setSelectedKPI] = useState<KPIKind | null>(null)
   const [selectedMetric, setSelectedMetric] = useState<MetricSelection>('all')
   const [visiblePollutants, setVisiblePollutants] = useState<Set<PollutantCode>>(
     () => new Set(POLLUTANT_CODES),
@@ -142,10 +197,14 @@ export default function Overview() {
   const tdValue = summary.data?.td ?? 0
   const ipeValue = summary.data?.ipe ?? 0
   const rco2Value = summary.data?.rco2 ?? 0
-  const emjTotal = useMemo(() => {
-    const vals = Object.values(summary.data?.emj ?? {})
-    return vals.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0)
-  }, [summary.data])
+  const emjTotal = useMemo(
+    () =>
+      POLLUTANT_CODES.reduce(
+        (s, code) => s + lookupPollutantMetric(summary.data?.emj, code),
+        0,
+      ),
+    [summary.data?.emj],
+  )
 
   const latestByPollutant = useMemo(() => {
     const map: Record<string, number> = {}
@@ -161,7 +220,7 @@ export default function Overview() {
 
   const history = useMemo(() => {
     if (!latest.data || latest.data.length === 0) return []
-    const pollutants: PollutantCode[] = ['CO2', 'NOX', 'SO2', 'PM']
+    const pollutants: PollutantCode[] = ['CO2', 'NOX', 'SO2', 'PM25', 'PM10']
     return pollutants.map((code) => ({
       code,
       label: POLLUTANTS[code].label,
@@ -209,69 +268,107 @@ export default function Overview() {
   const currentYear = currentDate.getFullYear()
   const currentMonth = currentDate.getMonth()
   const daysInCurrentMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
+  const mtdActiveDays = mtdActiveDayCount(currentYear, currentMonth, currentDate)
 
   const mtdLabels = useMemo(
-    () => Array.from({ length: daysInCurrentMonth }, (_, i) => String(i + 1).padStart(2, '0')),
-    [daysInCurrentMonth],
+    () => buildMtdLabels(daysInCurrentMonth, mtdActiveDays),
+    [daysInCurrentMonth, mtdActiveDays],
   )
 
-  const mtdValues = useMemo(() => {
-    const dailyValues = new Array<number>(daysInCurrentMonth).fill(0)
+  const mtdEmjDaily = useMemo(
+    () =>
+      truncateMtdSeries(
+        buildMtdDailyValues(
+          emjHistory.data?.points ?? [],
+          daysInCurrentMonth,
+          currentYear,
+          currentMonth,
+        ),
+        mtdActiveDays,
+      ),
+    [daysInCurrentMonth, emjHistory.data?.points, currentMonth, currentYear, mtdActiveDays],
+  )
 
-    for (const point of emjHistory.data?.points ?? []) {
-      const d = new Date(point.timestamp)
-      if (Number.isNaN(d.getTime())) continue
-      if (d.getFullYear() !== currentYear || d.getMonth() !== currentMonth) continue
-
-      const dayIndex = d.getDate() - 1
-      if (dayIndex < 0 || dayIndex >= dailyValues.length) continue
-      dailyValues[dayIndex] += Math.max(0, Number(point.value) || 0)
+  const tdDailyValues = useMemo(() => {
+    const series = tdHistories
+      .map((q) =>
+        truncateMtdSeries(
+          buildMtdDailyValues(
+            q.data?.points ?? [],
+            daysInCurrentMonth,
+            currentYear,
+            currentMonth,
+          ),
+          mtdActiveDays,
+        ),
+      )
+      .filter((s) => s.length > 0)
+    if (series.length === 0) {
+      return mtdLabels.map(() => tdValue)
     }
+    return averageMtdSeries(series)
+  }, [tdHistories, daysInCurrentMonth, currentYear, currentMonth, mtdLabels, tdValue, mtdActiveDays])
 
-    let cumulative = 0
-    return dailyValues.map((v) => {
-      cumulative += v
-      return Number(cumulative.toFixed(2))
-    })
-  }, [daysInCurrentMonth, emjHistory.data?.points, currentMonth, currentYear])
+  const rco2MonthlyChart = useMemo(() => {
+    const points = rco2MonthlyHistory.data?.points ?? []
+    if (points.length > 0) {
+      return {
+        labels: points.map((p) => formatDate(p.timestamp, 'MMM yy')),
+        values: points.map((p) => p.value),
+      }
+    }
+    if (Number.isFinite(rco2Value)) {
+      return {
+        labels: [formatDate(new Date(), 'MMM yy')],
+        values: [rco2Value],
+      }
+    }
+    return { labels: [], values: [] }
+  }, [rco2MonthlyHistory.data?.points, rco2Value])
 
-  // Per-KPI synthetic monthly trends (deterministic — no random) for the drill-down panel
-  const tdDailyValues = useMemo(
-    () =>
-      mtdLabels.map((_, i) => {
-        const wave = 0.6 + 0.4 * Math.sin((i / mtdLabels.length) * Math.PI * 2)
-        return Math.max(0, tdValue * wave)
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [tdValue],
-  )
-  const rco2DailyValues = useMemo(
-    () =>
-      mtdLabels.map((_, i) => {
-        const wave = 0.5 + 0.5 * Math.cos((i / mtdLabels.length) * Math.PI * 2)
-        return rco2Value * wave
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rco2Value],
-  )
-  const ipeDailyValues = useMemo(
-    () =>
-      mtdLabels.map((_, i) => {
-        const drift = 0.92 + 0.08 * Math.sin((i / mtdLabels.length) * Math.PI)
-        return Math.min(100, Math.max(0, ipeValue * drift))
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ipeValue],
-  )
+  const ipeDailyValues = useMemo(() => {
+    const fromHistory = truncateMtdSeries(
+      buildMtdDailyValues(
+        ipeHistory.data?.points ?? [],
+        daysInCurrentMonth,
+        currentYear,
+        currentMonth,
+      ),
+      mtdActiveDays,
+    )
+    if (fromHistory.some((v) => v > 0)) return fromHistory
+    if (Number.isFinite(ipeValue) && mtdActiveDays > 0) {
+      return mtdLabels.map((_, i) => (i === mtdActiveDays - 1 ? ipeValue : 0))
+    }
+    return fromHistory
+  }, [
+    daysInCurrentMonth,
+    ipeHistory.data?.points,
+    currentMonth,
+    currentYear,
+    mtdActiveDays,
+    mtdLabels,
+    ipeValue,
+  ])
 
   const emjByPollutant = useMemo(
     () =>
       POLLUTANT_CODES.map((c) => ({
         label: POLLUTANTS[c].label,
         color: POLLUTANTS[c].color,
-        value: summary.data?.emj?.[c] ?? 0,
+        value: lookupPollutantMetric(summary.data?.emj, c),
       })),
     [summary.data?.emj],
+  )
+
+  const tdByPollutant = useMemo(
+    () =>
+      POLLUTANT_CODES.map((c) => ({
+        label: POLLUTANTS[c].label,
+        color: POLLUTANTS[c].color,
+        value: summary.data?.tdByPollutant?.[c] ?? 0,
+      })),
+    [summary.data?.tdByPollutant],
   )
 
   const envSeries = useMemo(() => {
@@ -307,23 +404,28 @@ export default function Overview() {
 
   const envHasData = envSeries.some((p) => p.temperature !== undefined || p.humidity !== undefined)
 
-  const ipeContribByPollutant = useMemo(
-    () =>
-      POLLUTANT_CODES.map((c) => {
-        const limit = TUNISIA_DECRET_LIMITS[c]?.limit ?? 100
-        const v = latestByPollutant[c] ?? 0
-        const ratio = limit > 0 ? Math.min(1, v / limit) : 0
-        return {
-          label: POLLUTANTS[c].label,
-          color: POLLUTANTS[c].color,
-          value: Math.max(0, Math.round((1 - ratio) * 100)),
-        }
-      }),
-    [latestByPollutant],
-  )
+  const activeSitesCount = useMemo(() => {
+    const items = sites.data?.items ?? (sites.data as { data?: unknown[] })?.data ?? []
+    if (Array.isArray(items)) {
+      return items.filter((s) => (s as { status?: string }).status !== 'inactive').length
+    }
+    return null
+  }, [sites.data])
 
-  const hasTdTrend = tdDailyValues.some((value) => value > 0)
-  const hasEmjTrend = mtdValues.some((value) => value > 0)
+  const hasTdTrend = tdDailyValues.length > 0
+  const hasEmjTrend =
+    (emjHistory.data?.points?.length ?? 0) > 0 ||
+    emjByPollutant.some((p) => p.value > 0)
+  const hasRco2Trend =
+    (rco2MonthlyHistory.data?.points?.length ?? 0) > 0 || rco2Value !== 0
+  const rco2Detail = summary.data?.rco2Detail
+  const rco2CurrentAvg = rco2Detail?.currentAvg ?? latestByPollutant.CO2 ?? 0
+  const rco2PreviousAvg = rco2Detail?.previousAvg ?? 0
+  const rco2Attainment =
+    rco2Detail?.goalAttainmentPct ??
+    calculateRCO2GoalAttainment(rco2Value, targets.RCO2)
+  const rco2GoalMet = rco2Value <= targets.RCO2
+  const baselineCo2 = config.data?.baseline?.CO2 ?? 650
 
   return (
     <div className="space-y-4">
@@ -373,7 +475,7 @@ export default function Overview() {
             />
             <KPICard
               label="Réduction CO₂"
-              sublabel="RCO₂ — vs baseline"
+              sublabel={`RCO₂ · ${formatNumber(rco2Attainment, 0)} % atteinte`}
               value={rco2Value}
               unit="%"
               target={targets.RCO2}
@@ -411,25 +513,21 @@ export default function Overview() {
                   <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-text-tertiary">
                     <span>Aucune donnée disponible pour le TD</span>
                     <span className="text-[11px] text-text-secondary">
-                      La série reste vide tant qu’aucun dépassement n’est enregistré.
+                      L&apos;historique apparaît dès que des agrégations journalières existent.
                     </span>
                   </div>
                 )}
               </ChartWrapper>
               <ChartWrapper
                 title="Dépassements par polluant"
-                subtitle="Concentration vs limite réglementaire"
+                subtitle="Taux de dépassement (TD) par polluant · cible ≤ 2 %"
                 height={240}
                 className="lg:col-span-1"
               >
                 <MTDTrendChart
-                  labels={ipeContribByPollutant.map((p) => p.label)}
-                  values={POLLUTANT_CODES.map((c) => {
-                    const limit = TUNISIA_DECRET_LIMITS[c]?.limit ?? 0
-                    const v = latestByPollutant[c] ?? 0
-                    return limit > 0 ? Math.round((v / limit) * 100) : 0
-                  })}
-                  target={100}
+                  labels={tdByPollutant.map((p) => p.label)}
+                  values={tdByPollutant.map((p) => p.value)}
+                  target={targets.TD}
                   unit="%"
                   color="#E65100"
                 />
@@ -457,13 +555,22 @@ export default function Overview() {
                 height={240}
                 className="lg:col-span-2"
               >
-                <MTDTrendChart
-                  labels={mtdLabels}
-                  values={ipeDailyValues}
-                  target={targets.IPE}
-                  unit="pts"
-                  color="#1B5E20"
-                />
+                {ipeDailyValues.some((v) => v > 0) ? (
+                  <MTDTrendChart
+                    labels={mtdLabels}
+                    values={ipeDailyValues}
+                    target={targets.IPE}
+                    unit="pts"
+                    color="#1B5E20"
+                  />
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-text-tertiary">
+                    <span>Aucune série IPE disponible</span>
+                    <span className="text-[11px] text-text-secondary">
+                      Score actuel&nbsp;: {formatNumber(ipeValue, 1)} pts
+                    </span>
+                  </div>
+                )}
               </ChartWrapper>
             </>
           )}
@@ -471,8 +578,8 @@ export default function Overview() {
           {selectedKPI === 'EMJ' && (
             <>
               <ChartWrapper
-                title={`Émissions cumulées ${POLLUTANTS[selectedEmjPollutant].label}`}
-                subtitle={`Mois à date vs cible réglementaire · ${POLLUTANTS[selectedEmjPollutant].longLabel}`}
+                title={`Émissions journalières ${POLLUTANTS[selectedEmjPollutant].label}`}
+                subtitle={`EMJ par jour (kg/j) · ${POLLUTANTS[selectedEmjPollutant].longLabel}`}
                 height={240}
                 className="lg:col-span-2"
                 loading={emjHistory.isLoading}
@@ -507,20 +614,23 @@ export default function Overview() {
                 {hasEmjTrend ? (
                   <MTDTrendChart
                     labels={mtdLabels}
-                    values={mtdValues}
-                    target={
-                      Number.isFinite(targets.EMJ)
-                        ? (targets.EMJ as number) * daysInCurrentMonth
-                        : undefined
+                    values={
+                      mtdEmjDaily.some((v) => v > 0)
+                        ? mtdEmjDaily
+                        : mtdLabels.map((_, i) =>
+                            i === mtdActiveDays - 1
+                              ? lookupPollutantMetric(summary.data?.emj, selectedEmjPollutant)
+                              : 0,
+                          )
                     }
-                    unit="kg"
+                    unit="kg/j"
                     color={POLLUTANTS[selectedEmjPollutant].color}
                   />
                 ) : (
                   <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-text-tertiary">
                     <span>Aucune donnée pour {POLLUTANTS[selectedEmjPollutant].label}</span>
                     <span className="text-[11px] text-text-secondary">
-                      Choisissez un autre polluant pour afficher sa série.
+                      Les émissions du jour restent visibles dans le graphique de droite.
                     </span>
                   </div>
                 )}
@@ -544,43 +654,102 @@ export default function Overview() {
           {selectedKPI === 'RCO2' && (
             <>
               <ChartWrapper
-                title="Réduction CO₂ (RCO₂)"
-                subtitle={`Évolution mensuelle vs baseline · cible ≤ ${formatNumber(
+                title="Variation mensuelle CO₂ (RCO₂)"
+                subtitle={`Vs mois précédent · cible ≤ ${formatKpiTarget(
                   targets.RCO2,
+                  'RCO2',
                   1,
                 )} %`}
                 height={240}
                 className="lg:col-span-2"
+                loading={rco2MonthlyHistory.isLoading}
                 action={<CloseDetailButton onClose={() => setSelectedKPI(null)} />}
               >
-                <MTDTrendChart
-                  labels={mtdLabels}
-                  values={rco2DailyValues}
-                  target={targets.RCO2}
-                  unit="%"
-                  color={POLLUTANTS.PM?.color ?? '#7E57C2'}
-                />
+                {rco2MonthlyChart.values.length > 0 ? (
+                  <MTDTrendChart
+                    labels={rco2MonthlyChart.labels}
+                    values={rco2MonthlyChart.values}
+                    target={targets.RCO2}
+                    unit="%"
+                    color={POLLUTANTS.CO2.color}
+                    beginAtZero={false}
+                  />
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-text-tertiary">
+                    <span>Aucune série mensuelle RCO₂</span>
+                    <span className="text-[11px] text-text-secondary">
+                      Variation actuelle&nbsp;: {formatNumber(rco2Value, 1)} %
+                    </span>
+                  </div>
+                )}
               </ChartWrapper>
               <ChartWrapper
-                title="Baseline CO₂"
-                subtitle="Référence configurée"
+                title="Objectif CO₂ mensuel"
+                subtitle="Moyenne mois actuel vs mois précédent"
                 height={240}
                 className="lg:col-span-1"
               >
-                <div className="flex h-full flex-col items-center justify-center text-center">
-                  <div className="text-4xl font-semibold text-text-primary">
-                    {config.data?.baseline?.CO2 ?? '—'}
-                    <span className="ml-1 text-sm text-text-secondary">ppm</span>
+                <div className="flex h-full flex-col justify-center gap-4 px-2">
+                  <div className="grid grid-cols-2 gap-3 text-left">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-text-tertiary">
+                        M−1
+                      </div>
+                      <div className="text-xl font-semibold text-text-primary">
+                        {formatNumber(rco2PreviousAvg, 0)}
+                        <span className="ml-1 text-xs text-text-secondary">ppm</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-text-tertiary">
+                        Mois actuel
+                      </div>
+                      <div className="text-xl font-semibold text-text-primary">
+                        {formatNumber(rco2CurrentAvg, 0)}
+                        <span className="ml-1 text-xs text-text-secondary">ppm</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-2 text-xs text-text-secondary">
-                    Réduction actuelle&nbsp;:&nbsp;
-                    <span className="font-semibold text-text-primary">
-                      {formatNumber(rco2Value, 1)} %
-                    </span>
+
+                  <div className="space-y-2 rounded-lg border border-border bg-bg/50 p-3 text-sm">
+                    <div className="flex justify-between gap-2">
+                      <span className="text-text-secondary">Cible</span>
+                      <span className="font-medium text-text-primary">
+                        ≤ {formatKpiTarget(targets.RCO2, 'RCO2', 1)} %
+                      </span>
+                    </div>
+                    <div className="flex justify-between gap-2">
+                      <span className="text-text-secondary">Réel (RCO₂)</span>
+                      <span className="font-medium text-text-primary">
+                        {formatNumber(rco2Value, 1)} %
+                      </span>
+                    </div>
+                    <div className="flex justify-between gap-2">
+                      <span className="text-text-secondary">Atteinte</span>
+                      <span className="font-semibold text-text-primary">
+                        {formatNumber(rco2Attainment, 0)} %
+                      </span>
+                    </div>
                   </div>
-                  <div className="mt-1 text-[10px] uppercase tracking-wider text-text-tertiary">
-                    cible ≤ {formatNumber(targets.RCO2, 1)} %
+
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-bg">
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-all',
+                        rco2GoalMet ? 'bg-success' : 'bg-warning',
+                      )}
+                      style={{ width: `${Math.min(100, Math.max(0, rco2Attainment))}%` }}
+                    />
                   </div>
+
+                  <p
+                    className={cn(
+                      'text-center text-xs font-medium',
+                      rco2GoalMet ? 'text-success' : 'text-warning',
+                    )}
+                  >
+                    {rco2GoalMet ? '✓ Objectif atteint' : '⚠ En dessous de l\u2019objectif'}
+                  </p>
                 </div>
               </ChartWrapper>
             </>
@@ -714,7 +883,11 @@ export default function Overview() {
                       ? 'border-accent bg-accent text-white'
                       : 'border-border text-text-secondary hover:bg-bg hover:text-text-primary',
                   )}
-                  style={selectedMetric === code ? { backgroundColor: POLLUTANTS[code].color } : undefined}
+                  style={
+                    selectedMetric === code
+                      ? { backgroundColor: POLLUTANTS[code].color }
+                      : undefined
+                  }
                 >
                   {POLLUTANTS[code].label}
                 </button>
@@ -784,7 +957,7 @@ export default function Overview() {
         <QuickStat
           icon={<Gauge className="h-4 w-4" />}
           label="Sites actifs"
-          value={String(summary.data?.deltas ? 3 : '—')}
+          value={activeSitesCount != null ? String(activeSitesCount) : '—'}
         />
         <QuickStat
           icon={<Wind className="h-4 w-4" />}
@@ -799,7 +972,7 @@ export default function Overview() {
         <QuickStat
           icon={<Leaf className="h-4 w-4" />}
           label="Baseline CO₂"
-          value={`${config.data?.baseline?.CO2 ?? '—'} ppm`}
+          value={`${formatNumber(baselineCo2, 0)} ppm`}
         />
       </div>
     </div>

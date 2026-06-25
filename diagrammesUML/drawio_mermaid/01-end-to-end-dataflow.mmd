@@ -1,0 +1,37 @@
+flowchart LR
+  A[ESP32 Sensor Nodes] -->|MQTT emissions/zone/pollutant| B[MQTT Broker]
+  B --> C[mqttService]
+  C --> D[ReadingService.ingestReading]
+
+  D --> E[(MongoDB readings)]
+  D --> F[Alert Engine checkAndCreateAlert]
+  F --> G[(MongoDB alerts)]
+
+  D --> H[Reading API /api/readings/latest]
+  G --> I[Alerts API /api/alerts]
+
+  E --> J[KPIService]
+  J --> K[KPI API /api/kpi/summary]
+
+  E --> L[AggregationService HOURLY]
+  L --> M[(MongoDB aggregateData)]
+  M --> N[AIService LSTM + IF]
+  N --> O[IA API /api/ia/*]
+
+  H --> P[Frontend Dashboard]
+  I --> P
+  K --> P
+  O --> P
+
+  F --> Q[WebSocket broadcast]
+  Q --> P
+
+  classDef core fill:#e8f1ff,stroke:#3b5ea7,stroke-width:1px;
+  classDef db fill:#fff3e8,stroke:#b86b21,stroke-width:1px;
+  classDef api fill:#e9f9ef,stroke:#247a4d,stroke-width:1px;
+  classDef ui fill:#f6e8ff,stroke:#7a3ea1,stroke-width:1px;
+
+  class C,D,F,J,L,N core;
+  class E,G,M db;
+  class H,I,K,O api;
+  class P ui;

@@ -27,7 +27,7 @@ const SensorSchema = new mongoose.Schema(
     },
     model: {
       type: String,
-      required: true, //ex: "MQ-135", "SDS011", "BME680"
+      required: true, //ex: "MH-Z19B", "ME4-SO2", "ME4-NO2", "SDS011", "SGP30", "DHT22"
     },
     unit: {
       type: String,

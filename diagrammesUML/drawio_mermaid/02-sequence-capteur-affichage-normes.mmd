@@ -1,0 +1,33 @@
+sequenceDiagram
+  autonumber
+  participant Node as ESP32 Node
+  participant Broker as MQTT Broker
+  participant Mqtt as mqttService
+  participant ReadSvc as ReadingService
+  participant PollRepo as PolluantRepository
+  participant AlertRepo as AlertRepository
+  participant ReadDB as readings
+  participant AlertDB as alerts
+  participant API as REST APIs
+  participant UI as Frontend Dashboard
+
+  Node->>Broker: publish emissions/zone/pollutant {value, unit, sensorType}
+  Broker->>Mqtt: deliver message
+  Mqtt->>ReadSvc: ingestReading(sensorId, polluantId, value...)
+  ReadSvc->>PollRepo: findById(polluantId)
+  PollRepo-->>ReadSvc: regulatoryLimit + warningThreshold
+  ReadSvc->>ReadDB: create reading (isValid)
+
+  alt value <= warningThreshold
+    ReadSvc->>AlertRepo: autoResolve(open alert)
+    AlertRepo->>AlertDB: set resolvedAt
+  else value > warningThreshold
+    ReadSvc->>AlertRepo: create or update active alert
+    AlertRepo->>AlertDB: save severity + message
+  end
+
+  API->>ReadDB: GET /api/readings/latest
+  API->>AlertDB: GET /api/alerts
+  API-->>UI: concentrations + alert status + comparaison normes
+
+  Note over UI: Affichage couleur selon ecart a la norme\n(Warning / High / Critical)

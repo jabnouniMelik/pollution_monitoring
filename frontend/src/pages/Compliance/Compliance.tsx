@@ -8,7 +8,14 @@ import { QueryState } from '@/components/common/QueryState/QueryState'
 import { ComplianceSkeleton } from '@/components/ui/Skeleton/SkeletonBlocks'
 import { POLLUTANT_CODES, POLLUTANTS, type PollutantCode } from '@/lib/constants/pollutants'
 import { getPollutantThresholdRow } from '@/lib/constants/pollutantThresholdKeys'
-import { DECRET_NAME, DECRET_URL, TUNISIA_DECRET_LIMITS } from '@/lib/constants/tunisiaDecret'
+import {
+  DECRET_NAME,
+  DECRET_FULL_NAME,
+  DECRET_URL,
+  DECRET_ANNEX,
+  DECRET_O2_REF,
+  TUNISIA_DECRET_LIMITS,
+} from '@/lib/constants/tunisiaDecret'
 import { useLatestReadings } from '@/features/readings/hooks/useReadings'
 import { useThresholds } from '@/features/config/hooks/useThresholds'
 import { useSelectionStore } from '@/store/selectionStore'
@@ -49,7 +56,7 @@ export default function Compliance() {
     <div className="space-y-4">
       <PageHeader
         title="Conformité réglementaire"
-        subtitle={`Suivi des valeurs limites d’émission (${DECRET_NAME})`}
+        subtitle={`Suivi des valeurs limites d'émission (${DECRET_NAME})`}
       />
 
       <Card>
@@ -63,9 +70,12 @@ export default function Compliance() {
                 Référentiel : {DECRET_NAME}
               </h3>
               <p className="mt-1 text-xs text-text-secondary">
-                Les valeurs limites d’émission (VLE) appliquées proviennent de l’Annexe I, II et IV
-                du décret relatif aux rejets dans l’atmosphère. Les seuils site (si configurés)
-                peuvent être plus stricts que la réglementation nationale.
+                Les valeurs limites d&apos;émission (VLE) appliquées proviennent du{' '}
+                <span className="font-medium">{DECRET_FULL_NAME}</span>,{' '}
+                <span className="font-medium">{DECRET_ANNEX}</span>.
+                Toutes les valeurs sont ramenées à{' '}
+                <span className="font-medium">{DECRET_O2_REF}</span>.
+                Les seuils site (si configurés) peuvent être plus stricts que la réglementation nationale.
               </p>
               <a
                 href={DECRET_URL}
@@ -85,7 +95,7 @@ export default function Compliance() {
         <div className="px-4 pt-4">
           <h3 className="text-sm font-semibold text-text-primary">Tableau de conformité</h3>
           <p className="mt-0.5 text-xs text-text-secondary">
-            Comparaison des dernières mesures avec les limites applicables.
+            Comparaison des dernières mesures avec les limites applicables ({DECRET_ANNEX}).
           </p>
         </div>
         <div className="px-4 pb-4 pt-3">

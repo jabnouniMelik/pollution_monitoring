@@ -57,6 +57,7 @@ export const endpoints = {
   readings: {
     base: '/api/readings',
     latest: '/api/readings/latest',
+    history: '/api/readings/history',   // aggregated time-series for charts
     ingest: '/api/readings/ingest',
     byId: (id: string) => `/api/readings/${id}`,
   },
@@ -79,6 +80,8 @@ export const endpoints = {
     history: (polluantId: string) => `/api/kpi/history/${polluantId}`,
     config: '/api/kpi/config',
     configAirflow: '/api/kpi/config/airflow',
+    configBaseline: '/api/kpi/config/baseline',
+    configSampleInterval: '/api/kpi/config/sample-interval',
     configWeights: '/api/kpi/config/weights',
     configTargets: '/api/kpi/config/targets',
     aggregate: '/api/kpi/aggregate',
@@ -116,6 +119,11 @@ export const endpoints = {
   industries: {
     base: '/api/industries',
     byId: (id: string) => `/api/industries/${id}`,
+    register: '/api/industries/register',
+    pending: '/api/industries/pending',
+    prepare: (id: string) => `/api/industries/${id}/prepare`,
+    approve: (id: string) => `/api/industries/${id}/approve`,
+    reject: (id: string) => `/api/industries/${id}/reject`,
   },
 
   polluants: {
@@ -141,9 +149,24 @@ export const endpoints = {
     byId: (id: string) => `/api/reports/${id}`,
     generate: '/api/reports/generate',
     submit: (id: string) => `/api/reports/${id}/submit`,
+    approve: (id: string) => `/api/reports/${id}/approve`,
+    reject: (id: string) => `/api/reports/${id}/reject`,
   },
 
   websocket: {
     stats: '/api/ws/stats',
+  },
+
+  ia: {
+    health: '/api/ia/health',
+    forecastLatest: (zoneId: string) => `/api/ia/zone/${zoneId}/forecasts/latest`,
+    anomalyHistory: (zoneId: string) => `/api/ia/zone/${zoneId}/anomalies/history`,
+    runForecast: (zoneId: string) => `/api/ia/zone/${zoneId}/forecasts/run`,
+    runDetect: (zoneId: string) => `/api/ia/zone/${zoneId}/anomalies/detect`,
+    retrainPrepareDataset: '/api/ia/retrain/dataset/prepare',
+    retrainLatestDataset: '/api/ia/retrain/dataset/latest',
+    retrainStart: '/api/ia/retrain/start',
+    retrainLatestJob: '/api/ia/retrain/jobs/latest',
+    retrainJobById: (jobId: string) => `/api/ia/retrain/jobs/${jobId}`,
   },
 } as const

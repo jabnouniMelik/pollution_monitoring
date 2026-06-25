@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { useLatestForecast, useAnomalyHistory } from '@/features/ia/hooks/useIA'
+import { ForecastBanner, AnomalyBanner } from '@/features/ia/components/ForecastBanner'
 import { PageHeader } from '@/components/layout/PageHeader/PageHeader'
 import { ChartWrapper } from '@/components/charts/ChartWrapper/ChartWrapper'
 import { HistoryChart, type HistorySeries } from '@/components/charts/HistoryChart/HistoryChart'
@@ -27,22 +29,24 @@ const POLLUTANT_OPTIONS: SelectOption[] = POLLUTANT_CODES.map((code) => ({
 function periodToRange(period: string): { from: string; to: string; limit: number } {
   const now = new Date()
   const to = now.toISOString()
-  const limits: Record<string, number> = {
-    hour: 500,
-    day: 500,
-    week: 500,
-    month: 500,
-    year: 500,
-  }
   const offsets: Record<string, number> = {
-    hour: 60 * 60 * 1000,
-    day: 24 * 60 * 60 * 1000,
-    week: 7 * 24 * 60 * 60 * 1000,
+    hour:  60 * 60 * 1000,
+    day:   24 * 60 * 60 * 1000,
+    week:  7  * 24 * 60 * 60 * 1000,
     month: 30 * 24 * 60 * 60 * 1000,
-    year: 365 * 24 * 60 * 60 * 1000,
+    year:  365 * 24 * 60 * 60 * 1000,
+  }
+  // Limit scales with period so we get enough points without overloading the chart.
+  // The backend sorts descending and slices at `limit`, so we get the most recent N readings.
+  const limits: Record<string, number> = {
+    hour:  500,
+    day:   1000,
+    week:  1000,
+    month: 1000,
+    year:  1000,
   }
   const from = new Date(now.getTime() - (offsets[period] ?? offsets.day)).toISOString()
-  return { from, to, limit: limits[period] ?? 500 }
+  return { from, to, limit: limits[period] ?? 1000 }
 }
 
 export default function History() {
@@ -60,11 +64,14 @@ export default function History() {
     limit,
   })
 
+  const forecastQuery = useLatestForecast(zoneId)
+  const anomaliesQuery = useAnomalyHistory(zoneId, 1)
+
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Historique des émissions"
-        subtitle="Analyse temporelle par polluant"
+        title={`Historique — ${POLLUTANTS[pollutant].longLabel}`}
+        subtitle={`Derniers relevés · ${POLLUTANTS[pollutant].label} vs conditions environnementales`}
         actions={
           <div className="flex items-center gap-2">
             <Select
@@ -83,6 +90,21 @@ export default function History() {
         }
       />
 
+      {zoneId && (
+        <div className="space-y-2">
+          <AnomalyBanner
+            isAnomaly={Boolean(anomaliesQuery.data?.[0]?.isAnomaly)}
+            score={anomaliesQuery.data?.[0]?.anomalyScore}
+            periodStart={anomaliesQuery.data?.[0]?.periodStart}
+          />
+          <ForecastBanner
+            forecast={forecastQuery.data}
+            pollutant={pollutant}
+            loading={forecastQuery.isLoading}
+          />
+        </div>
+      )}
+
       <QueryState
         query={readings}
         loadingSkeleton={<HistorySkeleton />}
@@ -92,20 +114,30 @@ export default function History() {
         errorDescription="Impossible de charger les données historiques."
       >
         {(data) => {
+          const histPoints = data.map((r) => ({
+            t: r.timestamp,
+            v: r.measurements[pollutant]?.value ?? 0,
+          }))
+
           const series: HistorySeries[] = [
             {
               label: POLLUTANTS[pollutant].label,
               color: POLLUTANTS[pollutant].color,
-              points: data.map((r) => ({ t: r.timestamp, v: r.measurements[pollutant]?.value ?? 0 })),
+              points: histPoints,
               threshold: TUNISIA_DECRET_LIMITS[pollutant]?.limit,
             },
+          ]
+
+          const subtitleParts = [
+            `Unité: ${POLLUTANTS[pollutant].unit}`,
+            `VLE: ${TUNISIA_DECRET_LIMITS[pollutant]?.limit ?? '—'}`,
           ]
 
           return (
             <>
               <ChartWrapper
                 title={`Concentration ${POLLUTANTS[pollutant].longLabel}`}
-                subtitle={`Unité: ${POLLUTANTS[pollutant].unit} · VLE: ${TUNISIA_DECRET_LIMITS[pollutant]?.limit ?? '—'}`}
+                subtitle={subtitleParts.join(' · ')}
                 height={420}
               >
                 <HistoryChart series={series} unit={POLLUTANTS[pollutant].unit} />

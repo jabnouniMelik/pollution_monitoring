@@ -5,17 +5,15 @@ import { ProtectedRoute } from '@/components/common/ProtectedRoute/ProtectedRout
 import { LoadingSpinner } from '@/components/common/LoadingSpinner/LoadingSpinner'
 import { Role } from '@/lib/constants/roles'
 import { useAuth } from '@/features/auth/hooks/useAuth'
+import { defaultPathForRole } from '@/lib/rbac/auditorAccess'
 
-// Smart home redirect: SUPER_ADMIN → /industries, others → Overview
 function HomeRedirect() {
   const { user } = useAuth()
-  if (user?.role === Role.SUPER_ADMIN) {
-    return <Navigate to="/industries" replace />
-  }
-  return <Navigate to="/overview" replace />
+  return <Navigate to={defaultPathForRole(user?.role)} replace />
 }
 
 const Login = lazy(() => import('@/pages/Login'))
+const Register = lazy(() => import('@/pages/Register'))
 const Overview = lazy(() => import('@/pages/Overview'))
 const Alerts = lazy(() => import('@/pages/Alerts'))
 const History = lazy(() => import('@/pages/History'))
@@ -34,6 +32,7 @@ export function AppRoutes() {
     <Suspense fallback={<LoadingSpinner fullScreen />}>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
         <Route
@@ -71,7 +70,7 @@ export function AppRoutes() {
           <Route
             path="compliance"
             element={
-              <ProtectedRoute requires={['VIEW_KPI']}>
+              <ProtectedRoute requires={['VIEW_COMPLIANCE']}>
                 <Compliance />
               </ProtectedRoute>
             }

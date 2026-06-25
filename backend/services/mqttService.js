@@ -14,7 +14,6 @@ const mqtt = require("mqtt");
 const readingService = require("./ReadingService");
 const Sensor = require("../models/Sensor");
 const Polluant = require("../models/Polluant");
-const SensorNode = require("../models/SensorNode");
 
 // ── Broker MQTT ───────────────────────────────────────────────
 const MQTT_BROKER = process.env.MQTT_BROKER || "mqtt://localhost:1883";
@@ -31,26 +30,23 @@ const extractZoneFromTopic = (topic) => {
 };
 
 const resolveSensorForMessage = async (data, topic) => {
-  const zone = data.zone || extractZoneFromTopic(topic);
-
-  if (zone) {
-    const nodeIds = await SensorNode.find({ zone })
-      .select("_id")
-      .lean();
-
-    if (nodeIds.length > 0) {
-      const sensor = await Sensor.findOne({
-        type: data.sensorType,
-        model: data.model,
-        sensorNodeId: { $in: nodeIds.map((node) => node._id) },
-      }).lean();
-
-      if (sensor) {
-        return sensor;
-      }
-    }
+  // If the simulator sends sensorId directly, use it (fastest path)
+  if (data.sensorId) {
+    const sensor = await Sensor.findById(data.sensorId).lean();
+    if (sensor) return sensor;
   }
 
+  // Fallback: resolve by type + model, optionally scoped to a zone via nodeId
+  if (data.nodeId) {
+    const sensor = await Sensor.findOne({
+      type: data.sensorType,
+      model: data.model,
+      sensorNodeId: data.nodeId,
+    }).lean();
+    if (sensor) return sensor;
+  }
+
+  // Last resort: match by type + model across all nodes
   return await Sensor.findOne({
     type: data.sensorType,
     model: data.model,
@@ -83,17 +79,22 @@ const processMessage = async (topic, payload) => {
       return;
     }
 
-    // Récupérer l'ID du polluant depuis la DB via name
-    const polluant = await Polluant.findOne({ name: data.sensorType }).lean();
-    if (!polluant) {
-      console.warn(`⚠️  [MQTT] Polluant non trouvé: ${data.sensorType}`);
+    // Récupérer l'ID du polluant depuis la DB via code (champ canonique).
+    // Le simulateur envoie polluant.code dans sensorType.
+    // Fallback sur name pour compatibilité avec d'anciens messages.
+    let resolvedPolluant = await Polluant.findOne({ code: data.sensorType }).lean();
+    if (!resolvedPolluant) {
+      resolvedPolluant = await Polluant.findOne({ name: data.sensorType }).lean();
+    }
+    if (!resolvedPolluant) {
+      console.warn(`⚠️  [MQTT] Polluant non trouvé (code ou name): ${data.sensorType}`);
       return;
     }
 
     // Construire le payload pour ReadingService
     const readingPayload = {
       sensorId: sensor._id.toString(),
-      polluantId: polluant._id.toString(),
+      polluantId: resolvedPolluant._id.toString(),
       nodeId: sensor.sensorNodeId?.toString() || null,
       value: data.value,
       unit: data.unit,

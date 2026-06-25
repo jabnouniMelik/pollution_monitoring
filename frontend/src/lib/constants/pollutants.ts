@@ -27,13 +27,21 @@ export const POLLUTANTS = {
     color: '#7B1FA2',
     tailwindColor: 'pollutant-so2',
   },
-  PM: {
-    code: 'PM',
+  PM25: {
+    code: 'PM25',
     label: 'PM\u2082.\u2085',
     longLabel: 'Particules fines (PM\u2082.\u2085)',
     unit: '\u00B5g/m\u00B3',
     color: '#E65100',
     tailwindColor: 'pollutant-pm',
+  },
+  PM10: {
+    code: 'PM10',
+    label: 'PM\u2081\u2080',
+    longLabel: 'Particules inhalables (PM\u2081\u2080)',
+    unit: '\u00B5g/m\u00B3',
+    color: '#BF360C',
+    tailwindColor: 'pollutant-pm10',
   },
   COV: {
     code: 'COV',

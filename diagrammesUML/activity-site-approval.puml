@@ -1,0 +1,32 @@
+@startuml
+title Pollution Monitoring System - Site Approval Activity
+
+skinparam shadowing false
+
+start
+
+:HEAD_SUPERVISOR creates site request;
+:System auto-creates initial zone request;
+:Set approvalStatus = PENDING;
+
+if (SUPER_ADMIN reviews request?) then (yes)
+  :Validate location, pollutants, initial zone;
+  if (More information needed?) then (yes)
+    :Set approvalStatus = PREPARING;
+    :Store sensor node note;
+    :Wait for installation progress;
+  else (no)
+    :Approve site request;
+  endif
+
+  :Set approvalStatus = APPROVED;
+  :Activate site;
+  :Activate related zones;
+  :Site becomes available in dashboard;
+else (no)
+  :Keep request in pending queue;
+endif
+
+stop
+
+@enduml

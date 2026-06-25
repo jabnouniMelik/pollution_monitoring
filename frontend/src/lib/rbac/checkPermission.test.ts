@@ -5,6 +5,8 @@ import {
   hasMinimumRole,
   hasPermission,
 } from './checkPermission'
+import { isAuditorAllowedPath, defaultPathForRole } from './auditorAccess'
+import { Role } from '../constants/roles'
 
 describe('hasPermission', () => {
   it('SUPER_ADMIN has everything', () => {
@@ -12,10 +14,12 @@ describe('hasPermission', () => {
     expect(hasPermission('SUPER_ADMIN', 'RETRAIN_MODEL')).toBe(true)
   })
 
-  it('AUDITOR is read-only', () => {
-    expect(hasPermission('AUDITOR', 'VIEW_KPI')).toBe(true)
+  it('AUDITOR has compliance and reports only', () => {
+    expect(hasPermission('AUDITOR', 'VIEW_COMPLIANCE')).toBe(true)
+    expect(hasPermission('AUDITOR', 'GENERATE_REPORT')).toBe(true)
+    expect(hasPermission('AUDITOR', 'VIEW_KPI')).toBe(false)
+    expect(hasPermission('AUDITOR', 'VIEW_ALERTS')).toBe(false)
     expect(hasPermission('AUDITOR', 'DELETE_SITE')).toBe(false)
-    expect(hasPermission('AUDITOR', 'ACKNOWLEDGE_ALERT')).toBe(false)
   })
 
   it('OPERATOR cannot generate reports', () => {
@@ -78,5 +82,18 @@ describe('canAccessResource', () => {
         { assignedZones: ['z9'] },
       ),
     ).toBe(true)
+  })
+})
+
+describe('auditorAccess', () => {
+  it('allows only compliance and reports paths', () => {
+    expect(isAuditorAllowedPath('/compliance')).toBe(true)
+    expect(isAuditorAllowedPath('/reports')).toBe(true)
+    expect(isAuditorAllowedPath('/overview')).toBe(false)
+    expect(isAuditorAllowedPath('/users')).toBe(false)
+  })
+
+  it('default path for auditor is reports', () => {
+    expect(defaultPathForRole(Role.AUDITOR)).toBe('/reports')
   })
 })

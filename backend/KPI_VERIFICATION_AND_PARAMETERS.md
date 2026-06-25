@@ -30,7 +30,7 @@ $$TD_{global}(T) = \frac{1}{P} \sum_{p=1}^{P} TD(p,T)$$
 const tauxDepassement = (breachCount / totalCount) * 100;
 ```
 
-**Regulatory Target:** ≤ 2% per month (NT 106.04)
+**Regulatory Target:** ≤ 2% per month (Décret 2018-928)
 
 ---
 
@@ -81,7 +81,7 @@ $$Score(p,T) = \max\left(0, 1 - \frac{C_{moy}(p,T) - V_{limite}}{V_{limite}}\rig
   - If `C_moy > VLE`: Score = max(0, 1 - (C_moy - VLE) / VLE)
 - Final IPE normalized to [0, 100]
 
-**Regulatory Weights (NT 106.04):**
+**Regulatory Weights (Décret 2018-928):**
 | Pollutant | Weight | Current |
 |-----------|--------|---------|
 | NOx | 30% | ✅ 0.30 |
@@ -158,11 +158,11 @@ The following parameters can be adjusted by SUPER_ADMIN via API endpoints:
 
 | Pollutant | Parameter | Default | Min | Max | Regulatory |
 |-----------|-----------|---------|-----|-----|------------|
-| NOx | polluantWeights.NOx | 0.30 | 0 | 1 | 30% (NT 106.04) |
-| SO₂ | polluantWeights.SO2 | 0.25 | 0 | 1 | 25% (NT 106.04) |
-| PM₂.₅ | polluantWeights.PM25 | 0.25 | 0 | 1 | 25% (NT 106.04) |
-| COV | polluantWeights.COV | 0.15 | 0 | 1 | 15% (NT 106.04) |
-| CO₂ | polluantWeights.CO2 | 0.05 | 0 | 1 | 5% (NT 106.04) |
+| NOx | polluantWeights.NOx | 0.30 | 0 | 1 | 30% (Décret 2018-928) |
+| SO₂ | polluantWeights.SO2 | 0.25 | 0 | 1 | 25% (Décret 2018-928) |
+| PM₂.₅ | polluantWeights.PM25 | 0.25 | 0 | 1 | 25% (Décret 2018-928) |
+| COV | polluantWeights.COV | 0.15 | 0 | 1 | 15% (Décret 2018-928) |
+| CO₂ | polluantWeights.CO2 | 0.05 | 0 | 1 | 5% (Décret 2018-928) |
 
 **Constraint:** Sum of all weights MUST equal 1.0
 
@@ -208,7 +208,7 @@ The following parameters can be adjusted by SUPER_ADMIN via API endpoints:
 
 **Endpoint:** `PUT /api/thresholds/:id` (SUPER_ADMIN only)
 
-| Pollutant | Field | Default (Tunisia 2010-2516) | Adjustable |
+| Pollutant | Field | Default (Tunisia Décret 2018-928) | Adjustable |
 |-----------|-------|------|---|
 | NOx | max | 450 mg/Nm³ | ⚠️ Yes (warning-critical recalc) |
 | SO₂ | max | 1700 mg/Nm³ | ⚠️ Yes |
@@ -225,7 +225,7 @@ The following parameters can be adjusted by SUPER_ADMIN via API endpoints:
       "min": 120,
       "max": 500,
       "unit": "mg/Nm³",
-      "reference": "Décret 2010-2516"
+      "reference": "Décret Décret 2018-928"
     }
   }
 }

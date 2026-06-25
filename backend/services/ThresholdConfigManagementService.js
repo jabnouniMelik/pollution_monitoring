@@ -1,12 +1,12 @@
 /**
  * SERVICE : THRESHOLD CONFIG MANAGEMENT
  * Logique métier pour la gestion des seuils réglementaires
- * Limites d'émission Décret 2010-2516 (Tunisie) - SUPER_ADMIN only
+ * Limites d'émission Décret 2018-928 (Tunisie) - SUPER_ADMIN only
  */
 
 const thresholdConfigRepository = require("../repositories/ThresholdConfigRepository");
 
-const VALID_POLLUTANTS = ["NOx", "SO2", "PM", "PM25", "COV", "CO2"];
+const VALID_POLLUTANTS = ["NOx", "SO2", "PM", "PM25", "PM10", "COV", "CO2"];
 
 class ThresholdConfigManagementService {
   /**
@@ -79,7 +79,7 @@ class ThresholdConfigManagementService {
       warning: parseFloat(warning.toFixed(2)),
       critical: parseFloat(critical.toFixed(2)),
       unit: unit || "mg/Nm³",
-      reference: reference || "Décret 2010-2516",
+      reference: reference || "Décret 2018-928",
     };
 
     const updated = await thresholdConfigRepository.updatePollutantLimits(
@@ -192,7 +192,7 @@ class ThresholdConfigManagementService {
         warning: warningVal,
         critical: criticalVal,
         unit: unit || "mg/Nm³",
-        reference: reference || "Décret 2010-2516",
+        reference: reference || "Décret 2018-928",
       };
     }
 
@@ -239,7 +239,7 @@ class ThresholdConfigManagementService {
   }
 
   /**
-   * Réinitialise les seuils aux valeurs par défaut (Décret 2010-2516)
+   * Réinitialise les seuils aux valeurs par défaut (Décret 2018-928)
    * @param {String} configId - ID configuration
    * @param {Object} requester - Utilisateur qui fait la requête
    * @returns {Promise<Object>} Configuration réinitialisée
@@ -256,7 +256,7 @@ class ThresholdConfigManagementService {
         warning: 360,
         critical: 540,
         unit: "mg/Nm³",
-        reference: "Décret 2010-2516",
+        reference: "Décret 2018-928",
       },
       SO2: {
         min: 35,
@@ -264,7 +264,7 @@ class ThresholdConfigManagementService {
         warning: 1360,
         critical: 2040,
         unit: "mg/Nm³",
-        reference: "Décret 2010-2516",
+        reference: "Décret 2018-928",
       },
       PM: {
         min: 5,
@@ -272,15 +272,23 @@ class ThresholdConfigManagementService {
         warning: 440,
         critical: 660,
         unit: "mg/m³",
-        reference: "Décret 2010-2516",
+        reference: "Décret 2018-928",
       },
       PM25: {
         min: 5,
         max: 550,
         warning: 440,
         critical: 660,
-        unit: "mg/m³",
-        reference: "Décret 2010-2516",
+        unit: "µg/m³",
+        reference: "Décret 2018-928",
+      },
+      PM10: {
+        min: 5,
+        max: 660,
+        warning: 528,
+        critical: 792,
+        unit: "µg/m³",
+        reference: "Décret 2018-928",
       },
       COV: {
         min: 0,

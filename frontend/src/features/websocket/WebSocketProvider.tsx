@@ -54,10 +54,15 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user && status === 'connected') {
+      const industryId =
+        typeof user.industryId === 'string'
+          ? user.industryId
+          : user.industryId?._id ?? null
       wsClient.authenticate({
         userId: user.userId || user._id || '',
         role: user.role,
         email: user.email,
+        industryId,
       })
     }
   }, [user, status])

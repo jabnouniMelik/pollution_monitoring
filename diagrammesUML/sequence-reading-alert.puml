@@ -1,0 +1,44 @@
+@startuml
+title Pollution Monitoring System - Reading Ingestion and Alert Sequence
+
+autonumber
+skinparam shadowing false
+
+actor "ESP32 Node" as Node
+participant "MQTT Broker" as Broker
+participant "MQTT Service" as MQTT
+participant "ReadingService" as ReadingSvc
+participant "ReadingRepository" as ReadingRepo
+participant "Alert Engine" as AlertEngine
+participant "AlertRepository" as AlertRepo
+participant "WebSocket Service" as WS
+
+Node -> Broker : publish emissions/<zone>/<pollutant>
+Broker -> MQTT : deliver message
+MQTT -> ReadingSvc : parse payload
+ReadingSvc -> ReadingSvc : validate sensor, pollutant, status
+ReadingSvc -> ReadingRepo : save reading
+ReadingRepo --> ReadingSvc : reading saved
+ReadingSvc -> AlertEngine : checkAndCreateAlert(reading)
+
+alt value <= warningThreshold
+  AlertEngine -> AlertRepo : autoResolve(open alert)
+  AlertRepo --> AlertEngine : resolved or none
+else value > warningThreshold
+  alt no open alert
+    AlertEngine -> AlertRepo : create alert
+    AlertRepo --> AlertEngine : alert created
+  else open alert exists
+    alt severity escalates or update window expired
+      AlertEngine -> AlertRepo : update active alert
+      AlertRepo --> AlertEngine : alert updated
+    else too soon to update
+      AlertEngine -> AlertEngine : skip duplicate update
+    end
+  end
+end
+
+AlertEngine -> WS : broadcast alert/reading update
+WS --> MQTT : push update to dashboard clients
+
+@enduml

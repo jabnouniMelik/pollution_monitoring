@@ -1,0 +1,630 @@
+{
+  "generated_at": "2026-05-29T13:56:43.204629+00:00",
+  "summary": {
+    "lstm_global_skill_pct": 6.65,
+    "lstm_beats_persistence": true,
+    "lstm_pollutants_positive_skill": 6,
+    "if_contamination_target_pct": 5.0,
+    "if_test_anomaly_rate_pct": 5.45,
+    "if_behavior_pass": false,
+    "if_latency_ms_avg": 19.53,
+    "lstm_behavior_pass": true,
+    "lstm_latency_ms_avg": 365.94,
+    "api_ok": true
+  },
+  "offline": {
+    "lstm_skill_report": {
+      "global": {
+        "lstm": {
+          "rmse": 0.1249637253102417,
+          "mae": 0.08945953845977783,
+          "r2_score": 0.8459521557796104
+        },
+        "persistence": {
+          "rmse": 0.1483049867823216,
+          "mae": 0.09583579003810883,
+          "r2_score": 0.7830302394783076
+        },
+        "skill": 0.06653309349039116,
+        "lstm_wins_mae": true
+      },
+      "per_horizon_skill": {
+        "+1h": 0.05516540297222672,
+        "+2h": 0.0433850817532373,
+        "+3h": 0.05285057103437929,
+        "+4h": 0.10773788903249204
+      },
+      "per_horizon_lstm": {
+        "+1h": {
+          "rmse": 0.11010339141709315,
+          "mae": 0.0779181718826294,
+          "r2_score": 0.8805147355343382
+        },
+        "+2h": {
+          "rmse": 0.12088168325484122,
+          "mae": 0.08737899363040924,
+          "r2_score": 0.8558993470229401
+        },
+        "+3h": {
+          "rmse": 0.13192599011357428,
+          "mae": 0.09632278978824615,
+          "r2_score": 0.8282776284703618
+        },
+        "+4h": {
+          "rmse": 0.13536664760356662,
+          "mae": 0.09621818363666534,
+          "r2_score": 0.8190532210621714
+        }
+      },
+      "per_horizon_persistence": {
+        "+1h": {
+          "rmse": 0.1294530268469043,
+          "mae": 0.08246752619743347,
+          "r2_score": 0.8348276385443548
+        },
+        "+2h": {
+          "rmse": 0.1423926322596278,
+          "mae": 0.09134186804294586,
+          "r2_score": 0.800050656829922
+        },
+        "+3h": {
+          "rmse": 0.15582879634128483,
+          "mae": 0.10169756412506104,
+          "r2_score": 0.7604139053281838
+        },
+        "+4h": {
+          "rmse": 0.16328233326091723,
+          "mae": 0.10783623158931732,
+          "r2_score": 0.7367272544345604
+        }
+      },
+      "per_pollutant_skill": {
+        "CO2": 0.05865520435805405,
+        "NOX": 0.06072740822634126,
+        "SOX": 0.14131739538546684,
+        "PM25": 0.2373018995378512,
+        "PM10": 0.2413868557180726,
+        "COV": 0.16909810984171147,
+        "TEMPERATURE": 0.0,
+        "HUMIDITY": -23.822561536659236
+      },
+      "per_pollutant_lstm": {
+        "CO2": {
+          "mae": 0.09867922216653824,
+          "r2_score": 0.6841111362728676
+        },
+        "NOX": {
+          "mae": 0.0961010605096817,
+          "r2_score": 0.6917445542914309
+        },
+        "SOX": {
+          "mae": 0.10736219584941864,
+          "r2_score": 0.6359348995773729
+        },
+        "PM25": {
+          "mae": 0.11168137192726135,
+          "r2_score": 0.4659652059906997
+        },
+        "PM10": {
+          "mae": 0.11029596626758575,
+          "r2_score": 0.45953589236511383
+        },
+        "COV": {
+          "mae": 0.1160479187965393,
+          "r2_score": 0.558896445850222
+        },
+        "TEMPERATURE": {
+          "mae": 0.0003730056050699204,
+          "r2_score": 0.0
+        },
+        "HUMIDITY": {
+          "mae": 0.07513555884361267,
+          "r2_score": -56.509596815991436
+        }
+      },
+      "per_pollutant_persistence": {
+        "CO2": {
+          "mae": 0.10482792556285858,
+          "r2_score": 0.6235906481155962
+        },
+        "NOX": {
+          "mae": 0.10231434553861618,
+          "r2_score": 0.624678814935034
+        },
+        "SOX": {
+          "mae": 0.12503129243850708,
+          "r2_score": 0.49747449081248374
+        },
+        "PM25": {
+          "mae": 0.14642933011054993,
+          "r2_score": 0.07993533465431446
+        },
+        "PM10": {
+          "mae": 0.145391583442688,
+          "r2_score": 0.06964095673960591
+        },
+        "COV": {
+          "mae": 0.13966500759124756,
+          "r2_score": 0.33278223389573813
+        },
+        "TEMPERATURE": {
+          "mae": 0.0,
+          "r2_score": 0.0
+        },
+        "HUMIDITY": {
+          "mae": 0.0030269059352576733,
+          "r2_score": -0.9730037481681295
+        }
+      },
+      "baseline_comparison": {
+        "lstm": {
+          "rmse": 0.1249637253102417,
+          "mae": 0.08945953845977783,
+          "r2_score": 0.8459521557796104
+        },
+        "persistence": {
+          "rmse": 0.1483049867823216,
+          "mae": 0.09583579003810883,
+          "r2_score": 0.7830302394783076
+        },
+        "delta_mae": -0.006376251578330994,
+        "delta_r2": 0.06292191630130273,
+        "lstm_wins_mae": true,
+        "global_skill": 0.06653309349039116,
+        "per_pollutant_lstm": {
+          "CO2": {
+            "mae": 0.09867922216653824,
+            "r2_score": 0.6841111362728676
+          },
+          "NOX": {
+            "mae": 0.0961010605096817,
+            "r2_score": 0.6917445542914309
+          },
+          "SOX": {
+            "mae": 0.10736219584941864,
+            "r2_score": 0.6359348995773729
+          },
+          "PM25": {
+            "mae": 0.11168137192726135,
+            "r2_score": 0.4659652059906997
+          },
+          "PM10": {
+            "mae": 0.11029596626758575,
+            "r2_score": 0.45953589236511383
+          },
+          "COV": {
+            "mae": 0.1160479187965393,
+            "r2_score": 0.558896445850222
+          },
+          "TEMPERATURE": {
+            "mae": 0.0003730056050699204,
+            "r2_score": 0.0
+          },
+          "HUMIDITY": {
+            "mae": 0.07513555884361267,
+            "r2_score": -56.509596815991436
+          }
+        },
+        "per_pollutant_persistence": {
+          "CO2": {
+            "mae": 0.10482792556285858,
+            "r2_score": 0.6235906481155962
+          },
+          "NOX": {
+            "mae": 0.10231434553861618,
+            "r2_score": 0.624678814935034
+          },
+          "SOX": {
+            "mae": 0.12503129243850708,
+            "r2_score": 0.49747449081248374
+          },
+          "PM25": {
+            "mae": 0.14642933011054993,
+            "r2_score": 0.07993533465431446
+          },
+          "PM10": {
+            "mae": 0.145391583442688,
+            "r2_score": 0.06964095673960591
+          },
+          "COV": {
+            "mae": 0.13966500759124756,
+            "r2_score": 0.33278223389573813
+          },
+          "TEMPERATURE": {
+            "mae": 0.0,
+            "r2_score": 0.0
+          },
+          "HUMIDITY": {
+            "mae": 0.0030269059352576733,
+            "r2_score": -0.9730037481681295
+          }
+        },
+        "per_pollutant_skill": {
+          "CO2": 0.05865520435805405,
+          "NOX": 0.06072740822634126,
+          "SOX": 0.14131739538546684,
+          "PM25": 0.2373018995378512,
+          "PM10": 0.2413868557180726,
+          "COV": 0.16909810984171147,
+          "TEMPERATURE": 0.0,
+          "HUMIDITY": -23.822561536659236
+        },
+        "per_horizon_lstm": {
+          "+1h": {
+            "rmse": 0.11010339141709315,
+            "mae": 0.0779181718826294,
+            "r2_score": 0.8805147355343382
+          },
+          "+2h": {
+            "rmse": 0.12088168325484122,
+            "mae": 0.08737899363040924,
+            "r2_score": 0.8558993470229401
+          },
+          "+3h": {
+            "rmse": 0.13192599011357428,
+            "mae": 0.09632278978824615,
+            "r2_score": 0.8282776284703618
+          },
+          "+4h": {
+            "rmse": 0.13536664760356662,
+            "mae": 0.09621818363666534,
+            "r2_score": 0.8190532210621714
+          }
+        },
+        "per_horizon_persistence": {
+          "+1h": {
+            "rmse": 0.1294530268469043,
+            "mae": 0.08246752619743347,
+            "r2_score": 0.8348276385443548
+          },
+          "+2h": {
+            "rmse": 0.1423926322596278,
+            "mae": 0.09134186804294586,
+            "r2_score": 0.800050656829922
+          },
+          "+3h": {
+            "rmse": 0.15582879634128483,
+            "mae": 0.10169756412506104,
+            "r2_score": 0.7604139053281838
+          },
+          "+4h": {
+            "rmse": 0.16328233326091723,
+            "mae": 0.10783623158931732,
+            "r2_score": 0.7367272544345604
+          }
+        },
+        "per_horizon_skill": {
+          "+1h": 0.05516540297222672,
+          "+2h": 0.0433850817532373,
+          "+3h": 0.05285057103437929,
+          "+4h": 0.10773788903249204
+        }
+      },
+      "per_site": {
+        "site_broyage": {
+          "n_samples": 317,
+          "global_skill": 0.06599107921305014,
+          "lstm_mae": 0.08261024951934814,
+          "persistence_mae": 0.0884469598531723,
+          "per_pollutant_skill": {
+            "CO2": 0.06298374089191194,
+            "NOX": 0.11635373373513358,
+            "SOX": 0.13988986384586766,
+            "PM25": 0.24416304399036415,
+            "PM10": 0.2644551336628027,
+            "COV": 0.1632661396259315,
+            "TEMPERATURE": 0.0,
+            "HUMIDITY": -20.90677444142227
+          }
+        },
+        "site_expedition": {
+          "n_samples": 317,
+          "global_skill": -0.027385216946936408,
+          "lstm_mae": 0.06337614357471466,
+          "persistence_mae": 0.061686836183071136,
+          "per_pollutant_skill": {
+            "CO2": -0.004925081089285577,
+            "NOX": -0.019787951703340134,
+            "SOX": 0.08589130816820867,
+            "PM25": 0.24624427830786266,
+            "PM10": 0.2624992097005514,
+            "COV": 0.1250272188870425,
+            "TEMPERATURE": 0.0,
+            "HUMIDITY": -49.18030860463793
+          }
+        },
+        "site_four_A": {
+          "n_samples": 317,
+          "global_skill": 0.08598097261827642,
+          "lstm_mae": 0.11470673978328705,
+          "persistence_mae": 0.12549710273742676,
+          "per_pollutant_skill": {
+            "CO2": 0.019988027870903036,
+            "NOX": 0.09007239869918415,
+            "SOX": 0.16229489070138625,
+            "PM25": 0.2201720664272635,
+            "PM10": 0.20663111948757096,
+            "COV": 0.1661330293598171,
+            "TEMPERATURE": 0.0,
+            "HUMIDITY": -21.326005869210025
+          }
+        },
+        "site_four_B": {
+          "n_samples": 317,
+          "global_skill": 0.10990882144290215,
+          "lstm_mae": 0.10812061280012131,
+          "persistence_mae": 0.12147139012813568,
+          "per_pollutant_skill": {
+            "CO2": 0.08757466122747737,
+            "NOX": 0.05056325331571232,
+            "SOX": 0.16413400015328017,
+            "PM25": 0.2635212448676053,
+            "PM10": 0.2601064169144198,
+            "COV": 0.1860719655659263,
+            "TEMPERATURE": 0.0,
+            "HUMIDITY": -32.97363293439818
+          }
+        },
+        "site_mixed": {
+          "n_samples": 317,
+          "global_skill": 0.08424278368447857,
+          "lstm_mae": 0.09360993653535843,
+          "persistence_mae": 0.10222134739160538,
+          "per_pollutant_skill": {
+            "CO2": 0.09528968690363726,
+            "NOX": 0.057354508352510325,
+            "SOX": 0.13416092170038518,
+            "PM25": 0.23066141937361218,
+            "PM10": 0.23127838785109422,
+            "COV": 0.2051370630171443,
+            "TEMPERATURE": 0.0,
+            "HUMIDITY": -21.010523790483806
+          }
+        },
+        "site_stockage": {
+          "n_samples": 317,
+          "global_skill": 0.017936440204565418,
+          "lstm_mae": 0.07433352619409561,
+          "persistence_mae": 0.07569115608930588,
+          "per_pollutant_skill": {
+            "CO2": 0.07100874861810813,
+            "NOX": 0.026784034724045447,
+            "SOX": 0.1197414558327553,
+            "PM25": 0.21533562218785518,
+            "PM10": 0.2381143252043436,
+            "COV": 0.1404582779741197,
+            "TEMPERATURE": 0.0,
+            "HUMIDITY": -16.833421088009178
+          }
+        }
+      }
+    },
+    "lstm_metrics": {
+      "test": {
+        "rmse": 0.1249637253102417,
+        "mae": 0.08945953845977783,
+        "r2_score": 0.8459521557796104
+      },
+      "persistence": {
+        "rmse": 0.1483049867823216,
+        "mae": 0.09583579003810883,
+        "r2_score": 0.7830302394783076
+      },
+      "global_skill": 0.06653309349039116,
+      "per_pollutant_skill": {
+        "CO2": 0.05865520435805405,
+        "NOX": 0.06072740822634126,
+        "SOX": 0.14131739538546684,
+        "PM25": 0.2373018995378512,
+        "PM10": 0.2413868557180726,
+        "COV": 0.16909810984171147,
+        "TEMPERATURE": 0.0,
+        "HUMIDITY": -23.822561536659236
+      },
+      "dataset": "industrial_hybrid_tunisian"
+    },
+    "if_metrics": {
+      "anomalies_detected_val_pct": 5.298353909465021,
+      "anomalies_detected_test_pct": 5.4526748971193415,
+      "contamination_param": 0.05,
+      "feature_cols": [
+        "NOX",
+        "SOX",
+        "PM25",
+        "PM10",
+        "CO2",
+        "COV"
+      ],
+      "n_train": 9072,
+      "n_val": 1944,
+      "n_test": 1944,
+      "dataset": "industrial_hybrid_tunisian"
+    }
+  },
+  "if_behavior": [
+    {
+      "case": "profil_normal_four",
+      "expected_anomaly": false,
+      "is_anomaly": false,
+      "score": -0.1477,
+      "threshold": -0.2,
+      "pass": true,
+      "latency_ms": 22.3
+    },
+    {
+      "case": "profil_broyage_froid",
+      "expected_anomaly": false,
+      "is_anomaly": false,
+      "score": 0.1206,
+      "threshold": -0.2,
+      "pass": true,
+      "latency_ms": 18.73
+    },
+    {
+      "case": "spike_nox_x5",
+      "expected_anomaly": true,
+      "is_anomaly": false,
+      "score": -0.175,
+      "threshold": -0.2,
+      "pass": false,
+      "latency_ms": 21.86
+    },
+    {
+      "case": "spike_multivari\u00e9",
+      "expected_anomaly": true,
+      "is_anomaly": true,
+      "score": -0.2067,
+      "threshold": -0.2,
+      "pass": true,
+      "latency_ms": 15.25
+    }
+  ],
+  "lstm_behavior": [
+    {
+      "profile": "four_x1",
+      "go_deploy": true,
+      "latency_ms": 642.34,
+      "step4_checks": [
+        {
+          "pollutant": "CO2",
+          "input": 717.3,
+          "forecast_4h": 511.06,
+          "delta_pct": -28.8,
+          "source": "LSTM",
+          "within_regulatory": true,
+          "physically_plausible": true
+        },
+        {
+          "pollutant": "NOX",
+          "input": 732.11,
+          "forecast_4h": 661.12,
+          "delta_pct": -9.7,
+          "source": "PERSISTENCE",
+          "within_regulatory": true,
+          "physically_plausible": true
+        },
+        {
+          "pollutant": "SOX",
+          "input": 365.05,
+          "forecast_4h": 319.79,
+          "delta_pct": -12.4,
+          "source": "PERSISTENCE",
+          "within_regulatory": true,
+          "physically_plausible": true
+        },
+        {
+          "pollutant": "PM25",
+          "input": 18.57,
+          "forecast_4h": 17.76,
+          "delta_pct": -4.3,
+          "source": "PERSISTENCE",
+          "within_regulatory": true,
+          "physically_plausible": true
+        },
+        {
+          "pollutant": "COV",
+          "input": 99.32,
+          "forecast_4h": 81.23,
+          "delta_pct": -18.2,
+          "source": "PERSISTENCE",
+          "within_regulatory": true,
+          "physically_plausible": true
+        }
+      ],
+      "pass": true
+    },
+    {
+      "profile": "broyage_x0.65",
+      "go_deploy": true,
+      "latency_ms": 89.55,
+      "step4_checks": [
+        {
+          "pollutant": "CO2",
+          "input": 466.24,
+          "forecast_4h": 474.02,
+          "delta_pct": 1.7,
+          "source": "LSTM",
+          "within_regulatory": true,
+          "physically_plausible": true
+        },
+        {
+          "pollutant": "NOX",
+          "input": 475.87,
+          "forecast_4h": 475.87,
+          "delta_pct": 0.0,
+          "source": "PERSISTENCE",
+          "within_regulatory": true,
+          "physically_plausible": true
+        },
+        {
+          "pollutant": "SOX",
+          "input": 237.28,
+          "forecast_4h": 237.28,
+          "delta_pct": 0.0,
+          "source": "PERSISTENCE",
+          "within_regulatory": true,
+          "physically_plausible": true
+        },
+        {
+          "pollutant": "PM25",
+          "input": 12.07,
+          "forecast_4h": 12.07,
+          "delta_pct": -0.0,
+          "source": "PERSISTENCE",
+          "within_regulatory": true,
+          "physically_plausible": true
+        },
+        {
+          "pollutant": "COV",
+          "input": 64.56,
+          "forecast_4h": 64.56,
+          "delta_pct": 0.0,
+          "source": "PERSISTENCE",
+          "within_regulatory": true,
+          "physically_plausible": true
+        }
+      ],
+      "pass": true
+    }
+  ],
+  "holdout": {
+    "skipped": true,
+    "reason": "no test split"
+  },
+  "api": {
+    "reachable": true,
+    "health_ms": 4.98,
+    "health": {
+      "status": "ok",
+      "lstm": {
+        "loaded": true,
+        "go_deploy": true,
+        "horizon_hours": 4,
+        "lookback_hours": 48,
+        "use_calendar_features": false,
+        "alert_source": "LSTM_4H"
+      },
+      "isolation_forest": {
+        "loaded": true,
+        "feature_cols": [
+          "NOX",
+          "SOX",
+          "PM25",
+          "PM10",
+          "CO2",
+          "COV"
+        ],
+        "score_threshold": -0.2,
+        "alert_source": "ISOLATION_FOREST"
+      }
+    },
+    "predict_ms": 97.52,
+    "go_deploy": true,
+    "n_steps": 4,
+    "detect_ms": 22.79,
+    "detect_normal": true
+  },
+  "mongo_live": {
+    "skipped": true
+  }
+}

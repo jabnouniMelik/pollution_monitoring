@@ -3,9 +3,11 @@ import { queryKeys } from '@/lib/api/queryClient'
 import { kpiApi, type SummaryParams } from '../api/kpiApi'
 
 export function useKPISummary(params: SummaryParams = {}) {
+  const enabled = Boolean(params.siteId)
   return useQuery({
     queryKey: queryKeys.kpi.summary(params),
     queryFn: () => kpiApi.summary(params),
+    enabled,
     staleTime: 15_000,
   })
 }
@@ -19,10 +21,11 @@ export function useKPIConfig() {
 }
 
 export function useKPIHistory(pollutantId: string | undefined, params: SummaryParams = {}) {
+  const enabled = Boolean(pollutantId) && Boolean(params.siteId)
   return useQuery({
     queryKey: queryKeys.kpi.history(pollutantId ?? '', params),
     queryFn: () => kpiApi.history(pollutantId as string, params),
-    enabled: Boolean(pollutantId),
+    enabled,
     staleTime: 30_000,
   })
 }

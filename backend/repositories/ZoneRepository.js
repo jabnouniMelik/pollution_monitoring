@@ -86,7 +86,7 @@ class ZoneRepository {
    */
   async update(id, data) {
     return await Zone.findByIdAndUpdate(id, data, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     })
       .populate("siteId", "nom localisation")
@@ -104,7 +104,7 @@ class ZoneRepository {
     return await Zone.findByIdAndUpdate(
       zoneId,
       { $addToSet: { operatorsAssigned: operatorId } },
-      { new: true }
+      { returnDocument: "after" },
     ).populate("operatorsAssigned", "nom email role");
   }
 
@@ -118,7 +118,7 @@ class ZoneRepository {
     return await Zone.findByIdAndUpdate(
       zoneId,
       { $pull: { operatorsAssigned: operatorId } },
-      { new: true }
+      { returnDocument: "after" },
     ).populate("operatorsAssigned", "nom email role");
   }
 

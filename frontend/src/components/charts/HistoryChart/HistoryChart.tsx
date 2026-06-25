@@ -8,6 +8,9 @@ export interface HistorySeries {
   color: string
   points: Array<{ t: string | number | Date; v: number }>
   threshold?: number
+  /** Série prévisionnelle (trait pointillé) */
+  dashed?: boolean
+  borderWidth?: number
 }
 
 export interface HistoryEnvPoint {
@@ -47,11 +50,23 @@ function computeYBounds(series: HistorySeries[]): { min: number; max: number } {
   let thresholdMax = 0
 
   for (const s of series) {
+    if (s.dashed) continue
     for (const p of s.points) {
       if (Number.isFinite(p.v) && p.v > dataMax) dataMax = p.v
     }
     if (typeof s.threshold === 'number' && s.threshold > thresholdMax) {
       thresholdMax = s.threshold
+    }
+  }
+
+  // Prévision : inclure seulement si proche des mesures (évite d'écraser l'échelle)
+  for (const s of series) {
+    if (!s.dashed) continue
+    for (const p of s.points) {
+      if (!Number.isFinite(p.v)) continue
+      if (dataMax === 0 || p.v <= dataMax * 2.5) {
+        dataMax = Math.max(dataMax, p.v)
+      }
     }
   }
 
@@ -76,6 +91,38 @@ function computeYBounds(series: HistorySeries[]): { min: number; max: number } {
   return { min: 0, max: Math.max(dataMax, thresholdMax) * 1.15 }
 }
 
+/** Bornes X à partir des mesures ; extension optionnelle pour la prévision alignée. */
+function computeXBounds(series: HistorySeries[]): { min?: number; max?: number } {
+  const hist = series.filter((s) => !s.dashed)
+  const forecast = series.filter((s) => s.dashed)
+
+  let min = Infinity
+  let max = -Infinity
+
+  for (const s of hist) {
+    for (const p of s.points) {
+      const t = new Date(p.t).getTime()
+      if (Number.isFinite(t)) {
+        min = Math.min(min, t)
+        max = Math.max(max, t)
+      }
+    }
+  }
+
+  if (!Number.isFinite(min)) return {}
+
+  for (const s of forecast) {
+    for (const p of s.points) {
+      const t = new Date(p.t).getTime()
+      if (Number.isFinite(t)) max = Math.max(max, t)
+    }
+  }
+
+  const span = Math.max(max - min, 60_000)
+  const pad = span * 0.03
+  return { min: min - pad, max: max + pad }
+}
+
 export function HistoryChart({
   series,
   unit,
@@ -89,23 +136,25 @@ export function HistoryChart({
   }
 
   const yBounds = computeYBounds(series)
+  const xBounds = computeXBounds(series)
 
   const datasets: LineDataset[] = series.map((s) => ({
     label: s.label,
     data: s.points.map((p) => ({ x: toTime(p.t), y: p.v })),
     borderColor: s.color,
-    backgroundColor: hexToRgba(s.color, 0.1),
+    backgroundColor: hexToRgba(s.color, s.dashed ? 0 : 0.1),
     fill: false,
-    tension: 0.3,
+    tension: s.dashed ? 0.2 : 0.3,
     cubicInterpolationMode: 'monotone',
-    pointRadius: 0,
-    pointHoverRadius: 4,
-    borderWidth: 2,
+    pointRadius: s.dashed ? 3 : 0,
+    pointHoverRadius: s.dashed ? 5 : 4,
+    borderWidth: s.borderWidth ?? (s.dashed ? 2.5 : 2),
+    borderDash: s.dashed ? [8, 5] : undefined,
     yAxisID: 'y',
   }))
 
   const annotations: LineDataset[] = series
-    .filter((s) => typeof s.threshold === 'number')
+    .filter((s) => typeof s.threshold === 'number' && !s.dashed)
     .map((s) => ({
       label: `Seuil ${s.label}`,
       data: s.points.map((p) => ({ x: toTime(p.t), y: s.threshold! })),
@@ -170,6 +219,8 @@ export function HistoryChart({
         scales: {
           x: {
             type: 'time',
+            min: xBounds.min,
+            max: xBounds.max,
             time: {
               tooltipFormat: 'dd MMM yyyy HH:mm',
               displayFormats: { hour: 'HH:mm', day: 'dd/MM' },

@@ -124,7 +124,15 @@ class PdfGeneratorService {
       ipeChartBase64,
       trendChartBase64,
       generatedAt,
+      td,
+      rco2,
+      kpiTargets,
+      regulationRef = 'Décret 2018-928',
     } = reportData;
+
+    const ipeTarget = kpiTargets?.ipe ?? 95;
+    const tdTarget = kpiTargets?.td ?? 2;
+    const rco2Target = kpiTargets?.rco2 ?? -5;
 
     const formatDate = (date) => new Date(date).toLocaleDateString('fr-FR', {
       year: 'numeric',
@@ -134,8 +142,8 @@ class PdfGeneratorService {
 
     const polluantRows = Object.entries(polluantScores || {})
       .map(([name, score]) => {
-        const status = score >= 80 ? '✓ Conforme' : score >= 60 ? '⚠ Attention' : '✗ Non conforme';
-        const color = score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444';
+        const status = score >= ipeTarget ? '✓ Conforme' : score >= ipeTarget * 0.9 ? '⚠ Attention' : '✗ Non conforme';
+        const color = score >= ipeTarget ? '#10b981' : score >= ipeTarget * 0.9 ? '#f59e0b' : '#ef4444';
         return `
           <tr>
             <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${name}</td>
@@ -287,16 +295,28 @@ class PdfGeneratorService {
 
   <div class="stats-grid">
     <div class="stat-card">
+      <div class="value">${typeof td === 'number' ? td.toFixed(1) : '—'}%</div>
+      <div class="label">Taux de dépassement (cible ≤ ${tdTarget}%)</div>
+    </div>
+    <div class="stat-card">
       <div class="value">${breachCount}</div>
-      <div class="label">Dépassements</div>
+      <div class="label">Lectures en dépassement</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">${rco2?.reductionPct != null ? `${rco2.reductionPct}%` : '—'}</div>
+      <div class="label">RCO₂ vs mois préc. (cible ≤ ${rco2Target}%)</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">${rco2?.goalAttainmentPct != null ? `${rco2.goalAttainmentPct}%` : '—'}</div>
+      <div class="label">Atteinte objectif CO₂</div>
+    </div>
+    <div class="stat-card">
+      <div class="value">${overallScore >= ipeTarget ? 'Conforme' : 'Non conforme'}</div>
+      <div class="label">Statut IPE (cible ≥ ${ipeTarget})</div>
     </div>
     <div class="stat-card">
       <div class="value">${Object.keys(polluantScores || {}).length}</div>
       <div class="label">Polluants surveillés</div>
-    </div>
-    <div class="stat-card">
-      <div class="value">${overallScore >= 80 ? 'Conforme' : 'Non conforme'}</div>
-      <div class="label">Statut global</div>
     </div>
   </div>
 
@@ -355,7 +375,7 @@ class PdfGeneratorService {
 
   <div class="footer">
     <p>Rapport généré automatiquement par EmissionsIQ — Système de surveillance environnementale</p>
-    <p>Conforme aux normes NT 106.04 (Tunisie) et directives ANPE</p>
+    <p>Conforme au ${regulationRef} (Tunisie) et directives ANPE</p>
   </div>
 </body>
 </html>

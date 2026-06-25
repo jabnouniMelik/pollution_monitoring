@@ -236,7 +236,7 @@ Also sets a `refreshToken` HttpOnly cookie.
       "timestamp": "2026-05-04T14:30:00Z",
       "isAcknowledged": false,
       "polluant": { "name": "NOX" },
-      "sensor": { "model": "MQ-135" }
+      "sensor": { "model": "ME4-NO2" }
     }
   ],
   "total": 1038,

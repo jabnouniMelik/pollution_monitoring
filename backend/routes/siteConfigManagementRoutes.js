@@ -53,7 +53,7 @@ router.put(
 /**
  * PUT /api/site-config/:id/weights
  * Mettre à jour les poids des polluants (SUPER_ADMIN only)
- * Body: { weights: { NOx, SO2, PM25, COV, CO2 } }
+ * Body: { weights: { NOx, SO2, PM25, PM10, COV, CO2 } }
  * Somme doit égaler 1.0
  */
 router.put(

@@ -1,0 +1,30 @@
+sequenceDiagram
+  autonumber
+  participant UI as Frontend Dashboard
+  participant API as KPI Controller
+  participant KPISvc as KPIService
+  participant SNRepo as SensorNodeRepository
+  participant ReadRepo as ReadingRepository
+  participant PollRepo as PolluantRepository
+  participant CfgRepo as SiteConfigRepository
+  participant DB as MongoDB
+
+  UI->>API: GET /api/kpi/summary?siteId&periodStart&periodEnd&zoneId?
+  API->>KPISvc: calculate TD/EMJ/IPE/RCO2
+
+  opt zoneId provided
+    KPISvc->>SNRepo: findNodeIdsByZone(zoneId)
+    SNRepo-->>KPISvc: nodeIdFilter[]
+  end
+
+  KPISvc->>PollRepo: load polluants + thresholds + limits
+  KPISvc->>CfgRepo: load active site config (airflow, weights, targets)
+  KPISvc->>ReadRepo: aggregate/count readings in period
+  ReadRepo->>DB: queries on readings
+  DB-->>ReadRepo: stats and counts
+  ReadRepo-->>KPISvc: avg, min, max, breachCount, totalCount
+
+  KPISvc-->>API: TD/EMJ/IPE/RCO2 payload
+  API-->>UI: KPI cards + trends + compliance status
+
+  Note over KPISvc: Comparaison aux normes utilise\nregulatoryLimit / warningThreshold

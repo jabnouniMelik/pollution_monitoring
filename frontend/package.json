@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "EmissionsIQ — Environmental compliance dashboard (Tunisia Décret 2010-2516)",
+  "description": "EmissionsIQ — Environmental compliance dashboard (Tunisia Décret 2018-928)",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

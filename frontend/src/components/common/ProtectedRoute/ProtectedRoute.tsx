@@ -2,7 +2,8 @@ import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { hasAnyPermission } from '@/lib/rbac/checkPermission'
-import type { Permission, Role } from '@/lib/constants/roles'
+import { isAuditorAllowedPath, defaultPathForRole } from '@/lib/rbac/auditorAccess'
+import { Role, type Permission } from '@/lib/constants/roles'
 import { LoadingSpinner } from '../LoadingSpinner/LoadingSpinner'
 
 interface ProtectedRouteProps {
@@ -21,6 +22,10 @@ export function ProtectedRoute({ children, requires, role }: ProtectedRouteProps
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location }} />
+  }
+
+  if (user?.role === Role.AUDITOR && !isAuditorAllowedPath(location.pathname)) {
+    return <Navigate to={defaultPathForRole(Role.AUDITOR)} replace />
   }
 
   if (role !== undefined && user?.role !== role) {

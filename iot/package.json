@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node simulator.js",
+    "monitor": "node mqtt-monitor.js",
     "test": "node tests/runFrequencySuite.js",
     "test:frequency": "node tests/frequencyTest.js"
   },

@@ -33,4 +33,16 @@ export interface WSControlMessage {
   clientId?: string
 }
 
-export type WSMessage = WSKPIUpdate | WSAlertMessage | WSControlMessage
+export interface WSReportUpdate {
+  type: 'report_update'
+  timestamp: string
+  report: {
+    id: string
+    status: string
+    title?: string
+    industryId?: string | null
+    generatedBy?: string | null
+  }
+}
+
+export type WSMessage = WSKPIUpdate | WSAlertMessage | WSReportUpdate | WSControlMessage

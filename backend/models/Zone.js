@@ -69,7 +69,7 @@ const ZoneSchema = new mongoose.Schema(
     pollutants: {
       type: [String],
       default: [],
-      enum: ["CO2", "NOX", "SO2", "PM", "COV"],
+      enum: ["CO2", "NOX", "SO2", "PM", "PM25", "PM10", "COV"],
     },
 
     // Statut de la zone

@@ -8,7 +8,7 @@ export interface Reading {
 /**
  * TD — Taux de Dépassement (Exceedance Rate).
  * Fraction (in %) of readings that exceed the limit for a given pollutant.
- * Target per Décret 2010-2516: TD ≤ 2%.
+ * Target per Décret 2018-928: TD ≤ 2%.
  */
 export function calculateTD(readings: Reading[], pollutant: string, limit: number): number {
   if (readings.length === 0) return 0
@@ -63,12 +63,26 @@ export function calculateIPE(
 }
 
 /**
- * RCO2 — Réduction CO₂ (% change vs baseline). Negative values = improvement.
- * Target: ≤ -5%
+ * RCO2 — Variation % vs période de référence (négatif = réduction).
  */
-export function calculateRCO2(currentCO2: number, baselineCO2: number): number {
-  if (!Number.isFinite(baselineCO2) || baselineCO2 === 0) return 0
-  return ((baselineCO2 - currentCO2) / baselineCO2) * 100 * -1
+export function calculateRCO2(current: number, reference: number): number {
+  if (!Number.isFinite(reference) || reference === 0) return 0
+  return ((current - reference) / reference) * 100
+}
+
+/**
+ * Taux d'atteinte de l'objectif de réduction CO₂.
+ * Ex. objectif -5 %, réel -3,2 % → 64 %.
+ */
+export function calculateRCO2GoalAttainment(
+  reductionPct: number,
+  targetReductionPct = -5,
+): number {
+  const target = Math.abs(targetReductionPct)
+  if (target <= 0) return 100
+  const achieved = -reductionPct
+  if (!Number.isFinite(achieved) || achieved <= 0) return 0
+  return Math.min(100, (achieved / target) * 100)
 }
 
 export type KPIKind = 'TD' | 'IPE' | 'RCO2' | 'EMJ'
@@ -89,7 +103,8 @@ export function getKPIStatus(value: number, target: number, type: KPIKind): KPIS
       return 'danger'
     case 'RCO2':
       if (value <= target) return 'success'
-      if (value <= target * 0.7) return 'warning'
+      if (target < 0 && value <= target * 0.6) return 'warning'
+      if (target >= 0 && value <= target * 1.25) return 'warning'
       return 'danger'
     case 'EMJ':
       if (!Number.isFinite(target)) return 'success'

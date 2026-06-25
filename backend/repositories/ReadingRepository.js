@@ -7,17 +7,20 @@ const Reading = require("../models/Reading");
 
 class ReadingRepository {
   /**
-   * Récupère toutes les mesures avec filtres et pagination
-   * @param {Object} filter - Filtre MongoDB
-   * @param {Number} limit - Nombre de résultats max
-   * @returns {Promise<Array>} Array de mesures
+   * Récupère toutes les mesures avec filtres et pagination.
+   * Pour les requêtes historiques (avec filtre timestamp), trie par ordre
+   * croissant (oldest → newest) pour que les graphiques s'affichent correctement.
+   * Sans filtre timestamp, trie décroissant (newest first).
    */
   async findAll(filter = {}, limit = 100) {
+    const hasTimeFilter = filter.timestamp !== undefined || filter.createdAt !== undefined
+    const sortOrder = hasTimeFilter ? 1 : -1
+
     return await Reading.find(filter)
       .populate("sensorId", "name model type")
       .populate("PolluantId", "name unit regulatoryLimit")
-      .sort({ timestamp: -1 })
-      .limit(limit);
+      .sort({ createdAt: sortOrder })   // createdAt is set by Mongoose independently per doc
+      .limit(limit)
   }
 
   /**
@@ -138,6 +141,89 @@ class ReadingRepository {
     ]);
 
     return result.length > 0 ? result[0] : null;
+  }
+
+  /**
+   * Statistiques journalières par polluant (fallback historique KPI live).
+   * @returns {Promise<Array<{ day: string, avgValue, minValue, maxValue, count }>>}
+   */
+  async aggregateDailyByPolluant(
+    polluantId,
+    periodStart,
+    periodEnd,
+    nodeIdFilter = null,
+    regulatoryLimit = null,
+  ) {
+    const match = {
+      PolluantId: polluantId,
+      timestamp: { $gte: periodStart, $lte: periodEnd },
+      isValid: true,
+    };
+
+    if (nodeIdFilter && nodeIdFilter.length > 0) {
+      match.nodeId = { $in: nodeIdFilter };
+    }
+
+    const groupStage = {
+      _id: {
+        $dateToString: { format: "%Y-%m-%d", date: "$timestamp", timezone: "UTC" },
+      },
+      avgValue: { $avg: "$value" },
+      minValue: { $min: "$value" },
+      maxValue: { $max: "$value" },
+      count: { $sum: 1 },
+    };
+
+    if (Number.isFinite(regulatoryLimit)) {
+      groupStage.breachCount = {
+        $sum: { $cond: [{ $gt: ["$value", regulatoryLimit] }, 1, 0] },
+      };
+    }
+
+    return await Reading.aggregate([
+      { $match: match },
+      { $group: groupStage },
+      { $sort: { _id: 1 } },
+      {
+        $project: {
+          _id: 0,
+          day: "$_id",
+          avgValue: 1,
+          minValue: 1,
+          maxValue: 1,
+          count: 1,
+          breachCount: 1,
+        },
+      },
+    ]);
+  }
+
+  /**
+   * Dataset historique détaillé pour export (CSV/XLSX).
+   * Retourne les mesures triées par timestamp ascendant.
+   */
+  async findDetailedForExport(
+    periodStart,
+    periodEnd,
+    nodeIdFilter = null,
+    limit = 10000,
+  ) {
+    const filter = {
+      timestamp: { $gte: periodStart, $lte: periodEnd },
+      isValid: true,
+    };
+
+    if (nodeIdFilter && nodeIdFilter.length > 0) {
+      filter.nodeId = { $in: nodeIdFilter };
+    }
+
+    return await Reading.find(filter)
+      .populate("PolluantId", "name unit regulatoryLimit")
+      .populate("nodeId", "name code")
+      .populate("sensorId", "name model")
+      .sort({ timestamp: 1 })
+      .limit(limit)
+      .lean();
   }
 }
 

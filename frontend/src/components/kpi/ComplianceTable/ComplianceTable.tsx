@@ -69,7 +69,7 @@ export function ComplianceTable({ rows }: ComplianceTableProps) {
       columns={columns}
       data={rows}
       getRowKey={(r) => r.pollutant}
-      caption="Conformité des polluants par rapport au Décret 2010-2516"
+      caption="Conformité des polluants — Décret n° 2018-928, Annexe 1 (valeurs générales, toutes sources fixes)"
       emptyMessage="Aucun polluant configuré"
     />
   )

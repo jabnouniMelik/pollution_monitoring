@@ -1,0 +1,36 @@
+flowchart TD
+  S([Mesure capteur]) --> T[Publication MQTT]
+  T --> U[mqttService parse + map IDs]
+  U --> V[Validation capteur + polluant]
+  V --> W[Persist reading]
+
+  W --> X{Reading valide ?}
+  X -- Non --> Y[Ignorer alerting]
+  X -- Oui --> Z{value > warningThreshold ?}
+
+  Z -- Non --> AA[Auto-resolve alerte ouverte]
+  Z -- Oui --> AB[Create/Update alerte active]
+
+  AA --> AC[Expose lectures + alertes via API]
+  AB --> AC
+  AC --> AD[Affichage Dashboard + comparaison normes]
+
+  W --> AE[Aggregation HOURLY/DAILY/MONTHLY]
+  AE --> AF[Calcul KPI TD EMJ IPE RCO2]
+  AF --> AD
+
+  AE --> AG[Build IA features]
+  AG --> AH[LSTM Forecast + Anomaly Detection]
+  AH --> AI[Persist predictions/anomalies]
+  AI --> AJ[Expose /api/ia]
+  AJ --> AD
+
+  AB --> AK[WebSocket push temps reel]
+  AK --> AD
+
+  classDef alert fill:#ffe9e9,stroke:#aa2b2b,stroke-width:1px;
+  classDef kpi fill:#eaf8ec,stroke:#2b7a3d,stroke-width:1px;
+  classDef ia fill:#ecebff,stroke:#4a43a8,stroke-width:1px;
+  class AB,AA,AK alert;
+  class AE,AF kpi;
+  class AG,AH,AI,AJ ia;

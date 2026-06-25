@@ -7,9 +7,9 @@
  *     └── 1 Site each
  *         └── 2 Zones each
  *             └── 1 SensorNode each (6 nodes total)
- *                 └── 7 Sensors each (CO2, NOX, SO2, PM25, COV, TEMP, HUMIDITY)
+ *                 └── 8 Sensors each (CO2, NOX, SO2, PM25, PM10, COV, TEMP, HUMIDITY)
  *   7 Polluants (regulatory reference data — idempotent)
- *   1 ThresholdConfig (Décret 2010-2516 — idempotent)
+ *   1 ThresholdConfig (Décret 2018-928 — idempotent)
  *   1 SiteConfig (KPI parameters — idempotent)
  *   Demo users (idempotent — skips if already exist)
  *
@@ -97,24 +97,31 @@ const INDUSTRIES_DATA = [
 ];
 
 const POLLUANTS_DATA = [
-  { name: "CO2",         formula: "CO2",      unit: "ppm",     regulatoryLimit: 800,  warningThreshold: 640,  description: "Dioxyde de carbone",          conversionFactor: 1, weight: 0.05 },
-  { name: "NOX",         formula: "NO+NO2",   unit: "mg/Nm³",  regulatoryLimit: 450,  warningThreshold: 360,  description: "Oxydes d'azote",              conversionFactor: 1, weight: 0.30 },
-  { name: "SO2",         formula: "SO2",      unit: "mg/Nm³",  regulatoryLimit: 120,  warningThreshold: 96,   description: "Dioxyde de soufre",           conversionFactor: 1, weight: 0.25 },
-  { name: "PM25",        formula: "PM2.5",    unit: "µg/m³",   regulatoryLimit: 12,   warningThreshold: 9.6,  description: "Particules fines PM2.5",      conversionFactor: 1, weight: 0.25 },
-  { name: "COV",         formula: "COV",      unit: "mg/Nm³",  regulatoryLimit: 30,   warningThreshold: 24,   description: "Composés organiques volatils", conversionFactor: 1, weight: 0.15 },
-  { name: "TEMPERATURE", formula: "T",        unit: "°C",      regulatoryLimit: 35,   warningThreshold: 28,   description: "Température ambiante",        conversionFactor: 1, weight: 0.00 },
-  { name: "HUMIDITY",    formula: "RH",       unit: "%RH",     regulatoryLimit: 60,   warningThreshold: 48,   description: "Humidité relative",           conversionFactor: 1, weight: 0.00 },
+  // CO2 : pas de VLE réglementaire — seuil interne suivi KPI
+  { name: "CO2",         formula: "CO2",      unit: "ppm",     regulatoryLimit: 800,  warningThreshold: 640,  description: "Dioxyde de carbone",           conversionFactor: 1, weight: 0.05 },
+  // NOX : 500 mg/Nm³ — Décret 2018-928, Annexe 1, §4 (flux > 25 kg/h)
+  { name: "NOX",         formula: "NO+NO2",   unit: "mg/Nm³",  regulatoryLimit: 500,  warningThreshold: 400,  description: "Oxydes d'azote",               conversionFactor: 1, weight: 0.30 },
+  // SO2 : 300 mg/Nm³ — Décret 2018-928, Annexe 1, §3 (flux > 25 kg/h)
+  { name: "SO2",         formula: "SO2",      unit: "mg/Nm³",  regulatoryLimit: 300,  warningThreshold: 240,  description: "Dioxyde de soufre",            conversionFactor: 1, weight: 0.25 },
+  // PM25 : 40 mg/m³ — Décret 2018-928, Annexe 1, §1 (flux > 1 kg/h)
+  { name: "PM25",        formula: "PM2.5",    unit: "µg/m³",   regulatoryLimit: 40,   warningThreshold: 32,   description: "Particules fines PM2.5",       conversionFactor: 1, weight: 0.15 },
+  { name: "PM10",        formula: "PM10",     unit: "µg/m³",   regulatoryLimit: 48,   warningThreshold: 38,   description: "Particules inhalables PM10",     conversionFactor: 1, weight: 0.10 },
+  // COV : 110 mg/Nm³ — Décret 2018-928, Annexe 1, §7 (flux > 2 kg/h)
+  { name: "COV",         formula: "COV",      unit: "mg/Nm³",  regulatoryLimit: 110,  warningThreshold: 88,   description: "Composés organiques volatils",  conversionFactor: 1, weight: 0.15 },
+  { name: "TEMPERATURE", formula: "T",        unit: "°C",      regulatoryLimit: 35,   warningThreshold: 28,   description: "Température ambiante",         conversionFactor: 1, weight: 0.00 },
+  { name: "HUMIDITY",    formula: "RH",       unit: "%RH",     regulatoryLimit: 60,   warningThreshold: 48,   description: "Humidité relative",            conversionFactor: 1, weight: 0.00 },
 ];
 
-// Sensor specs per type — matches iot/config/simulatorConfig.js
+// Sensor specs per type — matches actual ESP32 hardware (see rapport/II3_Couche_IoT.md)
 const SENSOR_SPECS = [
-  { type: "CO2",         model: "MH-Z19B",              unit: "ppm"     },
-  { type: "NOX",         model: "MQ-135",               unit: "mg/Nm³"  },
-  { type: "SO2",         model: "Alphasense SO2-B4",    unit: "mg/Nm³"  },
-  { type: "PM25",        model: "Plantower PMS5003",    unit: "µg/m³"   },
-  { type: "COV",         model: "CCS811",               unit: "mg/Nm³"  },
-  { type: "TEMPERATURE", model: "SHT31",                unit: "°C"      },
-  { type: "HUMIDITY",    model: "SHT31",                unit: "%RH"     },
+  { type: "CO2",         model: "MH-Z19B",  unit: "ppm"     },
+  { type: "NOX",         model: "MQ-131",   unit: "mg/Nm³"  },
+  { type: "SO2",         model: "MQ-136",   unit: "mg/Nm³"  },
+  { type: "PM25",        model: "SDS011",   unit: "µg/m³"   },
+  { type: "PM10",        model: "SDS011",   unit: "µg/m³"   },
+  { type: "COV",         model: "SGP30",    unit: "mg/Nm³"  },
+  { type: "TEMPERATURE", model: "DHT22",    unit: "°C"      },
+  { type: "HUMIDITY",    model: "DHT22",    unit: "%RH"     },
 ];
 
 const DEMO_USERS = [
@@ -166,14 +173,15 @@ async function seedThresholdConfig() {
 
   await ThresholdConfig.create({
     nom: "Configuration Globale",
-    description: "Seuils globaux basés sur Décret 2010-2516 (Tunisie) et normes ANPE",
+    description: "Seuils globaux basés sur Décret 2018-928, Annexe 1 (valeurs générales — toutes sources fixes industrielles tunisiennes)",
     polluants: {
-      NOx: { min: 120, max: 450, warning: 360, critical: 540, unit: "mg/Nm³", reference: "Décret 2010-2516" },
-      SO2: { min: 10,  max: 120, warning: 96,  critical: 144, unit: "mg/Nm³", reference: "Décret 2010-2516" },
-      PM:  { min: 0,   max: 30,  warning: 24,  critical: 36,  unit: "mg/Nm³", reference: "Décret 2010-2516" },
-      PM25:{ min: 0,   max: 12,  warning: 9.6, critical: 14.4,unit: "µg/m³",  reference: "OMS 2021"         },
-      COV: { min: 5,   max: 30,  warning: 24,  critical: 36,  unit: "mg/Nm³", reference: "Décret 2010-2516" },
-      CO2: { min: 400, max: 800, warning: 640, critical: 960, unit: "ppm",    reference: "ASHRAE 62.1"      },
+      NOx:  { min: 0,   max: 500, warning: 400, critical: 600, unit: "mg/Nm³", reference: "Décret 2018-928, Annexe 1, §4 — NOₓ (flux > 25 kg/h)" },
+      SO2:  { min: 0,   max: 300, warning: 240, critical: 360, unit: "mg/Nm³", reference: "Décret 2018-928, Annexe 1, §3 — SO₂ (flux > 25 kg/h)" },
+      PM:   { min: 0,   max: 40,  warning: 32,  critical: 48,  unit: "mg/m³",  reference: "Décret 2018-928, Annexe 1, §1 — Poussières (flux > 1 kg/h)" },
+      PM25: { min: 0,   max: 40,  warning: 32,  critical: 48,  unit: "µg/m³",  reference: "Décret 2018-928, Annexe 1, §1 — Poussières (flux > 1 kg/h)" },
+      PM10: { min: 0,   max: 48,  warning: 38,  critical: 58,  unit: "µg/m³",  reference: "Décret 2018-928, Annexe 1, §1 — Poussières (flux > 1 kg/h)" },
+      COV:  { min: 0,   max: 110, warning: 88,  critical: 132, unit: "mg/Nm³", reference: "Décret 2018-928, Annexe 1, §7 — COV (flux > 2 kg/h)" },
+      CO2:  { min: 400, max: 800, warning: 640, critical: 960, unit: "ppm",    reference: "Suivi interne — pas de VLE réglementaire" },
     },
     actif: true,
   });
@@ -192,7 +200,7 @@ async function seedSiteConfig() {
     siteName: "Configuration Globale",
     airflow: 2.0,
     thermalPower: null,
-    polluantWeights: { NOx: 0.30, SO2: 0.25, PM25: 0.25, COV: 0.15, CO2: 0.05 },
+    polluantWeights: { NOx: 0.30, SO2: 0.25, PM25: 0.15, PM10: 0.10, COV: 0.15, CO2: 0.05 },
     targets: { tauxDepassement: 2.0, ipe: 95, reductionCO2: -5.0 },
     isActive: true,
   });
@@ -289,11 +297,12 @@ async function seedIndustriesTree(polluantMap) {
           node = await SensorNode.create({
             nom: nodeName,
             IndustrieId: industrie._id,
+            zoneId: zone._id,
+            siteId: zone.siteId,
             localisation: {
               type: "Point",
               coordinates: [indData.localisation.longitude, indData.localisation.latitude],
             },
-            zone: zoneData.code,
             Status: "Active",
             macAddress: macAddress,
           });

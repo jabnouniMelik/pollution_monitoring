@@ -119,6 +119,12 @@ function generateHourlyKPI() {
         unit: "µg/m³",
         status: Math.random() * 100 < 80 ? "ok" : "warning",
       },
+      PM10: {
+        concentration: (Math.random() * 90 + 18).toFixed(2),
+        limit: 120,
+        unit: "µg/m³",
+        status: Math.random() * 100 < 80 ? "ok" : "warning",
+      },
       COV: {
         concentration: (Math.random() * 50 + 10).toFixed(2),
         limit: 100,

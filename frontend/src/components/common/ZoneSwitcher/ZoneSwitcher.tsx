@@ -5,7 +5,16 @@ import { useZoneStore } from '@/features/auth/store/zoneStore'
 import { useSelectionStore } from '@/store/selectionStore'
 import { api, unwrap } from '@/lib/api/axios'
 import { endpoints } from '@/lib/api/endpoints'
+import { siteApi } from '@/features/sites/api/siteApi'
 import type { Zone, Site } from '@/features/auth/types/auth.types'
+
+/** Préfère une zone avec nœuds capteurs (requis pour l'IA). */
+function pickEquippedZone<T extends { _id: string; sensorNodeCount?: number }>(
+  zones: T[],
+): T | null {
+  if (!zones.length) return null
+  return zones.find((z) => (z.sensorNodeCount ?? 0) > 0) ?? zones[0]
+}
 
 // ── Shared select style ───────────────────────────────────────
 const selectCls =
@@ -20,11 +29,12 @@ function OperatorZoneSwitcher() {
   const zones: Zone[] = user?.zonesAssigned || []
 
   useEffect(() => {
-    if (zones.length > 0 && !selectedZone) {
-      setSelectedZone(zones[0])
-      setZone(zones[0]._id)
+    if (zones.length > 0 && !zones.some((z) => z._id === selectedZone?._id)) {
+      const best = pickEquippedZone(zones)!
+      setSelectedZone(best)
+      setZone(best._id)
     }
-  }, [zones.length]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [zones.length, selectedZone?._id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (selectedZone) setZone(selectedZone._id)
@@ -98,16 +108,26 @@ function SiteSupervisorZoneSwitcher() {
             nom: z.nom,
             siteId: s._id,
             industrieId: z.industrieId || '',
+            sensorNodeCount: z.sensorNodeCount ?? 0,
           } as Zone)))
           .catch(() => [] as Zone[])
       )
     ).then(results => {
       const allZones = results.flat()
       setZones(allZones)
-      if (allZones.length > 0 && !selectedZone) {
-        setSelectedZone(allZones[0])
-        setSite(allZones[0].siteId)
-        setZone(allZones[0]._id)
+      const validZone =
+        selectedZone && allZones.some((z) => z._id === selectedZone._id)
+          ? selectedZone
+          : pickEquippedZone(allZones)
+      if (validZone) {
+        if (!selectedZone || selectedZone._id !== validZone._id) {
+          setSelectedZone(validZone)
+        }
+        setSite(validZone.siteId)
+        setZone(validZone._id)
+      } else {
+        setSelectedZone(null)
+        setZone(null)
       }
       setLoadingZones(false)
     })
@@ -197,13 +217,18 @@ function HeadSupervisorSwitcher() {
   const [zones, setZones] = useState<Zone[]>([])
   const [loadingZones, setLoadingZones] = useState(false)
 
-  // Auto-select first site on mount
+  // Auto-select first site on mount (ignore stale persisted site after DB reset)
   useEffect(() => {
-    if (sites.length > 0 && !selectedSite) {
-      setSelectedSite(sites[0])
-      setSite(sites[0]._id)
+    if (sites.length === 0) return
+    const validSite =
+      selectedSite && sites.some((s) => s._id === selectedSite._id)
+        ? selectedSite
+        : sites[0]
+    if (!selectedSite || selectedSite._id !== validSite._id) {
+      setSelectedSite(validSite)
+      setSite(validSite._id)
     }
-  }, [sites.length]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sites.length, selectedSite?._id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load zones when site changes
   useEffect(() => {
@@ -218,12 +243,14 @@ function HeadSupervisorSwitcher() {
           nom: z.nom,
           siteId,
           industrieId: z.industrieId || '',
+          sensorNodeCount: z.sensorNodeCount ?? 0,
         } as Zone))
         setZones(z)
-        // Auto-select first zone of new site
+        // Auto-select first zone équipée (capteurs) pour l'IA
         if (z.length > 0) {
-          setSelectedZone(z[0])
-          setZone(z[0]._id)
+          const best = pickEquippedZone(z)!
+          setSelectedZone(best)
+          setZone(best._id)
         } else {
           setSelectedZone(null)
           setZone(null)
@@ -325,6 +352,98 @@ function HeadSupervisorSwitcher() {
   )
 }
 
+// ── AUDITOR: sites de son industrie (conformité / rapports) ───
+function AuditorSiteSwitcher() {
+  const { user } = useAuth()
+  const { selectedSite, setSelectedSite } = useZoneStore()
+  const { setSite } = useSelectionStore()
+  const [sites, setSites] = useState<Site[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const industryId =
+    typeof user?.industryId === 'string'
+      ? user.industryId
+      : user?.industryId?._id
+
+  useEffect(() => {
+    setLoading(true)
+    siteApi
+      .list({ pageSize: 100, ...(industryId ? { industrieId: industryId } : {}) })
+      .then((res) => {
+        const list: Site[] = (res.data ?? []).map((s) => ({
+          _id: s.id,
+          nom: s.nom,
+          industrieId: s.industrieId,
+        }))
+        setSites(list)
+        const valid =
+          selectedSite && list.some((s) => s._id === selectedSite._id)
+            ? selectedSite
+            : list[0] ?? null
+        if (valid && (!selectedSite || selectedSite._id !== valid._id)) {
+          setSelectedSite(valid)
+          setSite(valid._id)
+        }
+      })
+      .catch(() => setSites([]))
+      .finally(() => setLoading(false))
+  }, [industryId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (selectedSite) setSite(selectedSite._id)
+  }, [selectedSite?._id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (loading) {
+    return <div className="h-9 animate-pulse rounded-lg bg-bg" />
+  }
+
+  if (sites.length === 0) {
+    return (
+      <div className="flex items-center gap-2 rounded-lg bg-bg px-3 py-2 text-sm text-text-secondary">
+        <Building2 className="h-4 w-4 shrink-0" />
+        <span>Aucun site</span>
+      </div>
+    )
+  }
+
+  if (sites.length === 1) {
+    return (
+      <div className="flex items-center gap-2 rounded-lg bg-bg px-3 py-2 text-sm">
+        <Building2 className="h-4 w-4 shrink-0 text-accent" />
+        <p className="truncate font-medium text-text-primary">{sites[0].nom}</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative">
+      <div className="pointer-events-none absolute inset-y-0 left-2.5 flex items-center">
+        <Building2 className="h-4 w-4 text-accent" />
+      </div>
+      <select
+        value={selectedSite?._id || ''}
+        onChange={(e) => {
+          const site = sites.find((s) => s._id === e.target.value)
+          if (site) {
+            setSelectedSite(site)
+            setSite(site._id)
+          }
+        }}
+        className={selectCls}
+      >
+        {sites.map((s) => (
+          <option key={s._id} value={s._id}>
+            {s.nom}
+          </option>
+        ))}
+      </select>
+      <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+        <ChevronDown className="h-4 w-4 text-text-secondary" />
+      </div>
+    </div>
+  )
+}
+
 // ── Main export ───────────────────────────────────────────────
 export function ZoneSwitcher() {
   const { user } = useAuth()
@@ -334,6 +453,7 @@ export function ZoneSwitcher() {
   if (user.role === 'OPERATOR') return <OperatorZoneSwitcher />
   if (user.role === 'SITE_SUPERVISOR') return <SiteSupervisorZoneSwitcher />
   if (user.role === 'HEAD_SUPERVISOR') return <HeadSupervisorSwitcher />
+  if (user.role === 'AUDITOR') return <AuditorSiteSwitcher />
 
   return null
 }

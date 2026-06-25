@@ -1,0 +1,10 @@
+# Optional — Jupyter notebooks (01–07), training plots, data prep
+# Requires requirements.txt installed first.
+# Uses binary wheels only (no matplotlib source build).
+
+-r requirements.txt
+
+matplotlib>=3.8.0
+jupyter>=1.0.0
+ipykernel>=6.29.0
+nbformat>=5.10.0

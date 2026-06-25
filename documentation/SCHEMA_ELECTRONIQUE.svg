@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+  <style>
+    .blk { fill:#f3f6fb; stroke:#2b6cb0; stroke-width:2 }
+    .small { font:12px sans-serif; fill:#1a202c }
+    .title { font:16px sans-serif; font-weight:700; fill:#0f172a }
+    .conn { stroke:#1f2937; stroke-width:2; fill:none }
+    .gnd { stroke:#e53e3e }
+    .note { font:13px sans-serif; fill:#0f172a }
+  </style>
+
+  <!-- Title -->
+  <text x="20" y="30" class="title">Schéma électronique - Station de surveillance (ESP32 + capteurs)</text>
+  <text x="20" y="52" class="small">Composants principaux: ESP32 DevKit V1, MH-Z19B, MQ-136 (SO₂), MQ-131 (NOx), SGP30, SDS011, DHT22, alimentation 5V/3A, MB102, LM2596</text>
+
+  <!-- Power block -->
+  <rect x="20" y="80" width="300" height="180" class="blk" rx="8"/>
+  <text x="40" y="110" class="title">Alimentation 5V</text>
+  <text x="40" y="132" class="small">Bloc secteur 5V / 3A</text>
+  <text x="40" y="150" class="small">USB / Jack → Fusible 1A</text>
+  <text x="40" y="168" class="small">Interrupteur On/Off</text>
+  <text x="40" y="186" class="small">Protection: Diode 1N4007 (anti-inversion)</text>
+
+  <!-- Power lines to MB102 and LM2596 -->
+  <line x1="320" y1="170" x2="430" y2="170" class="conn" />
+  <text x="350" y="156" class="small">+5V</text>
+  <line x1="320" y1="200" x2="430" y2="200" class="conn" />
+  <text x="350" y="216" class="small">GND</text>
+
+  <!-- MB102 / LM2596 block -->
+  <rect x="430" y="120" width="300" height="160" class="blk" rx="8"/>
+  <text x="450" y="150" class="title">MB102 & LM2596</text>
+  <text x="450" y="172" class="small">MB102: module alimentation breadboard — sortie 5V et 3,3V simultanées (entrée USB/Jack)</text>
+  <text x="450" y="190" class="small">LM2596: régulateur buck — 3,3V haute capacité pour ME4 TIA + SGP30 + DHT22</text>
+  <text x="450" y="208" class="small">Condensateurs: 100µF électrolytique IN/OUT + 100nF céramique par IC (découplage)</text>
+
+  <!-- ESP32 block -->
+  <rect x="820" y="80" width="280" height="220" class="blk" rx="8"/>
+  <text x="840" y="110" class="title">ESP32 DevKit V1</text>
+  <text x="840" y="132" class="small">Alimentation: 5V (VIN) ou 3.3V (V3) - préférer VIN via régulateur</text>
+  <text x="840" y="150" class="small">Découplage: 100uF + 0.1uF près de l'ESP32</text>
+
+  <!-- ESP32 pins area -->
+  <text x="840" y="174" class="small">I2C: SDA -> GPIO21, SCL -> GPIO22 (pull-ups 4.7k)</text>
+  <text x="840" y="192" class="small">UART (Serial) pour capteurs: TX/RX</text>
+  <text x="840" y="210" class="small">ADC1 (GPIO32-39): Vout MQ via pont div. 10k/20kΩ (0–3,3V max, WiFi-safe)</text>
+
+  <!-- I2C devices (SGP30 and I2C LCD) -->
+  <rect x="1120" y="80" width="230" height="120" class="blk" rx="8"/>
+  <text x="1140" y="110" class="title">I2C Bus (3.3V)</text>
+  <text x="1140" y="130" class="small">SGP30 (COV, TVOC) - 3.3V</text>
+  <text x="1140" y="150" class="small">I2C LCD (PCF8574 backpack) - optionnel</text>
+  <text x="1140" y="168" class="small">Résistances pull-up: 2 × 4.7k entre SDA/SCL et 3.3V</text>
+
+  <!-- Lines from ESP32 to I2C -->
+  <line x1="1100" y1="160" x2="1120" y2="160" class="conn" />
+  <line x1="1100" y1="180" x2="1120" y2="180" class="conn" />
+  <text x="980" y="160" class="small">SDA (GPIO21)</text>
+  <text x="980" y="180" class="small">SCL (GPIO22)</text>
+
+  <!-- UART devices block -->
+  <rect x="1120" y="220" width="230" height="160" class="blk" rx="8"/>
+  <text x="1140" y="250" class="title">UART / Serial devices</text>
+  <text x="1140" y="272" class="small">MH-Z19B (CO2) - UART / PWM (alimentation 5V)</text>
+  <text x="1140" y="290" class="small">SDS011 (PM2.5 / PM10) - UART (alimentation 5V)</text>
+  <text x="1140" y="308" class="small">Utiliser convertisseur de niveau (TX/RX) si nécessaire</text>
+
+  <!-- Lines from ESP32 UART -->
+  <line x1="1100" y1="260" x2="1120" y2="260" class="conn" />
+  <text x="980" y="260" class="small">UART RX/TX (via level shifter)</text>
+
+  <!-- ME4 electrochemical sensors block (TIA interface) -->
+  <rect x="20" y="280" width="420" height="360" class="blk" rx="8"/>
+  <text x="40" y="310" class="title">Capteurs MOS MQ (pont diviseur résistif)</text>
+  <text x="40" y="332" class="small">MQ-136 (SO₂) — ADC GPIO33 — RL=10kΩ — chauffe 5V/150mA — GPIO26 ctrl NPN</text>
+  <text x="40" y="352" class="small">MQ-131 (NOx) — ADC GPIO34 — RL=10kΩ — chauffe 5V/150mA — GPIO27 ctrl NPN</text>
+  <text x="40" y="372" class="small">Principe : Rsensor varie avec [gaz] → pont divis. → Vout 0–5V → div. ADC ≤3,3V</text>
+  <text x="40" y="392" class="small">Pré-chauffe ≥ 24–48 h pour calibration R0 en air propre</text>
+  <text x="40" y="412" class="small">Schéma pont diviseur par capteur MQ :</text>
+  <text x="60" y="432" class="small">- 5V → Rsensor(MQ) → nœud Vout → RL(10kΩ) → GND</text>
+  <text x="60" y="452" class="small">- Nœud Vout → R1(10kΩ)/R2(20kΩ) diviseur → ADC ESP32 (≤ 3,3V)</text>
+  <text x="60" y="472" class="small">- Chauffage MQ : 5V → diode 1N4007 → collecteur NPN 2N2222 → émetteur GND</text>
+  <text x="60" y="492" class="small">- Base NPN : GPIO26/27 → R_base 1kΩ → base 2N2222</text>
+
+  <!-- Draw example MQ sensor diagram -->
+  <rect x="60" y="520" width="120" height="80" rx="6" fill="#fff" stroke="#4a5568"/>
+  <text x="70" y="544" class="small">MQ-13x</text>
+  <line x1="120" y1="560" x2="300" y2="560" class="conn"/>
+  <text x="200" y="548" class="small">Vout → div. 10k/20kΩ → ADC (≤3,3V)</text>
+  <text x="200" y="568" class="small">RL=10kΩ, Cfilt 100nF sortie div.</text>
+  <line x1="120" y1="600" x2="300" y2="600" class="conn"/>
+  <text x="200" y="592" class="small">Chauffe 5V → NPN 2N2222 + diode 1N4007</text>
+
+  <!-- DHT22 block -->
+  <rect x="520" y="320" width="240" height="100" class="blk" rx="8"/>
+  <text x="540" y="350" class="title">DHT22</text>
+  <text x="540" y="372" class="small">Signal data → GPIO (pull-up 10k)</text>
+  <text x="540" y="392" class="small">Alim 3.3V</text>
+  <line x1="760" y1="372" x2="820" y2="172" class="conn"/>
+  <text x="720" y="360" class="small">Data → GPIO</text>
+
+  <!-- Connections between power/regulator and ESP32 -->
+  <line x1="730" y1="170" x2="820" y2="170" class="conn" />
+  <text x="650" y="160" class="small">3.3V (LM2596 adjusted) → ESP32 3V</text>
+  <line x1="730" y1="200" x2="820" y2="240" class="conn" />
+  <text x="650" y="210" class="small">GND common</text>
+
+  <!-- Level shifter / UART protection -->
+  <rect x="980" y="380" width="200" height="90" class="blk" rx="8"/>
+  <text x="1000" y="410" class="title">Level Shifters</text>
+  <text x="1000" y="432" class="small">- Logic level shifter bidirectionnel I2C/UART</text>
+  <text x="1000" y="452" class="small">- Diviseur résistif pour RX/TX si nécessaire (R1=10k/R2=20k)</text>
+
+  <!-- SDS011 block -->
+  <rect x="1120" y="400" width="230" height="80" class="blk" rx="8"/>
+  <text x="1140" y="430" class="small">SDS011 (PM2.5/PM10) - Alim 5V, UART</text>
+
+  <!-- MH-Z19B block -->
+  <rect x="820" y="320" width="240" height="80" class="blk" rx="8"/>
+  <text x="840" y="350" class="small">MH-Z19B (CO2) - Alim 5V, UART / PWM</text>
+  <text x="840" y="370" class="small">Si utilisé en UART: TX/RX via level shifter</text>
+
+  <!-- Notes / component list -->
+  <rect x="20" y="660" width="1330" height="210" fill="#fff8e6" stroke="#d69e2e" rx="6"/>
+  <text x="40" y="690" class="title">Notes et valeurs recommandées</text>
+  <text x="60" y="712" class="note">- Condensateurs: 100uF électrolytique (IN/OUT régulateur), 0.1uF céramique près de chaque IC.</text>
+  <text x="60" y="734" class="note">- Pull-ups I2C: 2 × 4.7k à 3.3V. DHT22: 10k pull-up.</text>
+  <text x="60" y="756" class="note">- MQ sensors: RL ≈ 10k (ajuster selon datasheet), filtrage RC 10k + 100nF pour stabilité.</text>
+  <text x="60" y="778" class="note">- Chauffage MQ: driver MOSFET (IRLZ44N ou logic-level N-MOSFET) avec diode 1N4007 et fusible 1A sur l'alim 5V.</text>
+  <text x="60" y="800" class="note">- SDS011: alimentez en 5V, TX/RX via convertisseur de niveau; prévoir isolation si bruit.</text>
+  <text x="900" y="734" class="note">- Écran LCD: I2C (16x2) via PCF8574 backpack recommandé pour simplicité et câblage réduit.</text>
+  <text x="900" y="756" class="note">- Bouton On/Off: placé après fusible et avant régulateur; ajouter pull-down 100k sur gate si MOSFET est utilisé pour coupure.</text>
+  <text x="900" y="778" class="note">- Masse commune: relier GND de tous les modules (5V & 3.3V) pour référence ADC stable.</text>
+
+  <!-- Legend -->
+  <rect x="1120" y="660" width="230" height="120" fill="#eef2ff" stroke="#2b6cb0" rx="6"/>
+  <text x="1140" y="690" class="title">Légende</text>
+  <text x="1140" y="712" class="small">- RL : Load resistor (capteur MQ sortie)</text>
+  <text x="1140" y="732" class="small">- Cfilt : 100nF</text>
+  <text x="1140" y="752" class="small">- Diode : 1N4007</text>
+  <text x="1140" y="772" class="small">- Fuse : 1A</text>
+
+</svg>

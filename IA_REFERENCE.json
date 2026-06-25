@@ -161,7 +161,7 @@
         "sensorNodeId": "ObjectId → SensorNode (required)",
         "PolluantId": "ObjectId → Polluant (required)",
         "type": "Enum: CO2|SO2|NOX|PM25|PM10|COV|TEMPERATURE|HUMIDITY",
-        "model": "String (e.g., 'MQ-135', 'SDS011')",
+        "model": "String (e.g., 'MH-Z19B', 'ME4-SO2', 'ME4-NO2', 'SDS011', 'SGP30', 'DHT22')",
         "unit": "String (e.g., 'ppm', 'µg/m³')",
         "calibrationDate": "Date",
         "driftThreshold": "Number",
@@ -183,7 +183,7 @@
         "createdAt": "Date",
         "updatedAt": "Date"
       },
-      "anpeStandards": "NT 106.04 (Tunisie)"
+      "anpeStandards": "Décret 2018-928"
     },
     "Reading": {
       "fields": {

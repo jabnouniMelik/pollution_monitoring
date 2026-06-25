@@ -1,0 +1,125 @@
+@startuml
+title Pollution Monitoring System - Class Diagram
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+class User {
+  +username: String
+  +email: String
+  +role: Role
+  +isActive: Boolean
+  +lastLogin: Date
+}
+
+class Industrie {
+  +nom: String
+  +secteur: String
+  +actif: Boolean
+}
+
+class Site {
+  +nom: String
+  +actif: Boolean
+  +approvalStatus: String
+  +zoneCount: Number
+}
+
+class Zone {
+  +code: String
+  +nom: String
+  +actif: Boolean
+  +approvalStatus: String
+  +sensorNodeCount: Number
+}
+
+class SensorNode {
+  +nom: String
+  +zone: String
+  +status: String
+  +ipAddress: String
+  +macAddress: String
+}
+
+class Sensor {
+  +type: String
+  +model: String
+  +unit: String
+  +isActive: Boolean
+}
+
+class Polluant {
+  +name: String
+  +code: String
+  +unit: String
+  +regulatoryLimit: Number
+  +warningThreshold: Number
+  +weight: Number
+}
+
+class Reading {
+  +value: Number
+  +rawValue: Number
+  +unit: String
+  +isValid: Boolean
+  +timestamp: Date
+}
+
+class Alert {
+  +severity: String
+  +type: String
+  +value: Number
+  +threshold: Number
+  +message: String
+  +timestamp: Date
+  +isAcknowledged: Boolean
+  +resolvedAt: Date
+}
+
+class ThresholdConfig {
+  +nom: String
+  +warningOffsetPercent: Number
+  +criticalOffsetPercent: Number
+  +actif: Boolean
+}
+
+class SiteConfig {
+  +airflow: Number
+  +kpiTargets: Object
+  +baseline: Object
+  +actif: Boolean
+}
+
+class AggregateData {
+  +period: String
+  +periodStart: Date
+  +periodEnd: Date
+  +avgValue: Number
+  +minValue: Number
+  +maxValue: Number
+}
+
+Industrie "1" -- "0..*" Site : owns
+Site "1" -- "0..*" Zone : contains
+Zone "1" -- "0..*" SensorNode : hosts
+SensorNode "1" -- "1..*" Sensor : contains
+Sensor "1" -- "0..*" Reading : produces
+Polluant "1" -- "0..*" Sensor : measured by
+Polluant "1" -- "0..*" Reading : classified as
+Sensor "1" -- "0..*" Alert : triggers
+Reading "0..1" -- "0..1" Alert : may create
+User "0..*" -- "0..*" Site : manages
+User "0..*" -- "0..*" Zone : assigned to
+User "0..*" -- "0..*" Alert : acknowledges/resolves
+ThresholdConfig "1" ..> Polluant : defines limits
+SiteConfig "1" ..> AggregateData : feeds KPI
+
+note right of Alert
+One active alert per sensor x pollutant
+end note
+
+note bottom of Reading
+Reading ingestion from MQTT and simulator
+end note
+
+@enduml

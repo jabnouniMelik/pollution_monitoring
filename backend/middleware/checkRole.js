@@ -65,8 +65,21 @@ const PERMISSIONS = {
     "SITE_SUPERVISOR",
     "AUDITOR",
   ],
+  // Soumission d'un rapport pour validation auditeur
+  submit_reports: ["HEAD_SUPERVISOR", "SITE_SUPERVISOR"],
+  // Approbation / refus par l'auditeur
+  approve_reports: ["AUDITOR"],
   // Export PDF/CSV
   export_data: ["SUPER_ADMIN", "HEAD_SUPERVISOR", "SITE_SUPERVISOR", "AUDITOR"],
+  // Consultation module IA (prévisions LSTM, anomalies IF)
+  view_ai: [
+    "HEAD_SUPERVISOR",
+    "SITE_SUPERVISOR",
+    "AUDITOR",
+    "OPERATOR",
+  ],
+  // Lancement manuel des pipelines IA
+  run_ia: ["SUPER_ADMIN", "HEAD_SUPERVISOR"],
   // Calibration des capteurs
   calibrate_sensors: [
     "SUPER_ADMIN",

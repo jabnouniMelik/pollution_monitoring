@@ -24,6 +24,9 @@ export const ROLE_LABELS: Record<Role, string> = {
   OPERATOR: 'Opérateur',
 }
 
+/** Routes accessibles à l’auditeur (seules pages du menu). */
+export const AUDITOR_ALLOWED_PATHS = ['/compliance', '/reports'] as const
+
 export const Permission = {
   VIEW_ALL_USERS: 'VIEW_ALL_USERS',
   CREATE_USER: 'CREATE_USER',
@@ -61,10 +64,15 @@ export const Permission = {
   RESOLVE_ALERT: 'RESOLVE_ALERT',
 
   VIEW_KPI: 'VIEW_KPI',
+  VIEW_COMPLIANCE: 'VIEW_COMPLIANCE',
   GENERATE_REPORT: 'GENERATE_REPORT',
+  SUBMIT_REPORT: 'SUBMIT_REPORT',
+  APPROVE_REPORT: 'APPROVE_REPORT',
+  REJECT_REPORT: 'REJECT_REPORT',
   SUBMIT_ANPE: 'SUBMIT_ANPE',
 
   VIEW_AI: 'VIEW_AI',
+  RUN_IA: 'RUN_IA',
   RETRAIN_MODEL: 'RETRAIN_MODEL',
   MANAGE_OPERATORS: 'MANAGE_OPERATORS',
   MANAGE_TEAM: 'MANAGE_TEAM',
@@ -102,6 +110,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'UPDATE_TARGETS',
     'VIEW_THRESHOLDS',
     'UPDATE_THRESHOLDS',
+    'RUN_IA',
   ],
 
   HEAD_SUPERVISOR: [
@@ -122,8 +131,11 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'ESCALATE_ALERT',
     'RESOLVE_ALERT',
     'VIEW_KPI',
+    'VIEW_COMPLIANCE',
     'GENERATE_REPORT',
+    'SUBMIT_REPORT',
     'VIEW_AI',
+    'RUN_IA',
     'RETRAIN_MODEL',
   ],
 
@@ -142,20 +154,18 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'ACKNOWLEDGE_ALERT',
     'ESCALATE_ALERT',
     'VIEW_KPI',
+    'VIEW_COMPLIANCE',
     'GENERATE_REPORT',
+    'SUBMIT_REPORT',
     'VIEW_AI',
   ],
 
   AUDITOR: [
-    'VIEW_ALL_USERS',
-    'VIEW_ALL_SITES',
-    'VIEW_ALL_ZONES',
-    'VIEW_CONFIG',
+    'VIEW_COMPLIANCE',
     'VIEW_THRESHOLDS',
-    'VIEW_ALERTS',
-    'VIEW_KPI',
-    'VIEW_AI',
     'GENERATE_REPORT',
+    'APPROVE_REPORT',
+    'REJECT_REPORT',
   ],
 
   OPERATOR: [
@@ -163,6 +173,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'VIEW_ALERTS',
     'ACKNOWLEDGE_ALERT',
     'VIEW_KPI',
+    'VIEW_COMPLIANCE',
     'VIEW_AI',
   ],
 }

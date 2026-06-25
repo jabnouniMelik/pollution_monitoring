@@ -34,7 +34,7 @@ function defaultPollutantLimits(code: PollutantCode): PollutantThresholdLimits {
     warning: Math.round(warning * 100) / 100,
     critical: Math.round(critical * 100) / 100,
     unit: POLLUTANTS[code].unit,
-    reference: dec?.reference ?? 'Décret 2010-2516',
+    reference: dec?.reference ?? 'Décret 2018-928',
   }
 }
 

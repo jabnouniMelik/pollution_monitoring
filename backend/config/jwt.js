@@ -41,9 +41,13 @@ const generateAccessToken = (user) => {
     zone: user.zone || null, // utilisé pour filtrer par zone (OPERATOR)
   };
 
-  return jwt.sign(payload, requireSecret(JWT_CONFIG.access.secret, "JWT_ACCESS_SECRET"), {
-    expiresIn: JWT_CONFIG.access.expires,
-  });
+  return jwt.sign(
+    payload,
+    requireSecret(JWT_CONFIG.access.secret, "JWT_ACCESS_SECRET"),
+    {
+      expiresIn: JWT_CONFIG.access.expires,
+    },
+  );
 };
 
 // ── Générer un Refresh Token ──────────────────────────────────
@@ -53,20 +57,30 @@ const generateRefreshToken = (user) => {
     userId: user._id,
   };
 
-  return jwt.sign(payload, requireSecret(JWT_CONFIG.refresh.secret, "JWT_REFRESH_SECRET"), {
-    expiresIn: JWT_CONFIG.refresh.expires,
-  });
+  return jwt.sign(
+    payload,
+    requireSecret(JWT_CONFIG.refresh.secret, "JWT_REFRESH_SECRET"),
+    {
+      expiresIn: JWT_CONFIG.refresh.expires,
+    },
+  );
 };
 
 // ── Vérifier un Access Token ──────────────────────────────────
 // Retourne le payload décodé ou lève une erreur
 const verifyAccessToken = (token) => {
-  return jwt.verify(token, requireSecret(JWT_CONFIG.access.secret, "JWT_ACCESS_SECRET"));
+  return jwt.verify(
+    token,
+    requireSecret(JWT_CONFIG.access.secret, "JWT_ACCESS_SECRET"),
+  );
 };
 
 // ── Vérifier un Refresh Token ─────────────────────────────────
 const verifyRefreshToken = (token) => {
-  return jwt.verify(token, requireSecret(JWT_CONFIG.refresh.secret, "JWT_REFRESH_SECRET"));
+  return jwt.verify(
+    token,
+    requireSecret(JWT_CONFIG.refresh.secret, "JWT_REFRESH_SECRET"),
+  );
 };
 
 // ── Options du Cookie HttpOnly ────────────────────────────────
@@ -74,7 +88,7 @@ const verifyRefreshToken = (token) => {
 const COOKIE_OPTIONS = {
   httpOnly: true, // inaccessible au JavaScript → protection XSS
   secure: process.env.NODE_ENV === "production", // HTTPS en production
-  sameSite: "strict", // protection CSRF
+  sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax", // lax pour développement (localhost cross-port)
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours en millisecondes
 };
 

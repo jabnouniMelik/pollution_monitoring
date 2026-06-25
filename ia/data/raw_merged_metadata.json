@@ -1,0 +1,39 @@
+{
+  "created_at": "2026-05-19T12:54:24.483925",
+  "total_rows": 195907,
+  "sources": [
+    "UCI_AirQuality",
+    "Beijing_MultiSite",
+    "EPA_AQS"
+  ],
+  "pollutants": [
+    "COV",
+    "NOX",
+    "PM10",
+    "PM25",
+    "SOX"
+  ],
+  "date_range": {
+    "min": "2004-03-10T18:00:00",
+    "max": "2025-09-30T23:00:00"
+  },
+  "quality_flags": {
+    "duplicates_removed": "0",
+    "outliers_marked": "6134",
+    "missing_values": {
+      "wind_speed_ms": 100.0,
+      "pressure_hpa": 39.75712965846039,
+      "humidity_percent": 31.21430066306972,
+      "temperature_c": 31.21430066306972
+    }
+  },
+  "source_distribution": {
+    "Beijing_MultiSite": 118020,
+    "EPA_AQS": 61151,
+    "UCI_AirQuality": 16736
+  },
+  "synthetic_data": {
+    "beijing_synthetic_rows": "131400",
+    "total_synthetic_percentage": 100.0
+  }
+}

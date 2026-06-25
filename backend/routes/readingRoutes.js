@@ -15,6 +15,7 @@ const router = express.Router();
 
 const {
   ingestReading,
+  getHistory,
   getAllReadings,
   getLatestReadings,
   getReadingById,
@@ -25,6 +26,7 @@ const { validateReading } = require("../middleware/validators");
 // Routes spéciales AVANT /:id — ordre important !
 router.post("/ingest", validateReading, ingestReading);
 router.get("/latest", getLatestReadings);
+router.get("/history", getHistory);   // aggregated time-series for charts
 
 // Routes générales
 router.route("/").get(getAllReadings);

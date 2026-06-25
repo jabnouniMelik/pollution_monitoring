@@ -9,7 +9,7 @@
  *   2 Sites      : Site Principal Gabès | Site Annexe Gabès
  *   2 Zones/site : Zone-Four + Zone-Broyage | Zone-Stockage + Zone-Expedition
  *   1 SensorNode per zone (4 total)
- *   5 Sensors per node  (CO2, NOX, SO2, PM25, COV)
+ *   6 Sensors per node  (CO2, NOX, SO2, PM25, PM10, COV)
  *   30 days of readings (5-min interval) per sensor
  *   Alerts generated from readings that exceed thresholds
  *   1 HEAD_SUPERVISOR, 1 SITE_SUPERVISOR, 4 OPERATORs, 1 AUDITOR
@@ -39,32 +39,51 @@ const User          = require("./models/User");
 const SiteConfig    = require("./models/SiteConfig");
 const ThresholdConfig = require("./models/ThresholdConfig");
 const RefreshToken  = require("./models/RefreshToken");
+const AggregateData = require("./models/AggregateData");
+const LstmForecast  = require("./models/LstmForecast");
+const AnomalyDetection = require("./models/AnomalyDetection");
+const Report        = require("./models/Report");
 
 // ── Constants ─────────────────────────────────────────────────
-const DAYS        = 30;
+const DAYS        = parseInt(process.env.SEED_DAYS || "30", 10);
 const INTERVAL_MS = 5 * 60 * 1000;   // 5 minutes
 const BATCH_SIZE  = 500;
+const IS_DEMO     = process.env.SEED_DEMO === "1";
 
-// Pollutant definitions — regulatory limits from Décret 2010-2516
+// Pollutant definitions — regulatory limits from Décret 2018-928 + 2018-928
+// Annexe 1 (valeurs générales) — applicables à toutes sources fixes industrielles.
+// Ces valeurs constituent les seuils par défaut du système générique.
+// Pour un déploiement sectoriel spécifique, surcharger via ThresholdConfig.
 const POLLUTANTS = [
-  { code: "CO2",  name: "CO2",  formula: "CO₂",  unit: "ppm",     regulatoryLimit: 800,  warningThreshold: 600,  weight: 0.05 },
-  { code: "NOX",  name: "NOX",  formula: "NOₓ",  unit: "mg/Nm³",  regulatoryLimit: 200,  warningThreshold: 150,  weight: 0.30 },
-  { code: "SO2",  name: "SO2",  formula: "SO₂",  unit: "mg/Nm³",  regulatoryLimit: 100,  warningThreshold: 75,   weight: 0.25 },
-  { code: "PM25", name: "PM25", formula: "PM₂.₅",unit: "µg/m³",   regulatoryLimit: 50,   warningThreshold: 35,   weight: 0.25 },
-  { code: "COV",  name: "COV",  formula: "COV",  unit: "mg/Nm³",  regulatoryLimit: 30,   warningThreshold: 22,   weight: 0.15 },
+  // CO2 : pas de VLE réglementaire — seuil interne pour suivi KPI
+  { code: "CO2",  name: "CO2",  formula: "CO₂",  unit: "ppm",    regulatoryLimit: 800,  warningThreshold: 640,  weight: 0.05 },
+  // NOx : 500 mg/Nm³ — Annexe 1, §4 (flux > 25 kg/h)
+  { code: "NOX",  name: "NOX",  formula: "NOₓ",  unit: "mg/Nm³", regulatoryLimit: 500,  warningThreshold: 400,  weight: 0.30 },
+  // SO2 : 300 mg/Nm³ — Annexe 1, §3 (flux > 25 kg/h)
+  { code: "SO2",  name: "SO2",  formula: "SO₂",  unit: "mg/Nm³", regulatoryLimit: 300,  warningThreshold: 240,  weight: 0.25 },
+  // PM25 : 40 mg/m³ — Annexe 1, §1 (flux > 1 kg/h)
+  { code: "PM25", name: "PM25", formula: "PM₂.₅",unit: "µg/m³",  regulatoryLimit: 40,   warningThreshold: 32,   weight: 0.15 },
+  // PM10 : même VLE poussières (Annexe 1, §1) — mesure SDS011 complémentaire
+  { code: "PM10", name: "PM10", formula: "PM₁₀", unit: "µg/m³",  regulatoryLimit: 48,   warningThreshold: 38,   weight: 0.10 },
+  // COV : 110 mg/Nm³ — Annexe 1, §7 (flux > 2 kg/h, exprimé en carbone total)
+  { code: "COV",  name: "COV",  formula: "COV",  unit: "mg/Nm³", regulatoryLimit: 110,  warningThreshold: 88,   weight: 0.15 },
 ];
 
-// Sensor models per pollutant
+// Sensor models per pollutant — aligned with actual hardware (see rapport/II3_Couche_IoT.md)
 const SENSOR_MODELS = {
-  CO2: "MH-Z19B", NOX: "MiCS-6814", SO2: "MiCS-6814", PM25: "SDS011", COV: "BME680",
+  CO2: "MH-Z19B", NOX: "MQ-131", SO2: "MQ-136", PM25: "SDS011", PM10: "SDS011", COV: "SGP30",
 };
 
 // Emission profiles per zone (baseline ± amplitude + noise)
+// Values calibrated against Décret 2018-928, Annexe 1 VLEs so normal operation
+// stays mostly compliant but warning/breach events occur naturally.
+// NOX VLE = 500 mg/Nm³ | SO2 VLE = 300 mg/Nm³ | PM VLE = 40 mg/m³ | COV VLE = 110 mg/Nm³
 const PROFILES = {
-  "Zone-Four":      { CO2: [650,120,40], NOX: [85,30,15],  SO2: [45,20,10], PM25: [28,12,8],  COV: [18,8,5]  },
-  "Zone-Broyage":   { CO2: [420,80,30],  NOX: [55,20,10],  SO2: [30,12,7],  PM25: [18,8,5],   COV: [12,5,3]  },
-  "Zone-Stockage":  { CO2: [380,60,25],  NOX: [40,15,8],   SO2: [22,10,5],  PM25: [14,6,4],   COV: [9,4,2]   },
-  "Zone-Expedition":{ CO2: [350,50,20],  NOX: [35,12,6],   SO2: [18,8,4],   PM25: [12,5,3],   COV: [7,3,2]   },
+  //                    CO2            NOX              SO2             PM25           PM10           COV
+  "Zone-Four":      { CO2: [650,120,40], NOX: [400,80,40],  SO2: [240,50,30], PM25: [32,8,4],  PM10: [38,10,5], COV: [88,15,10]  },
+  "Zone-Broyage":   { CO2: [420,80,30],  NOX: [260,60,30],  SO2: [150,40,20], PM25: [20,6,3],  PM10: [24,7,4],  COV: [58,10,7]   },
+  "Zone-Stockage":  { CO2: [380,60,25],  NOX: [230,50,25],  SO2: [130,35,18], PM25: [16,4,2],  PM10: [19,5,2],  COV: [52,8,5]    },
+  "Zone-Expedition":{ CO2: [350,50,20],  NOX: [200,40,20],  SO2: [110,30,15], PM25: [12,3,2],  PM10: [14,4,2],  COV: [46,7,4]    },
 };
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -74,6 +93,42 @@ function genValue(profile, t) {
   const dayFactor = (hour >= 6 && hour <= 18) ? 1.15 : 0.85;
   const wave = Math.sin(t / (4 * 60 * 60 * 1000));
   const v = (baseline + amplitude * wave + (Math.random() - 0.5) * 2 * noise) * dayFactor;
+  return Math.max(0, Math.round(v * 100) / 100);
+}
+
+/** Épisodes de dépassement pour démo rapport (pics industriels + épisode récent). */
+function buildDemoEpisodes(startTime, now) {
+  const day = 24 * 60 * 60 * 1000;
+  const hour = 60 * 60 * 1000;
+  return [
+    { zone: "Zone-Four", pol: "NOX", startMs: startTime + 5 * day, durationMs: 5 * hour, mult: 1.32 },
+    { zone: "Zone-Four", pol: "SO2", startMs: startTime + 12 * day, durationMs: 4 * hour, mult: 1.28 },
+    { zone: "Zone-Four", pol: "PM25", startMs: startTime + 20 * day, durationMs: 6 * hour, mult: 1.55 },
+    { zone: "Zone-Four", pol: "PM10", startMs: startTime + 20 * day, durationMs: 6 * hour, mult: 1.45 },
+    { zone: "Zone-Broyage", pol: "PM25", startMs: startTime + 28 * day, durationMs: 8 * hour, mult: 1.6 },
+    { zone: "Zone-Broyage", pol: "COV", startMs: startTime + 35 * day, durationMs: 4 * hour, mult: 1.25 },
+    { zone: "Zone-Stockage", pol: "SO2", startMs: startTime + 38 * day, durationMs: 3 * hour, mult: 1.22 },
+    { zone: "Zone-Expedition", pol: "NOX", startMs: startTime + 42 * day, durationMs: 4 * hour, mult: 1.2 },
+    // Dernières heures — visible immédiatement (alertes, IA, courbes live)
+    { zone: "Zone-Four", pol: "NOX", startMs: now - 10 * hour, durationMs: 9 * hour, mult: 1.28 },
+    { zone: "Zone-Four", pol: "PM25", startMs: now - 6 * hour, durationMs: 6 * hour, mult: 1.48 },
+    { zone: "Zone-Four", pol: "PM10", startMs: now - 6 * hour, durationMs: 6 * hour, mult: 1.42 },
+    { zone: "Zone-Four", pol: "CO2", startMs: now - 4 * hour, durationMs: 4 * hour, mult: 1.12 },
+  ];
+}
+
+function applyDemoEpisodes(zoneCode, pollutantCode, baseValue, t, episodes) {
+  let v = baseValue;
+  for (const ep of episodes) {
+    if (ep.zone !== zoneCode || ep.pol !== pollutantCode) continue;
+    if (t < ep.startMs || t >= ep.startMs + ep.durationMs) continue;
+    const mid = ep.startMs + ep.durationMs / 2;
+    const dist = Math.abs(t - mid) / (ep.durationMs / 2);
+    const shape = 1 + (1 - Math.min(dist, 1)) * 0.12;
+    v *= ep.mult * shape;
+  }
+  const dow = new Date(t).getUTCDay();
+  if (dow === 0 || dow === 6) v *= 0.5;
   return Math.max(0, Math.round(v * 100) / 100);
 }
 
@@ -100,6 +155,7 @@ async function main() {
   const collections = [
     Alert, Reading, Sensor, SensorNode, Zone, Site, Industrie,
     Polluant, User, SiteConfig, ThresholdConfig, RefreshToken,
+    AggregateData, LstmForecast, AnomalyDetection, Report,
   ];
   for (const Model of collections) {
     const { deletedCount } = await Model.deleteMany({});
@@ -119,24 +175,35 @@ async function main() {
 
   // ══════════════════════════════════════════════════════════
   // STEP 2 — ThresholdConfig
+  // Décret gouvernemental n° 2018-928 — Annexe 1 (valeurs générales)
+  // décret gouvernemental n° 2018-928 du 7 novembre 2018.
+  // Annexe 1 — Valeurs limites générales à la source, toutes sources fixes.
+  // Pour un déploiement cimenteries, surcharger via ThresholdConfig (Annexe 6).
   // ══════════════════════════════════════════════════════════
   console.log("\n── Step 2: ThresholdConfig ──");
   await ThresholdConfig.create({
-    nom: "Configuration Globale",
-    description: "Seuils réglementaires — Décret 2010-2516 (Tunisie)",
+    nom: "Sources fixes — Décret 2018-928 (Annexe 1)",
+    description: "Valeurs limites générales à la source pour toutes sources fixes industrielles — Décret gouvernemental n° 2018-928, Annexe 1.",
+    installationType: "GENERAL",
     polluants: {
-      NOx:  { min: 50,  max: 200, warning: 150, critical: 200, unit: "mg/Nm³", reference: "Décret 2010-2516" },
-      SO2:  { min: 20,  max: 100, warning: 75,  critical: 100, unit: "mg/Nm³", reference: "Décret 2010-2516" },
-      PM:   { min: 10,  max: 50,  warning: 35,  critical: 50,  unit: "µg/m³",  reference: "Décret 2010-2516" },
-      PM25: { min: 10,  max: 50,  warning: 35,  critical: 50,  unit: "µg/m³",  reference: "Décret 2010-2516" },
-      COV:  { min: 5,   max: 30,  warning: 22,  critical: 30,  unit: "mg/Nm³", reference: "ANPE" },
-      CO2:  { min: 400, max: 800, warning: 600, critical: 800, unit: "ppm",    reference: "Custom" },
+      // §1 — Poussières : 40 mg/m³ (flux > 1 kg/h)
+      PM:   { min: 0, max: 40,  warning: 32,  critical: 48,  unit: "mg/m³",  reference: "Décret 2018-928, Annexe 1, §1 — Poussières (flux > 1 kg/h)" },
+      PM25: { min: 0, max: 40,  warning: 32,  critical: 48,  unit: "µg/m³",  reference: "Décret 2018-928, Annexe 1, §1 — Poussières (flux > 1 kg/h)" },
+      PM10: { min: 0, max: 48,  warning: 38,  critical: 58,  unit: "µg/m³",  reference: "Décret 2018-928, Annexe 1, §1 — Poussières (flux > 1 kg/h)" },
+      // §3 — SO₂ : 300 mg/m³ (flux > 25 kg/h)
+      SO2:  { min: 0, max: 300, warning: 240, critical: 360, unit: "mg/Nm³", reference: "Décret 2018-928, Annexe 1, §3 — SO₂ (flux > 25 kg/h)" },
+      // §4 — NOₓ : 500 mg/m³ (flux > 25 kg/h)
+      NOx:  { min: 0, max: 500, warning: 400, critical: 600, unit: "mg/Nm³", reference: "Décret 2018-928, Annexe 1, §4 — NOₓ (flux > 25 kg/h)" },
+      // §7 — COV : 110 mg/m³ (flux > 2 kg/h, carbone total)
+      COV:  { min: 0, max: 110, warning: 88,  critical: 132, unit: "mg/Nm³", reference: "Décret 2018-928, Annexe 1, §7 — COV (flux > 2 kg/h)" },
+      // CO₂ : pas de VLE réglementaire — seuil interne suivi KPI
+      CO2:  { min: 0, max: 800, warning: 640, critical: 960, unit: "ppm",    reference: "Suivi interne — pas de VLE réglementaire" },
     },
-    warningOffsetPercent: 25,
-    criticalOffsetPercent: 0,
+    warningOffsetPercent: 20,
+    criticalOffsetPercent: 20,
     actif: true,
   });
-  console.log("  ✓ ThresholdConfig created");
+  console.log("  ✓ ThresholdConfig created (Décret 2018-928, Annexe 1)");
 
   // ══════════════════════════════════════════════════════════
   // STEP 3 — SiteConfig (KPI parameters)
@@ -145,7 +212,7 @@ async function main() {
   await SiteConfig.create({
     siteName: "Cimenterie de Gabès",
     airflow: 3.5,
-    polluantWeights: { NOx: 0.30, SO2: 0.25, PM25: 0.25, COV: 0.15, CO2: 0.05 },
+    polluantWeights: { NOx: 0.30, SO2: 0.25, PM25: 0.15, PM10: 0.10, COV: 0.15, CO2: 0.05 },
     targets: { tauxDepassement: 2.0, ipe: 95, reductionCO2: -5.0 },
     location: { type: "Point", coordinates: [10.0982, 33.8815] },
     isActive: true,
@@ -178,7 +245,7 @@ async function main() {
 
   const auditor = await new User({
     username: "auditor", email: "auditor@example.com",
-    password: "Audit1234!", role: "AUDITOR", isActive: true,
+    password: "Audit1234!", role: "AUDITOR", industryId: industrie._id, isActive: true,
   }).save();
   console.log("  ✓ AUDITOR:", auditor.email);
 
@@ -246,7 +313,7 @@ async function main() {
       description: cfg.desc,
       localisation: { type: "Point", coordinates: cfg.coords },
       actif: true, approvalStatus: "APPROVED", approvedBy: superAdmin._id, approvedAt: new Date(),
-      pollutants: ["CO2", "NOX", "SO2", "PM", "COV"],
+      pollutants: ["CO2", "NOX", "SO2", "PM25", "PM10", "COV"],
     });
     zoneDocs[cfg.code] = zone;
     console.log(`  ✓ ${zone.nom}`);
@@ -297,9 +364,13 @@ async function main() {
   for (const def of nodeDefs) {
     const zone = zoneDocs[def.zone];
     const node = await SensorNode.create({
-      nom: def.nom, IndustrieId: industrie._id,
-      zone: def.zone,   // ← matches Zone.code exactly
-      Status: "Active", IPAddress: def.ip, macAddress: def.mac,
+      nom: def.nom,
+      IndustrieId: industrie._id,
+      zoneId: zone._id,
+      siteId: zone.siteId,
+      Status: "Active",
+      IPAddress: def.ip,
+      macAddress: def.mac,
       localisation: { type: "Point", coordinates: zone.localisation.coordinates },
     });
     nodeDocs[def.zone] = node;
@@ -308,7 +379,7 @@ async function main() {
   }
 
   // ══════════════════════════════════════════════════════════
-  // STEP 10 — Sensors (5 per node = 20 total)
+  // STEP 10 — Sensors (6 per node = 24 total)
   // ══════════════════════════════════════════════════════════
   console.log("\n── Step 10: Sensors ──");
 
@@ -326,18 +397,20 @@ async function main() {
       });
       sensorDocs[`${zoneCode}:${p.code}`] = sensor;
     }
-    console.log(`  ✓ 5 sensors for ${node.nom}`);
+    console.log(`  ✓ 6 sensors for ${node.nom}`);
   }
 
   // ══════════════════════════════════════════════════════════
   // STEP 11 — Readings + Alerts
   // ══════════════════════════════════════════════════════════
-  console.log("\n── Step 11: Readings + Alerts (30 days × 5-min) ──");
-  console.log("  Generating ~86,400 readings and alerts...\n");
+  console.log(`\n── Step 11: Readings + Alerts (${DAYS} days × 5-min) ──`);
+  console.log(`  Mode: ${IS_DEMO ? "DÉMO (épisodes de dépassement)" : "standard"}`);
+  console.log("  Generating readings and alerts...\n");
 
   const now = Date.now();
   const startTime = now - DAYS * 24 * 60 * 60 * 1000;
   const steps = Math.floor((now - startTime) / INTERVAL_MS);
+  const demoEpisodes = IS_DEMO ? buildDemoEpisodes(startTime, now) : null;
 
   let totalReadings = 0;
   let totalAlerts = 0;
@@ -354,7 +427,10 @@ async function main() {
 
       for (let s = 0; s < steps; s++) {
         const t = startTime + s * INTERVAL_MS;
-        const value = genValue(profile, t);
+        let value = genValue(profile, t);
+        if (demoEpisodes) {
+          value = applyDemoEpisodes(zoneCode, p.code, value, t, demoEpisodes);
+        }
         const isValid = value >= 0;
 
         readings.push({
@@ -376,7 +452,7 @@ async function main() {
             type: "Threshold",
             value,
             threshold: value >= p.regulatoryLimit ? p.regulatoryLimit : p.warningThreshold,
-            message: `${p.code} dépasse le seuil réglementaire ANPE (NT 106.04) — Dépassement : +${(((value - p.regulatoryLimit) / p.regulatoryLimit) * 100).toFixed(2)}%`,
+            message: `${p.code} dépasse le seuil réglementaire ANPE (Décret 2018-928) — Dépassement : +${(((value - p.regulatoryLimit) / p.regulatoryLimit) * 100).toFixed(2)}%`,
             timestamp: new Date(t),
             isAcknowledged: Math.random() > 0.7, // 30% unacknowledged
           });
@@ -406,7 +482,7 @@ async function main() {
   console.log(`  Sites      : Site Principal Gabès | Site Annexe Gabès`);
   console.log(`  Zones      : Zone-Four | Zone-Broyage | Zone-Stockage | Zone-Expedition`);
   console.log(`  SensorNodes: 4 (1 per zone)`);
-  console.log(`  Sensors    : 20 (5 per node)`);
+  console.log(`  Sensors    : 24 (6 per node)`);
   console.log(`  Readings   : ${totalReadings.toLocaleString()}`);
   console.log(`  Alerts     : ${totalAlerts.toLocaleString()}`);
   console.log("═".repeat(62));
@@ -421,12 +497,20 @@ async function main() {
   console.log("  AUDITOR          : auditor@example.com                       / Audit1234!");
   console.log("═".repeat(62) + "\n");
 
-  await mongoose.disconnect();
-  console.log("✓ Done\n");
+  if (process.env.SKIP_DISCONNECT !== "1") {
+    await mongoose.disconnect();
+    console.log("✓ Done\n");
+  }
+
+  return { totalReadings, totalAlerts, days: DAYS, demo: IS_DEMO };
 }
 
-main().catch(e => {
-  console.error("❌ init-fresh failed:", e.message);
-  console.error(e.stack);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch(e => {
+    console.error("❌ init-fresh failed:", e.message);
+    console.error(e.stack);
+    process.exit(1);
+  });
+}
+
+module.exports = { main, DAYS, IS_DEMO };

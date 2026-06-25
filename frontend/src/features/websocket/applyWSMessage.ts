@@ -16,4 +16,8 @@ export function applyWSMessage(queryClient: QueryClient, message: WSMessage): vo
     void queryClient.invalidateQueries({ queryKey: ['alerts'] })
     return
   }
+
+  if (message.type === 'report_update') {
+    void queryClient.invalidateQueries({ queryKey: ['reports'] })
+  }
 }

@@ -49,7 +49,7 @@ class PolluantRepository {
    */
   async update(id, data) {
     return await Polluant.findByIdAndUpdate(id, data, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     });
   }
@@ -65,7 +65,7 @@ class PolluantRepository {
     return await Polluant.findByIdAndUpdate(
       id,
       { regulatoryLimit, warningThreshold },
-      { new: true },
+      { returnDocument: "after" },
     );
   }
 

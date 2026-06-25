@@ -1,16 +1,33 @@
 export type ReportFormat = 'pdf' | 'csv' | 'xlsx'
 
+export type ReportWorkflowStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED'
+
+export interface ReportAuthor {
+  id?: string
+  username?: string
+  email?: string
+}
+
 export interface Report {
   id: string
   title: string
   period: string
   generatedAt: string
-  generatedBy?: string
+  generatedBy?: string | ReportAuthor
+  generatedById?: string
+  generatedByName?: string
   siteId?: string
   format: ReportFormat
   sizeBytes?: number
   url?: string
-  status?: 'pending' | 'ready' | 'failed'
+  workflowStatus: ReportWorkflowStatus
+  submittedAt?: string
+  approvedAt?: string
+  rejectedAt?: string
+  approvedByName?: string
+  rejectedByName?: string
+  rejectionReason?: string
+  notes?: string
 }
 
 export interface GenerateReportPayload {

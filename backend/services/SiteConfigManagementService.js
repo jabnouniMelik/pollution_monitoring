@@ -47,7 +47,7 @@ class SiteConfigManagementService {
   /**
    * Met à jour les poids des polluants pour IPE - SUPER_ADMIN only
    * @param {String} configId - ID configuration
-   * @param {Object} weights - { NOx, SO2, PM25, COV, CO2 }
+   * @param {Object} weights - { NOx, SO2, PM25, PM10, COV, CO2 }
    * @param {Object} requester - Utilisateur qui fait la requête
    * @returns {Promise<Object>} Configuration mise à jour
    */
@@ -57,7 +57,7 @@ class SiteConfigManagementService {
     }
 
     // Valider que les poids sont présents et valides
-    const requiredPollutants = ["NOx", "SO2", "PM25", "COV", "CO2"];
+    const requiredPollutants = ["NOx", "SO2", "PM25", "PM10", "COV", "CO2"];
     let totalWeight = 0;
 
     for (const pollutant of requiredPollutants) {
@@ -83,6 +83,7 @@ class SiteConfigManagementService {
         NOx: parseFloat(weights.NOx),
         SO2: parseFloat(weights.SO2),
         PM25: parseFloat(weights.PM25),
+        PM10: parseFloat(weights.PM10),
         COV: parseFloat(weights.COV),
         CO2: parseFloat(weights.CO2),
       },
@@ -104,7 +105,7 @@ class SiteConfigManagementService {
       throw new Error("Seul le SUPER_ADMIN peut modifier les objectifs");
     }
 
-    const allowedTargets = ["tauxDepassement", "ipe", "reductionCO2"];
+    const allowedTargets = ["tauxDepassement", "ipe", "reductionCO2", "EMJ"];
     const filteredTargets = {};
 
     for (const target of allowedTargets) {
@@ -122,6 +123,7 @@ class SiteConfigManagementService {
         tauxDepassement: filteredTargets.tauxDepassement || (await siteConfigRepository.getActiveConfig()).targets.tauxDepassement,
         ipe: filteredTargets.ipe || (await siteConfigRepository.getActiveConfig()).targets.ipe,
         reductionCO2: filteredTargets.reductionCO2 || (await siteConfigRepository.getActiveConfig()).targets.reductionCO2,
+        EMJ: filteredTargets.EMJ ?? (await siteConfigRepository.getActiveConfig()).targets.EMJ ?? null,
       },
       lastModifiedBy: requester._id,
     });
@@ -141,7 +143,7 @@ class SiteConfigManagementService {
       throw new Error("Seul le SUPER_ADMIN peut mettre à jour la configuration");
     }
 
-    const allowedFields = ["siteName", "airflow", "thermalPower", "polluantWeights", "targets", "location"];
+    const allowedFields = ["siteName", "airflow", "thermalPower", "expectedSampleIntervalSeconds", "polluantWeights", "targets", "location"];
     const filteredData = {};
 
     for (const field of allowedFields) {

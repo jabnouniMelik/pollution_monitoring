@@ -1,34 +1,55 @@
 // ROUTES : REPORT
 // Base URL : /api/reports
-//
-// GET  /api/reports                → liste tous les rapports
-// GET  /api/reports/:id            → détail d'un rapport
-// POST /api/reports/generate       → générer un rapport
-// POST /api/reports/:id/submit     → soumettre à l'ANPE
-// DELETE /api/reports/:id          → supprimer un rapport DRAFT
-//
-//  /generate AVANT /:id
 
 const express = require("express");
 const router = express.Router();
+const verifyToken = require("../middleware/verifyToken");
+const { checkPermission } = require("../middleware/checkRole");
 
 const {
   getAllReports,
   getReportById,
   generateReport,
   submitReport,
+  approveReport,
+  rejectReport,
   deleteReport,
 } = require("../controllers/reportController");
 
-// Route spéciale AVANT /:id
-router.post("/generate", generateReport);
+router.use(verifyToken);
 
-// Routes générales
-router.route("/").get(getAllReports);
+router.post(
+  "/generate",
+  checkPermission("generate_reports"),
+  generateReport,
+);
 
-router.route("/:id").get(getReportById).delete(deleteReport);
+router.get("/", checkPermission("generate_reports"), getAllReports);
 
-// Action soumission ANPE
-router.post("/:id/submit", submitReport);
+router.get("/:id", checkPermission("generate_reports"), getReportById);
+
+router.post(
+  "/:id/submit",
+  checkPermission("submit_reports"),
+  submitReport,
+);
+
+router.post(
+  "/:id/approve",
+  checkPermission("approve_reports"),
+  approveReport,
+);
+
+router.post(
+  "/:id/reject",
+  checkPermission("approve_reports"),
+  rejectReport,
+);
+
+router.delete(
+  "/:id",
+  checkPermission("generate_reports"),
+  deleteReport,
+);
 
 module.exports = router;

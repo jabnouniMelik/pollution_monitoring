@@ -12,9 +12,10 @@ const { error_messages, success_messages } = require("../utils/constants");
 const getAllSensorNodes = async (req, res, next) => {
   try {
     const filter = {};
-    if (req.query.industrieId) filter.industrieId = req.query.industrieId;
-    if (req.query.status) filter.status = req.query.status;
-    if (req.query.zone) filter.zone = req.query.zone;
+    if (req.query.industrieId) filter.IndustrieId = req.query.industrieId;
+    if (req.query.status) filter.Status = req.query.status;
+    if (req.query.zoneId) filter.zoneId = req.query.zoneId;
+    if (req.query.siteId) filter.siteId = req.query.siteId;
 
     const nodes = await sensorNodeService.getAllSensorNodes(filter);
 

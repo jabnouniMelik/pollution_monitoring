@@ -36,6 +36,23 @@ function normalizeType(raw: unknown): AlertType {
   return 'threshold_breach'
 }
 
+function resolveUserDisplay(raw: unknown): string | undefined {
+  if (raw == null) return undefined
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim()
+    if (!trimmed || /^[a-f\d]{24}$/i.test(trimmed)) return undefined
+    return trimmed
+  }
+  if (typeof raw === 'object') {
+    const user = raw as { username?: string; email?: string }
+    const username = user.username?.trim()
+    const email = user.email?.trim()
+    if (username && email) return `${username} · ${email}`
+    return username || email || undefined
+  }
+  return undefined
+}
+
 function normalizeAlert(raw: RawAlert): Alert {
   const pollutantName =
     typeof raw.pollutant === 'string'
@@ -82,11 +99,11 @@ function normalizeAlert(raw: RawAlert): Alert {
     // resolving does NOT imply acknowledging
     acknowledged: raw.acknowledged ?? raw.isAcknowledged ?? false,
     acknowledgedAt: raw.acknowledgedAt ?? raw.acknowledged_at,
-    acknowledgedBy: raw.acknowledgedBy as string | undefined,
+    acknowledgedBy: resolveUserDisplay(raw.acknowledgedBy),
     // resolved = resolvedAt is set (either manual or auto-resolve)
     resolved: !!(raw.resolved ?? raw.resolvedAt),
     resolvedAt: raw.resolvedAt as string | undefined,
-    resolvedBy: raw.resolvedBy as string | undefined,
+    resolvedBy: resolveUserDisplay(raw.resolvedBy),
     severity: normalizeSeverity(raw.severity),
     type: normalizeType(raw.type),
   } as Alert

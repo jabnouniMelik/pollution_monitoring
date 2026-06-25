@@ -8,22 +8,21 @@ const readingRepository = require("../repositories/ReadingRepository");
 const sensorRepository = require("../repositories/SensorRepository");
 const polluantRepository = require("../repositories/PolluantRepository");
 const alertRepository = require("../repositories/AlertRepository");
+const Alert = require("../models/Alert");
 const { alert_severity, alert_types } = require("../utils/constants");
 
 // Verbose per-reading logs are only enabled when DEBUG_INGEST=true.
-// In production / default dev they are silenced to avoid stdout back-pressure
-// and memory growth from high-rate MQTT ingestion.
 const DEBUG_INGEST = process.env.DEBUG_INGEST === "true";
 const dlog = DEBUG_INGEST ? console.log.bind(console) : () => {};
 
 // ============================================================
 // ALERT ENGINE CONFIGURATION
 // ============================================================
-// UPDATE_WINDOW_MS: how often an active alert's value/timestamp
-// is refreshed while the breach continues. Default 30 seconds.
-// Set via ALERT_UPDATE_WINDOW_MS env var.
+// UPDATE_WINDOW_MS: minimum interval between refreshing an active
+// alert's value/timestamp while the breach continues.
+// Default 30 s. Set via ALERT_UPDATE_WINDOW_MS env var.
 const UPDATE_WINDOW_MS =
-  Number(process.env.ALERT_UPDATE_WINDOW_MS) || 30 * 1000; // 30 s
+  Number(process.env.ALERT_UPDATE_WINDOW_MS) || 30 * 1000;
 
 // Severity rank for escalation detection
 const SEVERITY_RANK = { Warning: 1, High: 2, Critical: 3 };
@@ -31,24 +30,34 @@ const SEVERITY_RANK = { Warning: 1, High: 2, Critical: 3 };
 class ReadingService {
   constructor() {
     // In-memory cache of the current open alert per (sensorId:polluantId).
-    // Key: `${sensorId}:${polluantId}`
+    // Key  : `${sensorId}:${polluantId}`  — both lowercase ObjectId strings
     // Value: { alertId, severity, lastUpdatedAt (ms) }
-    // This avoids a DB lookup on every reading.
+    //
+    // The cache is the primary deduplication guard. It is populated:
+    //   a) at startup via _warmUpCache (awaited before first ingest)
+    //   b) whenever a new alert is created or an existing one is updated
+    //   c) whenever an alert is auto-resolved (entry deleted)
     this._activeAlerts = new Map();
-    // Warm up cache from DB on startup (async, non-blocking)
-    this._warmUpCache();
+
+    // Promise that resolves once the warm-up DB query completes.
+    // ingestReading awaits this before processing the first reading so
+    // the cache is never empty on the first tick after a restart.
+    this._warmUpPromise = this._warmUpCache();
   }
 
   async _warmUpCache() {
     try {
-      const Alert = require("../models/Alert");
-      // Load all open (non-resolved, non-acknowledged) alerts
-      const openAlerts = await Alert.find({
-        isAcknowledged: false,
-        resolvedAt: null,
-      }).select("_id SensorId PolluantId severity timestamp").lean();
+      // "Open" means not yet resolved — regardless of acknowledgement status.
+      // An acknowledged-but-unresolved alert must still suppress duplicates.
+      const openAlerts = await Alert.find({ resolvedAt: null })
+        .select("_id SensorId PolluantId severity timestamp")
+        .lean();
 
       for (const a of openAlerts) {
+        // Both sides of the key must use the same field casing.
+        // Alert model stores SensorId (capital S) and PolluantId (capital P).
+        // We normalise to lowercase strings here so the key always matches
+        // what ingestReading builds from the reading document.
         const key = `${String(a.SensorId)}:${String(a.PolluantId)}`;
         this._activeAlerts.set(key, {
           alertId: a._id,
@@ -56,22 +65,24 @@ class ReadingService {
           lastUpdatedAt: new Date(a.timestamp).getTime(),
         });
       }
-      dlog(`[AlertEngine] Cache warmed: ${openAlerts.length} open alerts loaded`);
+      console.log(`[AlertEngine] Cache warmed: ${openAlerts.length} open alert(s) loaded`);
     } catch (e) {
-      // Non-fatal — cache starts empty, will rebuild from readings
+      // Non-fatal — cache starts empty, duplicates may appear until next restart
       console.warn("[AlertEngine] Cache warm-up failed:", e.message);
     }
   }
 
   // ── Alert engine ────────────────────────────────────────────
   /**
-   * Core alert logic:
-   *   - If value is within limits → auto-resolve any open alert
-   *   - If value exceeds threshold:
-   *       • No open alert → create one
-   *       • Open alert, same/lower severity, within update window → skip
-   *       • Open alert, same/lower severity, window expired → update value/timestamp
-   *       • Open alert, higher severity → update severity + value immediately
+   * Core deduplication logic:
+   *   - value within limits  → auto-resolve any open alert, remove from cache
+   *   - value breaches limit → no cached alert  → create new alert, add to cache
+   *                          → cached alert, same/lower severity, window active → skip
+   *                          → cached alert, same/lower severity, window expired → update in place
+   *                          → cached alert, higher severity (escalation) → update immediately
+   *
+   * The cache key is `${sensorId}:${polluantId}` using the lowercase ObjectId
+   * strings from the Reading document — matching exactly what _warmUpCache stores.
    */
   async checkAndCreateAlert(reading, polluant) {
     try {
@@ -85,6 +96,10 @@ class ReadingService {
       if (!hasRegulatoryLimit || !hasWarningThreshold) return null;
 
       const readingValue = reading.value;
+
+      // Cache key: lowercase sensorId + polluantId strings.
+      // reading.sensorId  comes from the create() call in ingestReading (lowercase field).
+      // reading.PolluantId comes from the schema (capital P) — normalise here.
       const sensorKey = `${String(reading.sensorId)}:${String(reading.PolluantId)}`;
       const now = Date.now();
 
@@ -103,11 +118,9 @@ class ReadingService {
       // ── Case 1: Value back within limits ──────────────────
       if (!severity) {
         if (cached) {
-          // Auto-resolve: value dropped below threshold — mark as resolved
-          // but do NOT set isAcknowledged (operator may not have seen it yet)
           await alertRepository.autoResolve(
             cached.alertId,
-            "Valeur revenue dans les limites réglementaires"
+            "Valeur revenue dans les limites réglementaires",
           );
           this._activeAlerts.delete(sensorKey);
           dlog(`   ✅ Alert auto-resolved — ${polluant.name}: ${readingValue}`);
@@ -115,34 +128,52 @@ class ReadingService {
         return null;
       }
 
-      // ── Case 2: No open alert → create one ────────────────
+      // ── Case 2: No cached open alert ──────────────────────
+      // Before creating, do a DB check to guard against cache misses
+      // (e.g. first reading after a crash before warm-up completed).
       if (!cached) {
-        const alert = await this._createAlert(reading, polluant, severity);
-        this._activeAlerts.set(sensorKey, {
-          alertId: alert._id,
-          severity,
-          lastUpdatedAt: now,
-        });
-        console.log(`🚨 Alerte ${severity} créée — ${polluant.name}: ${readingValue} ${polluant.unit}`);
-        return alert;
+        const existingOpen = await Alert.findOne({
+          SensorId: reading.sensorId,
+          PolluantId: reading.PolluantId,
+          resolvedAt: null,
+        }).select("_id severity timestamp").lean();
+
+        if (existingOpen) {
+          // Cache was stale — repopulate and fall through to Case 3
+          this._activeAlerts.set(sensorKey, {
+            alertId: existingOpen._id,
+            severity: existingOpen.severity,
+            lastUpdatedAt: new Date(existingOpen.timestamp).getTime(),
+          });
+          // Fall through to Case 3 below
+        } else {
+          // Genuinely no open alert — create one
+          const alert = await this._createAlert(reading, polluant, severity);
+          this._activeAlerts.set(sensorKey, {
+            alertId: alert._id,
+            severity,
+            lastUpdatedAt: now,
+          });
+          console.log(`🚨 Alerte ${severity} créée — ${polluant.name}: ${readingValue} ${polluant.unit}`);
+          return alert;
+        }
       }
 
-      // ── Case 3: Open alert exists ─────────────────────────
-      const cachedRank = SEVERITY_RANK[cached.severity] || 0;
+      // ── Case 3: Open alert exists in cache ────────────────
+      const current = this._activeAlerts.get(sensorKey);
+      const cachedRank = SEVERITY_RANK[current.severity] || 0;
       const newRank = SEVERITY_RANK[severity] || 0;
-      const windowExpired = now - cached.lastUpdatedAt >= UPDATE_WINDOW_MS;
+      const windowExpired = now - current.lastUpdatedAt >= UPDATE_WINDOW_MS;
       const escalated = newRank > cachedRank;
 
       if (!escalated && !windowExpired) {
-        // Still within update window, same severity → skip
-        dlog(`   🔕 Alert update skipped (window: ${Math.round((now - cached.lastUpdatedAt) / 1000)}s < ${UPDATE_WINDOW_MS / 1000}s)`);
+        dlog(`   🔕 Skipped (${Math.round((now - current.lastUpdatedAt) / 1000)}s < ${UPDATE_WINDOW_MS / 1000}s window)`);
         return null;
       }
 
-      // Update the existing alert in place
+      // Update the existing alert in place — no new document created
       const { message } = this._buildMessage(readingValue, polluant, severity);
-
-      const updated = await alertRepository.updateActive(cached.alertId, {
+      const updated = await alertRepository.updateActive(current.alertId, {
         severity,
         value: readingValue,
         ReadingId: reading._id,
@@ -151,13 +182,13 @@ class ReadingService {
       });
 
       this._activeAlerts.set(sensorKey, {
-        alertId: cached.alertId,
+        alertId: current.alertId,
         severity,
         lastUpdatedAt: now,
       });
 
       if (escalated) {
-        console.log(`⬆️  Alerte escaladée ${cached.severity}→${severity} — ${polluant.name}: ${readingValue}`);
+        console.log(`⬆️  Alerte escaladée ${current.severity}→${severity} — ${polluant.name}: ${readingValue}`);
       } else {
         dlog(`   🔄 Alert updated — ${polluant.name}: ${readingValue}`);
       }
@@ -170,7 +201,7 @@ class ReadingService {
   }
 
   async _createAlert(reading, polluant, severity) {
-    const { message, exceedance } = this._buildMessage(reading.value, polluant, severity);
+    const { message } = this._buildMessage(reading.value, polluant, severity);
 
     return await alertRepository.create({
       PolluantId: reading.PolluantId,
@@ -186,34 +217,20 @@ class ReadingService {
     });
   }
 
-  /**
-   * Build a human-readable alert message with the correct sign and context.
-   *
-   * Warning  (value > warningThreshold but ≤ regulatoryLimit):
-   *   "NOX approche le seuil réglementaire — Risque de dépassement : -12.50%"
-   *   (negative % = still X% below the limit)
-   *
-   * High / Critical (value > regulatoryLimit):
-   *   "NOX dépasse le seuil réglementaire ANPE (NT 106.04) — Dépassement : +18.30%"
-   *   (positive % = X% above the limit)
-   */
   _buildMessage(value, polluant, severity) {
     const limit = polluant.regulatoryLimit;
     const diff = value - limit;
     const pct = ((diff / limit) * 100).toFixed(2);
-    const sign = diff >= 0 ? "+" : "";   // negative numbers already carry "-"
+    const sign = diff >= 0 ? "+" : "";
 
     if (severity === alert_severity.Warning) {
-      // Value is between warningThreshold and regulatoryLimit → approaching
       return {
-        message: `${polluant.name} approche le seuil réglementaire ANPE (NT 106.04) — Risque de dépassement : ${sign}${pct}%`,
+        message: `${polluant.name} approche le seuil réglementaire ANPE (Décret 2018-928) — Risque de dépassement : ${sign}${pct}%`,
         exceedance: pct,
       };
     }
-
-    // High or Critical → already exceeded
     return {
-      message: `${polluant.name} dépasse le seuil réglementaire ANPE (NT 106.04) — Dépassement : ${sign}${pct}%`,
+      message: `${polluant.name} dépasse le seuil réglementaire ANPE (Décret 2018-928) — Dépassement : ${sign}${pct}%`,
       exceedance: pct,
     };
   }
@@ -221,21 +238,15 @@ class ReadingService {
   /**
    * Ingère une nouvelle mesure de capteur
    * Appel principal: ESP32 → MQTT → /ingest
-   * @param {Object} data - Données mesure
-   * @returns {Promise<Object>} Mesure créée + alerte optionnelle
    */
   async ingestReading(data) {
-    const { sensorId, polluantId, nodeId, value, unit, rawValue, timestamp } =
-      data;
+    // Await warm-up so the cache is never empty on the first reading
+    await this._warmUpPromise;
 
-    dlog(`\n📥 [READING] Ingesting reading:`, {
-      sensorId,
-      polluantId,
-      value,
-      unit,
-    });
+    const { sensorId, polluantId, nodeId, value, unit, rawValue, timestamp } = data;
 
-    // Vérifier que le capteur existe et est actif
+    dlog(`\n📥 [READING] Ingesting:`, { sensorId, polluantId, value, unit });
+
     const sensor = await sensorRepository.findById(sensorId);
     if (!sensor) {
       const err = new Error("Capteur non trouvé");
@@ -248,7 +259,6 @@ class ReadingService {
       throw err;
     }
 
-    // Récupérer les seuils du polluant
     const polluant = await polluantRepository.findById(polluantId);
     if (!polluant) {
       const err = new Error("Polluant non trouvé");
@@ -256,20 +266,21 @@ class ReadingService {
       throw err;
     }
 
-    dlog(`   Fetched polluant:`, {
-      _id: polluant._id,
+    dlog(`   Polluant:`, {
       name: polluant.name,
       regulatoryLimit: polluant.regulatoryLimit,
       warningThreshold: polluant.warningThreshold,
     });
 
-    // Valider la mesure - marquer comme invalide si aberrante
-    const isValid = value >= 0 && value <= 1000;
+    // Reject values that are clearly sensor faults (> 10× the regulatory limit)
+    const validityMax = polluant.regulatoryLimit
+      ? polluant.regulatoryLimit * 10
+      : 10000;
+    const isValid = value >= 0 && value <= validityMax;
 
-    // Créer la mesure
     const reading = await readingRepository.create({
       sensorId,
-      PolluantId: polluantId, // Use capital P to match schema
+      PolluantId: polluantId,
       nodeId: nodeId || sensor.sensorNodeId,
       value,
       unit,
@@ -278,7 +289,6 @@ class ReadingService {
       timestamp: timestamp || new Date(),
     });
 
-    // Déclencher le moteur d'alertes
     let alert = null;
     if (isValid) {
       alert = await this.checkAndCreateAlert(reading, polluant);
@@ -287,31 +297,15 @@ class ReadingService {
     return {
       reading,
       alert: alert
-        ? {
-            id: alert._id,
-            severity: alert.severity,
-            type: alert.type,
-            message: alert.message,
-          }
+        ? { id: alert._id, severity: alert.severity, type: alert.type, message: alert.message }
         : null,
     };
   }
 
-  /**
-   * Récupère l'historique des mesures avec filtres
-   * @param {Object} filters - Filtres (sensorId, polluantId, nodeId, isValid, date range)
-   * @param {Number} limit - Max résultats
-   * @returns {Promise<Array>} Mesures
-   */
   async getAllReadings(filters = {}, limit = 100) {
     return await readingRepository.findAll(filters, limit);
   }
 
-  /**
-   * Récupère une mesure par ID
-   * @param {String} id - ID mesure
-   * @returns {Promise<Object>} Mesure
-   */
   async getReadingById(id) {
     const reading = await readingRepository.findById(id);
     if (!reading) {
@@ -322,33 +316,15 @@ class ReadingService {
     return reading;
   }
 
-  /**
-   * Récupère la dernière mesure de chaque capteur
-   * Utilisé par le Dashboard pour données temps réel
-   * @param {String} nodeId - ID nœud optionnel
-   * @returns {Promise<Array>} Dernières mesures par capteur
-   */
   async getLatestReadings(nodeId = null) {
     const filter = nodeId ? { nodeId } : {};
     return await readingRepository.getLatestByAllSensors(filter);
   }
 
-  /**
-   * Récupère les statistiques de mesures invalides
-   * @param {Date} periodStart - Date début
-   * @param {Date} periodEnd - Date fin
-   * @returns {Promise<Number>} Nombre de mesures invalides
-   */
   async getInvalidReadingsCount(periodStart, periodEnd) {
     return await readingRepository.countInvalid(periodStart, periodEnd);
   }
 
-  /**
-   * Ré-évalue les alertes si elles n'ont pas été créées correctement
-   * Fonction utilitaire pour maintenance
-   * @param {String} readingId - ID mesure
-   * @returns {Promise<Object|null>} Alerte créée ou null
-   */
   async reEvaluateReading(readingId) {
     const reading = await readingRepository.findById(readingId);
     if (!reading) {
@@ -356,7 +332,6 @@ class ReadingService {
       err.statusCode = 404;
       throw err;
     }
-
     const polluant = await polluantRepository.findById(reading.PolluantId._id);
     return await this.checkAndCreateAlert(reading, polluant);
   }

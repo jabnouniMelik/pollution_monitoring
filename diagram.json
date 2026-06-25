@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "author": "pollution_monitoring",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-esp32-devkit-v1",
+      "id": "esp32",
+      "top": 200,
+      "left": 350,
+      "attrs": { "env": "arduino-esp32" }
+    },
+    {
+      "type": "wokwi-dht22",
+      "id": "dht22",
+      "top": 420,
+      "left": 620,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_dht",
+      "top": 395,
+      "left": 680,
+      "attrs": { "value": "10000" },
+      "label": "R_DHT 10k pull-up"
+    },
+    {
+      "type": "wokwi-gas-sensor",
+      "id": "mq131",
+      "top": 30,
+      "left": 720,
+      "attrs": { "gasType": "analog" },
+      "label": "MQ-131"
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 60,
+      "left": 810,
+      "attrs": { "value": "10000" },
+      "label": "R1 10k"
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": 60,
+      "left": 760,
+      "attrs": { "value": "20000" },
+      "label": "R2 20k"
+    },
+    {
+      "type": "wokwi-gas-sensor",
+      "id": "mq5",
+      "top": 150,
+      "left": 720,
+      "attrs": { "gasType": "analog" },
+      "label": "MQ-5"
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r3",
+      "top": 180,
+      "left": 810,
+      "attrs": { "value": "10000" },
+      "label": "R3 10k"
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r4",
+      "top": 180,
+      "left": 760,
+      "attrs": { "value": "20000" },
+      "label": "R4 20k"
+    },
+    {
+      "type": "wokwi-mhz19b",
+      "id": "mhz19",
+      "top": 310,
+      "left": 720,
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    ["esp32:3V3",  "dht22:VCC",  "red",   []],
+    ["esp32:GND",  "dht22:GND",  "black", []],
+    ["esp32:D32",  "dht22:SDA",  "green", []],
+    ["dht22:SDA",  "r_dht:1",    "green", []],
+    ["r_dht:2",    "esp32:3V3",  "red",   []],
+
+    ["esp32:VIN",  "mq131:VCC",  "red",   []],
+    ["esp32:GND",  "mq131:GND",  "black", []],
+    ["mq131:AOUT", "r2:1",       "orange",[]],
+    ["r2:2",       "r1:1",       "orange",[]],
+    ["r1:2",       "esp32:GND",  "black", []],
+    ["r2:2",       "esp32:D34",  "yellow",[]],
+
+    ["esp32:VIN",  "mq5:VCC",    "red",   []],
+    ["esp32:GND",  "mq5:GND",    "black", []],
+    ["mq5:AOUT",   "r4:1",       "orange",[]],
+    ["r4:2",       "r3:1",       "orange",[]],
+    ["r3:2",       "esp32:GND",  "black", []],
+    ["r4:2",       "esp32:D35",  "yellow",[]],
+
+    ["esp32:3V3",  "mhz19:VCC",  "red",   []],
+    ["esp32:GND",  "mhz19:GND",  "black", []],
+    ["esp32:D16",  "mhz19:RX",   "blue",  []],
+    ["esp32:D17",  "mhz19:TX",   "purple",[]],
+
+    ["esp32:GND",  "esp32:GND",  "black", []]
+  ],
+  "dependencies": {}
+}

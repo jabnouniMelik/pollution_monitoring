@@ -1,0 +1,87 @@
+@startuml
+title Pollution Monitoring System - Use Case Diagram
+
+left to right direction
+skinparam shadowing false
+
+actor "SUPER_ADMIN" as SuperAdmin
+actor "HEAD_SUPERVISOR" as HeadSupervisor
+actor "SITE_SUPERVISOR" as SiteSupervisor
+actor "OPERATOR" as Operator
+actor "AUDITOR" as Auditor
+actor "ESP32 / MQTT Broker" as IoT
+actor "KPI Scheduler" as Scheduler
+
+rectangle "EmissionsIQ System" {
+  usecase "Login / Refresh Token" as UCAuth
+  usecase "View dashboard" as UCDashboard
+  usecase "Monitor live readings" as UCReadings
+  usecase "View alerts" as UCAlerts
+  usecase "Acknowledge alert" as UCAcknowledge
+  usecase "Resolve alert" as UCResolve
+  usecase "Generate report" as UCReport
+  usecase "View KPI summary" as UCKPI
+  usecase "Manage users" as UCUsers
+  usecase "Manage industries, sites and zones" as UCInfra
+  usecase "Create site / zone request" as UCCreateRequest
+  usecase "Approve site / zone" as UCApprove
+  usecase "Manage thresholds" as UCThresholds
+  usecase "Ingest sensor reading" as UCIngest
+  usecase "Auto create / update alert" as UCAutoAlert
+  usecase "Aggregate KPI data" as UCAggregate
+}
+
+SuperAdmin --> UCAuth
+SuperAdmin --> UCUsers
+SuperAdmin --> UCInfra
+SuperAdmin --> UCThresholds
+SuperAdmin --> UCApprove
+SuperAdmin --> UCKPI
+
+HeadSupervisor --> UCAuth
+HeadSupervisor --> UCDashboard
+HeadSupervisor --> UCReadings
+HeadSupervisor --> UCAlerts
+HeadSupervisor --> UCAcknowledge
+HeadSupervisor --> UCResolve
+HeadSupervisor --> UCReport
+HeadSupervisor --> UCKPI
+HeadSupervisor --> UCCreateRequest
+
+SiteSupervisor --> UCAuth
+SiteSupervisor --> UCDashboard
+SiteSupervisor --> UCReadings
+SiteSupervisor --> UCAlerts
+SiteSupervisor --> UCAcknowledge
+SiteSupervisor --> UCResolve
+SiteSupervisor --> UCReport
+SiteSupervisor --> UCKPI
+SiteSupervisor --> UCCreateRequest
+
+Operator --> UCAuth
+Operator --> UCDashboard
+Operator --> UCReadings
+Operator --> UCAlerts
+Operator --> UCAcknowledge
+Operator --> UCKPI
+
+Auditor --> UCAuth
+Auditor --> UCDashboard
+Auditor --> UCReadings
+Auditor --> UCAlerts
+Auditor --> UCReport
+Auditor --> UCKPI
+
+IoT --> UCIngest
+UCIngest --> UCAutoAlert : <<include>>
+Scheduler --> UCAggregate
+UCAggregate --> UCKPI : <<include>>
+
+UCDashboard --> UCReadings : <<include>>
+UCDashboard --> UCAlerts : <<include>>
+UCDashboard --> UCKPI : <<include>>
+
+UCAlerts --> UCAcknowledge : <<extend>>
+UCAlerts --> UCResolve : <<extend>>
+
+@enduml

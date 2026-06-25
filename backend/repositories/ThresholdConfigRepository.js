@@ -56,7 +56,7 @@ class ThresholdConfigRepository {
    */
   async update(id, data) {
     return await ThresholdConfig.findByIdAndUpdate(id, data, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     })
       .populate("createdBy", "nom email role")
@@ -74,7 +74,7 @@ class ThresholdConfigRepository {
     return await ThresholdConfig.findByIdAndUpdate(
       id,
       { $set: { [`polluants.${polluantName}`]: limits } },
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true },
     );
   }
 
@@ -92,7 +92,7 @@ class ThresholdConfigRepository {
         warningOffsetPercent: warningOffset,
         criticalOffsetPercent: criticalOffset,
       },
-      { new: true }
+      { returnDocument: "after" },
     );
   }
 
@@ -118,7 +118,7 @@ class ThresholdConfigRepository {
     return await ThresholdConfig.findByIdAndUpdate(
       id,
       { actif: false },
-      { new: true }
+      { returnDocument: "after" },
     );
   }
 

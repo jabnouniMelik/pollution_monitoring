@@ -48,6 +48,7 @@ export default {
           nox: '#1565C0',
           so2: '#7B1FA2',
           pm: '#E65100',
+          'pm10': '#BF360C',
           cov: '#00897B',
         },
       },

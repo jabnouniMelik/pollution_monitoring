@@ -20,6 +20,7 @@ import { PermissionGate } from '@/components/common/PermissionGate/PermissionGat
 import { ZoneSwitcher } from '@/components/common/ZoneSwitcher'
 import { UserInfo } from '@/components/common/UserInfo'
 import { Role, type Permission } from '@/lib/constants/roles'
+import { isAuditorAllowedPath } from '@/lib/rbac/auditorAccess'
 import { useQuery } from '@tanstack/react-query'
 import { api, unwrap } from '@/lib/api/axios'
 import { endpoints } from '@/lib/api/endpoints'
@@ -57,7 +58,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/overview', label: 'Vue d\u2019ensemble', icon: LayoutDashboard, requires: ['VIEW_KPI'], hideFor: Role.SUPER_ADMIN },
   { to: '/alerts', label: 'Alertes', icon: AlertTriangle, requires: ['VIEW_ALERTS'], hideFor: Role.SUPER_ADMIN },
   { to: '/history', label: 'Historique', icon: BarChart3, requires: ['VIEW_KPI'], hideFor: Role.SUPER_ADMIN },
-  { to: '/compliance', label: 'Conformit\u00e9', icon: ShieldCheck, requires: ['VIEW_KPI'], hideFor: Role.SUPER_ADMIN },
+  { to: '/compliance', label: 'Conformit\u00e9', icon: ShieldCheck, requires: ['VIEW_COMPLIANCE'], hideFor: Role.SUPER_ADMIN },
   { to: '/ai', label: 'Pr\u00e9dictions IA', icon: Bot, requires: ['VIEW_AI'], hideFor: Role.SUPER_ADMIN },
   { to: '/reports', label: 'Rapports', icon: FileText, requires: ['GENERATE_REPORT'], hideFor: Role.SUPER_ADMIN },
   { to: '/config', label: 'Configuration', icon: ClipboardList, role: Role.SUPER_ADMIN },
@@ -65,6 +66,14 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/users', label: 'Gestion Utilisateurs', icon: Users, requires: ['VIEW_ALL_USERS'] },
   { to: '/industries', label: 'Sites & Zones', icon: Building2, requires: ['VIEW_ALL_SITES'] },
 ]
+
+function isNavItemVisible(item: NavItem, role: Role | undefined): boolean {
+  if (role === Role.AUDITOR) {
+    return isAuditorAllowedPath(item.to)
+  }
+  if (item.hideFor && item.hideFor === role) return false
+  return true
+}
 
 export function Sidebar() {
   const collapsed = useUIStore((s) => s.sidebarCollapsed)
@@ -109,7 +118,7 @@ export function Sidebar() {
 
         <nav className="scrollbar-thin flex-1 overflow-y-auto p-2">
           <ul className="space-y-1">
-            {NAV_ITEMS.filter(item => !item.hideFor || item.hideFor !== currentRole).map((item) => (
+            {NAV_ITEMS.filter((item) => isNavItemVisible(item, currentRole)).map((item) => (
               <PermissionGate key={item.to} anyOf={item.requires} role={item.role}>
                 <li>
                   <NavLink

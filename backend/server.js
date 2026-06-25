@@ -22,6 +22,7 @@ server.setMaxListeners(0);
 const corsOptions = {
   origin: function (origin, callback) {
     const allowed = ["http://localhost:3000", "http://127.0.0.1:3000",
+                   "http://localhost:3001", "http://127.0.0.1:3001",
                    "http://localhost:5173", "http://127.0.0.1:5173"];
     const envUrl = process.env.FRONTEND_URL;
     if (envUrl) allowed.push(envUrl);
@@ -106,6 +107,7 @@ app.use("/api/readings", require("./routes/readingRoutes"));
 app.use("/api/alerts", require("./routes/alertRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/kpi", require("./routes/kpiRoutes"));
+app.use("/api/ia", require("./routes/iaRoutes"));
 
 // RBAC management routes (admin/site/zone/threshold/site-config)
 // These were declared in routes/ but never mounted, causing 404s in the SPA

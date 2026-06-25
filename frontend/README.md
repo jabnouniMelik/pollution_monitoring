@@ -109,7 +109,7 @@ Endpoint map lives in `src/lib/api/endpoints.ts` — one source of truth per bac
 
 `<WebSocketProvider>` wires the client to the authenticated user and exposes `useWebSocket()` + `useWebSocketSubscription(topics, onMessage)`.
 
-## KPI calculations (Décret 2010-2516)
+## KPI calculations (Décret 2018-928)
 
 Implemented in `src/features/kpi/utils/kpiCalculations.ts`:
 

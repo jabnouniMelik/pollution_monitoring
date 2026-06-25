@@ -13,16 +13,19 @@ const ReportSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-    // Zone for which this report was generated
     zoneId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Zone",
       default: null,
     },
-    // Site for which this report was generated
     siteId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Site",
+      default: null,
+    },
+    industryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Industrie",
       default: null,
     },
     overallScore: {
@@ -46,7 +49,7 @@ const ReportSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["DRAFT", "SUBMITTED", "APPROVED"],
+      enum: ["DRAFT", "SUBMITTED", "APPROVED", "REJECTED"],
       default: "DRAFT",
     },
     format: {
@@ -57,12 +60,28 @@ const ReportSchema = new mongoose.Schema(
     fileUrl: {
       type: String,
     },
+    submittedAt: { type: Date, default: null },
+    approvedAt: { type: Date, default: null },
+    rejectedAt: { type: Date, default: null },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    rejectedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    rejectionReason: { type: String, default: "" },
+    notes: { type: String, default: "" },
   },
   { timestamps: true },
 );
 
 ReportSchema.index({ periodStart: -1, periodEnd: -1 });
 ReportSchema.index({ status: 1 });
+ReportSchema.index({ industryId: 1, status: 1 });
 ReportSchema.index({ zoneId: 1, periodStart: -1 });
 ReportSchema.index({ siteId: 1, periodStart: -1 });
 module.exports = mongoose.model("Report", ReportSchema);

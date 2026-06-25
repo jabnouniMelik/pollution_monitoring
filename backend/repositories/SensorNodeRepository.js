@@ -13,7 +13,9 @@ class SensorNodeRepository {
    */
   async findAll(filter = {}) {
     return await SensorNode.find(filter)
-      .populate("industrieId", "nom secteur localisation")
+      .populate("IndustrieId", "nom secteur localisation")
+      .populate("zoneId", "nom code description")
+      .populate("siteId", "nom localisation")
       .sort({ createdAt: -1 });
   }
 
@@ -23,10 +25,42 @@ class SensorNodeRepository {
    * @returns {Promise<Object>} Document nœud ou null
    */
   async findById(id) {
-    return await SensorNode.findById(id).populate(
-      "industrieId",
-      "nom secteur localisation",
-    );
+    return await SensorNode.findById(id)
+      .populate("IndustrieId", "nom secteur localisation")
+      .populate("zoneId", "nom code description")
+      .populate("siteId", "nom localisation");
+  }
+
+  /**
+   * Récupère tous les nœuds d'une zone (utilisé pour les calculs KPI)
+   * @param {String} zoneId - ID de la zone
+   * @returns {Promise<Array>} Array de nœuds
+   */
+  async findByZone(zoneId) {
+    return await SensorNode.find({ zoneId })
+      .select("_id nom Status")
+      .sort({ createdAt: -1 });
+  }
+
+  /**
+   * Récupère les IDs des nœuds d'une zone (optimisé pour les filtres KPI)
+   * @param {String} zoneId - ID de la zone
+   * @returns {Promise<Array<ObjectId>>} Array d'IDs
+   */
+  async findNodeIdsByZone(zoneId) {
+    const nodes = await SensorNode.find({ zoneId }).select("_id");
+    return nodes.map((n) => n._id);
+  }
+
+  /**
+   * Récupère tous les nœuds d'un site (utilisé pour les calculs KPI site-level)
+   * @param {String} siteId - ID du site
+   * @returns {Promise<Array>} Array de nœuds
+   */
+  async findBySite(siteId) {
+    return await SensorNode.find({ siteId })
+      .select("_id nom zoneId Status")
+      .sort({ createdAt: -1 });
   }
 
   /**
@@ -47,9 +81,12 @@ class SensorNodeRepository {
    */
   async update(id, data) {
     return await SensorNode.findByIdAndUpdate(id, data, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
-    }).populate("industrieId", "nom secteur localisation");
+    })
+      .populate("IndustrieId", "nom secteur localisation")
+      .populate("zoneId", "nom code description")
+      .populate("siteId", "nom localisation");
   }
 
   /**
@@ -59,7 +96,11 @@ class SensorNodeRepository {
    * @returns {Promise<Object>} Document mis à jour
    */
   async updateStatus(id, status) {
-    return await SensorNode.findByIdAndUpdate(id, { status }, { new: true });
+    return await SensorNode.findByIdAndUpdate(
+      id,
+      { Status: status },
+      { returnDocument: "after" },
+    );
   }
 
   /**
@@ -68,7 +109,7 @@ class SensorNodeRepository {
    * @returns {Promise<Number>} Nombre de nœuds
    */
   async countByIndustrie(industrieId) {
-    return await SensorNode.countDocuments({ industrieId });
+    return await SensorNode.countDocuments({ IndustrieId: industrieId });
   }
 
   /**

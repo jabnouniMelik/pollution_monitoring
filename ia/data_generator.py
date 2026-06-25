@@ -121,7 +121,7 @@ def add_correlations(df: pd.DataFrame) -> pd.DataFrame:
     Dans une zone industrielle :
       - CO2 ↑ → NOX ↑ (combustion simultanée)
       - NOX ↑ → SO2 légèrement ↑ (mêmes sources)
-      - PM25 corrèle avec PM1 (même capteur PMS5003)
+      - PM25 corrèle avec PM10 (même capteur SDS011)
     
     Args:
         df: DataFrame avec colonnes POLLUTANT_NAMES

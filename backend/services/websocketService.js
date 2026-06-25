@@ -117,7 +117,7 @@ function handleClientMessage(clientId, data) {
  * Authenticate WebSocket connection with userId and role
  */
 function handleAuthentication(clientId, payload) {
-  const { userId, role, email } = payload;
+  const { userId, role, email, industryId } = payload;
   const client = clients.get(clientId);
 
   if (!client) return;
@@ -125,6 +125,7 @@ function handleAuthentication(clientId, payload) {
   client.userId = userId;
   client.role = role;
   client.email = email;
+  client.industryId = industryId || null;
 
   console.log(
     `[WebSocket] Client ${clientId} authenticated as ${role} (${email})`
@@ -293,6 +294,63 @@ function broadcastAlert(alert, allowedRoles = ["SUPER_ADMIN", "HEAD_SUPERVISOR"]
 }
 
 /**
+ * Broadcast report workflow updates to supervisors and auditors in the same industry.
+ */
+function broadcastReportUpdate(report) {
+  if (!wsServer || !report) return;
+
+  const industryId =
+    report.industryId?._id?.toString?.() ??
+    report.industryId?.toString?.() ??
+    null;
+
+  const payload = {
+    type: "report_update",
+    timestamp: new Date().toISOString(),
+    report: {
+      id: report._id?.toString?.() ?? report.id,
+      status: report.status,
+      title: report.title,
+      industryId,
+      generatedBy:
+        report.generatedBy?._id?.toString?.() ??
+        report.generatedBy?.toString?.() ??
+        null,
+    },
+  };
+
+  const allowedRoles = ["AUDITOR", "HEAD_SUPERVISOR", "SITE_SUPERVISOR"];
+  let messageCount = 0;
+
+  clients.forEach((client, clientId) => {
+    if (!allowedRoles.includes(client.role)) return;
+    if (
+      industryId &&
+      client.industryId &&
+      client.industryId !== industryId
+    ) {
+      return;
+    }
+
+    try {
+      client.ws.send(JSON.stringify(payload));
+      messageCount++;
+    } catch (err) {
+      console.error(
+        `[WebSocket] Error sending report update to client ${clientId}:`,
+        err.message
+      );
+    }
+  });
+
+  if (messageCount > 0) {
+    console.log(
+      `[WebSocket] Broadcasted report update (${report.status}) to ${messageCount} client(s)`
+    );
+  }
+}
+
+/**
  * Send message to specific user
  */
 function sendToUser(userId, message) {
@@ -344,6 +402,7 @@ module.exports = {
   initializeWebSocket,
   broadcastKPIUpdate,
   broadcastAlert,
+  broadcastReportUpdate,
   sendToUser,
   getStats,
   handleClientMessage,

@@ -1,0 +1,8 @@
+CompileFlags:
+  Compiler: C:/Users/melik/.platformio/packages/toolchain-xtensa-esp32/bin/xtensa-esp32-elf-g++
+  Remove:
+    - -mlongcalls
+    - -fstrict-volatile-bitfields
+    - -fno-tree-switch-conversion
+QueryDriver:
+  - C:/Users/melik/.platformio/packages/toolchain-xtensa-esp32/bin/xtensa-esp32-elf-*

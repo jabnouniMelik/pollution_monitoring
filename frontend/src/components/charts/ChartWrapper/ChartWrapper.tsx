@@ -21,14 +21,14 @@ export function ChartWrapper({
   loading,
 }: ChartWrapperProps) {
   return (
-    <section className={cn('card', className)} aria-busy={loading || undefined}>
+    <section className={cn('card p-4', className)} aria-busy={loading || undefined}>
       {(title || action) && (
-        <header className="mb-3 flex items-start justify-between gap-3">
-          <div>
+        <header className="mb-4 flex items-start justify-between gap-3">
+          <div className="min-w-0 space-y-1.5">
             {title && (
-              <h3 className="text-sm font-semibold text-text-primary">{title}</h3>
+              <h3 className="text-sm font-semibold leading-snug text-text-primary">{title}</h3>
             )}
-            {subtitle && <p className="mt-0.5 text-xs text-text-secondary">{subtitle}</p>}
+            {subtitle && <p className="text-xs leading-relaxed text-text-secondary">{subtitle}</p>}
           </div>
           {action}
         </header>

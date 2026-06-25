@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp, Minus } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { formatNumber, formatSignedDelta } from '@/lib/utils/formatters'
+import { formatKpiTarget, kpiComparator } from '@/features/kpi/utils/kpiFormatters'
 import type { KPIKind, KPIStatus } from '@/features/kpi/utils/kpiCalculations'
 
 interface KPICardProps {
@@ -62,7 +63,7 @@ export function KPICard({
       </>
     )
 
-  const comparator = type === 'IPE' ? '≥' : '≤'
+  const comparator = kpiComparator(type)
 
   const interactive = typeof onClick === 'function'
   const Tag = interactive ? 'button' : 'article'
@@ -105,7 +106,7 @@ export function KPICard({
         )}
         {target !== undefined && Number.isFinite(target) && (
           <span className="text-text-secondary">
-            cible {comparator} {formatNumber(target, 1)}
+            cible {comparator} {formatKpiTarget(target, type, 1)}
             {unit ?? ''}
             {status === 'success' && <span className="ml-1 text-success">✓</span>}
           </span>

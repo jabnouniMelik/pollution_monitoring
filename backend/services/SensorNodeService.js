@@ -6,12 +6,14 @@
 const sensorNodeRepository = require("../repositories/SensorNodeRepository");
 const industrieRepository = require("../repositories/IndustrieRepository");
 const sensorRepository = require("../repositories/SensorRepository");
+const zoneRepository = require("../repositories/ZoneRepository");
+const Site = require("../models/Site");
 const { sensor_node_status } = require("../utils/constants");
 
 class SensorNodeService {
   /**
    * Récupère tous les nœuds avec filtres
-   * @param {Object} filters - Filtres (industrieId, status, zone)
+   * @param {Object} filters - Filtres (IndustrieId, Status, zoneId, siteId)
    * @returns {Promise<Array>} Nœuds
    */
   async getAllSensorNodes(filters = {}) {
@@ -39,23 +41,42 @@ class SensorNodeService {
 
   /**
    * Crée un nouveau nœud
-   * @param {Object} data - Données nœud
+   * @param {Object} data - Données nœud (doit inclure zoneId et siteId)
    * @returns {Promise<Object>} Nœud créé
    */
   async createSensorNode(data) {
     // Vérifier que l'industrie existe
-    if (!data.industrieId) {
-      throw new Error("industrieId est requis");
+    if (!data.IndustrieId) {
+      throw new Error("IndustrieId est requis");
     }
-
-    const industrie = await industrieRepository.findById(data.industrieId);
+    const industrie = await industrieRepository.findById(data.IndustrieId);
     if (!industrie) {
       throw new Error("Industrie non trouvée");
     }
 
+    // Vérifier que la zone existe
+    if (!data.zoneId) {
+      throw new Error("zoneId est requis");
+    }
+    const zone = await zoneRepository.findById(data.zoneId);
+    if (!zone) {
+      throw new Error("Zone non trouvée");
+    }
+
+    // Dériver siteId depuis la zone si non fourni explicitement
+    if (!data.siteId) {
+      data.siteId = zone.siteId;
+    }
+
+    // Vérifier que le site existe
+    const site = await Site.findById(data.siteId);
+    if (!site) {
+      throw new Error("Site non trouvé");
+    }
+
     // Vérifier champs requis
-    if (!data.nom || !data.zone) {
-      throw new Error("nom et zone sont requis");
+    if (!data.nom) {
+      throw new Error("nom est requis");
     }
 
     return await sensorNodeRepository.create(data);
@@ -71,6 +92,13 @@ class SensorNodeService {
     const node = await sensorNodeRepository.findById(id);
     if (!node) {
       throw new Error("Nœud non trouvé");
+    }
+
+    // Si zoneId change, re-dériver siteId
+    if (data.zoneId && data.zoneId.toString() !== node.zoneId?._id?.toString()) {
+      const zone = await zoneRepository.findById(data.zoneId);
+      if (!zone) throw new Error("Zone non trouvée");
+      data.siteId = zone.siteId;
     }
 
     return await sensorNodeRepository.update(id, data);

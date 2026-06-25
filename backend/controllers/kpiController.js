@@ -7,16 +7,24 @@ const kpiService = require("../services/KPIService");
 const aggregationService = require("../services/AggregationService");
 const aggregateDataRepository = require("../repositories/AggregateDataRepository");
 const siteConfigRepository = require("../repositories/SiteConfigRepository");
+const polluantRepository = require("../repositories/PolluantRepository");
+
+function normalizeRco2Target(value, fallback = -5) {
+  const n = Number(value ?? fallback);
+  if (!Number.isFinite(n)) return fallback;
+  return n > 0 ? -n : n;
+}
 
 class KPIController {
   /**
    * GET /api/kpi/td/:polluantId
    * Calcule le Taux de Dépassement pour un polluant
+   * Query params optionnels : zoneId, siteId
    */
   async getTauxDepassement(req, res, next) {
     try {
       const { polluantId } = req.params;
-      const { periodStart, periodEnd } = req.query;
+      const { periodStart, periodEnd, zoneId } = req.query;
 
       if (!periodStart || !periodEnd) {
         return res.status(400).json({
@@ -27,12 +35,22 @@ class KPIController {
       const start = new Date(periodStart);
       const end = new Date(periodEnd);
 
-      const result = await kpiService.calculateTD(polluantId, start, end);
+      // Résoudre le filtre de nœuds si zoneId fourni
+      let nodeIdFilter = null;
+      if (zoneId) {
+        nodeIdFilter = await kpiService.getNodeIdsForZone(zoneId);
+        if (!nodeIdFilter.length) {
+          return res.status(404).json({ error: "Aucun nœud trouvé pour cette zone" });
+        }
+      }
+
+      const result = await kpiService.calculateTD(polluantId, start, end, nodeIdFilter);
 
       res.json({
         success: true,
         kpi: "TD",
         polluantId,
+        zoneId: zoneId || null,
         periodStart: start,
         periodEnd: end,
         data: result,
@@ -45,11 +63,12 @@ class KPIController {
   /**
    * GET /api/kpi/emj/:polluantId
    * Calcule l'Émission Moyenne par Jour pour un polluant
+   * Query params optionnels : zoneId, qAir
    */
   async getEmissionMoyenne(req, res, next) {
     try {
       const { polluantId } = req.params;
-      const { periodStart, periodEnd, qAir } = req.query;
+      const { periodStart, periodEnd, qAir, zoneId } = req.query;
 
       if (!periodStart || !periodEnd) {
         return res.status(400).json({
@@ -61,17 +80,21 @@ class KPIController {
       const end = new Date(periodEnd);
       const airflow = qAir ? parseFloat(qAir) : null;
 
-      const result = await kpiService.calculateEMJ(
-        polluantId,
-        start,
-        end,
-        airflow,
-      );
+      let nodeIdFilter = null;
+      if (zoneId) {
+        nodeIdFilter = await kpiService.getNodeIdsForZone(zoneId);
+        if (!nodeIdFilter.length) {
+          return res.status(404).json({ error: "Aucun nœud trouvé pour cette zone" });
+        }
+      }
+
+      const result = await kpiService.calculateEMJ(polluantId, start, end, airflow, nodeIdFilter);
 
       res.json({
         success: true,
         kpi: "EMJ",
         polluantId,
+        zoneId: zoneId || null,
         periodStart: start,
         periodEnd: end,
         data: result,
@@ -83,11 +106,12 @@ class KPIController {
 
   /**
    * GET /api/kpi/ipe
-   * Calcule l'Indice de Performance Environnementale global
+   * Calcule l'Indice de Performance Environnementale
+   * Query params optionnels : zoneId (pour IPE d'une zone spécifique)
    */
   async getIPE(req, res, next) {
     try {
-      const { periodStart, periodEnd } = req.query;
+      const { periodStart, periodEnd, zoneId } = req.query;
 
       if (!periodStart || !periodEnd) {
         return res.status(400).json({
@@ -98,11 +122,20 @@ class KPIController {
       const start = new Date(periodStart);
       const end = new Date(periodEnd);
 
-      const result = await kpiService.calculateIPE(start, end);
+      let nodeIdFilter = null;
+      if (zoneId) {
+        nodeIdFilter = await kpiService.getNodeIdsForZone(zoneId);
+        if (!nodeIdFilter.length) {
+          return res.status(404).json({ error: "Aucun nœud trouvé pour cette zone" });
+        }
+      }
+
+      const result = await kpiService.calculateIPE(start, end, null, nodeIdFilter);
 
       res.json({
         success: true,
         kpi: "IPE",
+        zoneId: zoneId || null,
         periodStart: start,
         periodEnd: end,
         data: result,
@@ -159,14 +192,21 @@ class KPIController {
   /**
    * POST /api/kpi/aggregate
    * Lance l'agrégation manuelle pour une période
+   * Body : { period, periodStart, periodEnd, siteId (required) }
    */
   async triggerAggregation(req, res, next) {
     try {
-      const { period, periodStart, periodEnd } = req.body;
+      const { period, periodStart, periodEnd, siteId } = req.body;
 
       if (!period || !periodStart || !periodEnd) {
         return res.status(400).json({
           error: "period, periodStart et periodEnd sont requis",
+        });
+      }
+
+      if (!siteId) {
+        return res.status(400).json({
+          error: "siteId est requis pour l'agrégation manuelle",
         });
       }
 
@@ -184,12 +224,14 @@ class KPIController {
         period,
         start,
         end,
+        siteId,
       );
 
       res.json({
         success: true,
         message: "Agrégation terminée",
         period,
+        siteId,
         periodStart: start,
         periodEnd: end,
         aggregatesCreated: results.length,
@@ -202,10 +244,11 @@ class KPIController {
   /**
    * GET /api/kpi/summary
    * Récupère le résumé des KPIs pour une période
+   * Query params : period, periodStart, periodEnd, siteId (required), zoneId (optional)
    */
   async getSummary(req, res, next) {
     try {
-      const { period, periodStart, periodEnd } = req.query;
+      const { period, periodStart, periodEnd, siteId, zoneId } = req.query;
 
       if (!period || !periodStart || !periodEnd) {
         return res.status(400).json({
@@ -213,13 +256,23 @@ class KPIController {
         });
       }
 
+      if (!siteId) {
+        return res.status(400).json({
+          error: "siteId est requis pour filtrer par site",
+        });
+      }
+
       const start = new Date(periodStart);
       const end = new Date(periodEnd);
+
+      const filters = { siteId };
+      if (zoneId) filters.zoneId = zoneId;
 
       const summary = await aggregationService.getKPISummary(
         period,
         start,
         end,
+        filters,
       );
 
       res.json({
@@ -234,11 +287,12 @@ class KPIController {
   /**
    * GET /api/kpi/history/:polluantId
    * Récupère l'historique des agrégations pour un polluant
+   * Query params : period, siteId (required), zoneId (optional), limit
    */
   async getHistory(req, res, next) {
     try {
       const { polluantId } = req.params;
-      const { period, limit } = req.query;
+      const { period, limit, siteId, zoneId } = req.query;
 
       if (!period) {
         return res.status(400).json({
@@ -246,20 +300,160 @@ class KPIController {
         });
       }
 
+      if (!siteId) {
+        return res.status(400).json({
+          error: "siteId est requis pour filtrer par site",
+        });
+      }
+
       const maxLimit = limit ? parseInt(limit) : 30;
 
-      const history = await aggregateDataRepository.findByPolluantAndPeriod(
-        polluantId,
-        period,
-        maxLimit,
-      );
+      const filters = { siteId };
+      if (zoneId) filters.zoneId = zoneId;
+
+      const isGlobalIpe = polluantId === "global" || polluantId === "ipe";
+
+      let history;
+      if (isGlobalIpe) {
+        history = await aggregateDataRepository.findIpeHistory(period, maxLimit, filters);
+        if (history.length === 0 && zoneId) {
+          history = await aggregateDataRepository.findIpeHistory(period, maxLimit, { siteId });
+        }
+        if (period === "DAILY") {
+          const live = await kpiService.buildLiveDailyIpeHistory(
+            siteId,
+            zoneId || null,
+            maxLimit,
+          );
+          if (live.length > 0) {
+            history = live;
+          }
+        }
+      } else {
+        history = await aggregateDataRepository.findByPolluantAndPeriod(
+          polluantId,
+          period,
+          maxLimit,
+          filters,
+        );
+        if (history.length === 0 && zoneId) {
+          history = await aggregateDataRepository.findByPolluantAndPeriod(
+            polluantId,
+            period,
+            maxLimit,
+            { siteId },
+          );
+        }
+        if (history.length === 0 && period === "DAILY") {
+          history = await kpiService.buildLiveDailyHistory(
+            polluantId,
+            siteId,
+            zoneId || null,
+            maxLimit,
+          );
+        }
+      }
+
+      if (!isGlobalIpe && period === "MONTHLY") {
+        const polluant = await polluantRepository.findById(polluantId);
+        if (
+          polluant &&
+          (polluant.name === "CO2" || polluant.name === "CO2e")
+        ) {
+          const hasValidRco2 = history.some(
+            (row) =>
+              row?.reductionPct != null &&
+              Number.isFinite(Number(row.reductionPct)),
+          );
+          if (history.length === 0 || !hasValidRco2) {
+            const live = await kpiService.buildLiveMonthlyRco2History(
+              polluantId,
+              siteId,
+              zoneId || null,
+              maxLimit,
+            );
+            if (live.length > 0) {
+              history = live;
+            }
+          }
+        }
+      }
 
       res.json({
         success: true,
-        polluantId,
+        polluantId: isGlobalIpe ? "global" : polluantId,
         period,
+        zoneId: zoneId || null,
         count: history.length,
         data: history,
+        source: history.length > 0 && history[0]?.dataQuality === "LIVE" ? "live" : "aggregate",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /api/kpi/zones/:siteId
+   * Récupère le résumé KPI de toutes les zones d'un site pour une période
+   */
+  async getZonesSummary(req, res, next) {
+    try {
+      const { siteId } = req.params;
+      const { period, periodStart, periodEnd } = req.query;
+
+      if (!period || !periodStart || !periodEnd) {
+        return res.status(400).json({
+          error: "period, periodStart et periodEnd sont requis",
+        });
+      }
+
+      const start = new Date(periodStart);
+      const end = new Date(periodEnd);
+
+      // Récupérer les agrégations zone-level pour ce site
+      const zoneAggregates = await aggregateDataRepository.findZoneAggregatesBySite(
+        siteId,
+        period,
+        start,
+        end,
+      );
+
+      // Grouper par zone
+      const byZone = {};
+      for (const agg of zoneAggregates) {
+        const zId = agg.zoneId?._id?.toString() || agg.zoneId?.toString();
+        if (!zId) continue;
+        if (!byZone[zId]) {
+          byZone[zId] = {
+            zoneId: zId,
+            zoneName: agg.zoneId?.nom || null,
+            zoneCode: agg.zoneId?.code || null,
+            polluants: [],
+            ipe: null,
+          };
+        }
+        if (!agg.polluantId) {
+          byZone[zId].ipe = agg.overallScore;
+        } else {
+          byZone[zId].polluants.push({
+            name: agg.polluantId?.name,
+            tauxDepassement: agg.tauxDepassement,
+            emissionKgDay: agg.emissionKgDay,
+            score: agg.score,
+            avgValue: agg.avgValue,
+            dataQuality: agg.dataQuality,
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        siteId,
+        period,
+        periodStart: start,
+        periodEnd: end,
+        zones: Object.values(byZone),
       });
     } catch (error) {
       next(error);
@@ -274,9 +468,6 @@ class KPIController {
     try {
       const config = await siteConfigRepository.getActiveConfig();
 
-      // If no config has been seeded yet, return a 200 with safe defaults
-      // instead of a 404. This keeps clients usable before `npm run init:kpi`
-      // has been executed and avoids a cascade of 404-driven UI errors.
       if (!config) {
         return res.json({
           success: true,
@@ -284,7 +475,16 @@ class KPIController {
             siteName: null,
             airflow: null,
             polluantWeights: {},
-            targets: {},
+            weights: {},
+            targets: {
+              TD: 2,
+              IPE: 95,
+              RCO2: -5,
+              EMJ: null,
+            },
+            baseline: { CO2: 650 },
+            baselineCo2: 650,
+            expectedSampleIntervalSeconds: 30,
             location: null,
             isDefault: true,
           },
@@ -296,9 +496,14 @@ class KPIController {
         data: {
           siteName: config.siteName,
           airflow: config.airflow,
-          polluantWeights: config.polluantWeights,
-          targets: config.targets,
+          weights: siteConfigRepository.mapWeightsForApi(config.polluantWeights),
+          targets: siteConfigRepository.mapTargetsForApi(config.targets),
+          baseline: { CO2: config.baselineCo2 ?? 650 },
+          baselineCo2: config.baselineCo2 ?? 650,
+          expectedSampleIntervalSeconds:
+            config.expectedSampleIntervalSeconds ?? 30,
           location: config.location,
+          isDefault: false,
         },
       });
     } catch (error) {
@@ -313,7 +518,7 @@ class KPIController {
   async updateAirflow(req, res, next) {
     try {
       const { airflow } = req.body;
-      const userId = req.user?._id;
+      const userId = req.user?.userId;
 
       if (!airflow || airflow <= 0) {
         return res.status(400).json({
@@ -336,14 +541,56 @@ class KPIController {
     }
   }
 
-  /**
-   * PUT /api/kpi/config/weights
-   * Met à jour les poids des polluants pour IPE
-   */
+  async updateBaseline(req, res, next) {
+    try {
+      const { baselineCo2 } = req.body;
+      const userId = req.user?.userId;
+
+      const config = await siteConfigRepository.updateBaselineCo2(
+        baselineCo2,
+        userId,
+      );
+
+      res.json({
+        success: true,
+        message: "Baseline CO₂ mise à jour",
+        data: {
+          baselineCo2: config.baselineCo2,
+          updatedAt: config.updatedAt,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateSampleInterval(req, res, next) {
+    try {
+      const { expectedSampleIntervalSeconds } = req.body;
+      const userId = req.user?.userId;
+
+      const config = await siteConfigRepository.updateSampleInterval(
+        expectedSampleIntervalSeconds,
+        userId,
+      );
+
+      res.json({
+        success: true,
+        message: "Intervalle d'échantillonnage mis à jour",
+        data: {
+          expectedSampleIntervalSeconds: config.expectedSampleIntervalSeconds,
+          updatedAt: config.updatedAt,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async updateWeights(req, res, next) {
     try {
       const { weights } = req.body;
-      const userId = req.user?._id;
+      const userId = req.user?.userId;
 
       if (!weights || typeof weights !== "object") {
         return res.status(400).json({
@@ -360,6 +607,7 @@ class KPIController {
         success: true,
         message: "Poids des polluants mis à jour",
         data: {
+          weights: siteConfigRepository.mapWeightsForApi(config.polluantWeights),
           polluantWeights: config.polluantWeights,
           updatedAt: config.updatedAt,
         },
@@ -376,7 +624,7 @@ class KPIController {
   async updateTargets(req, res, next) {
     try {
       const { targets } = req.body;
-      const userId = req.user?._id;
+      const userId = req.user?.userId;
 
       if (!targets || typeof targets !== "object") {
         return res.status(400).json({
@@ -390,7 +638,7 @@ class KPIController {
         success: true,
         message: "Objectifs KPI mis à jour",
         data: {
-          targets: config.targets,
+          targets: siteConfigRepository.mapTargetsForApi(config.targets),
           updatedAt: config.updatedAt,
         },
       });

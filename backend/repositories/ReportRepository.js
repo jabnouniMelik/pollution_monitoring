@@ -5,85 +5,89 @@
 
 const Report = require("../models/Report");
 
+const USER_POPULATE = [
+  { path: "generatedBy", select: "username email role" },
+  { path: "approvedBy", select: "username email" },
+  { path: "rejectedBy", select: "username email" },
+];
+
 class ReportRepository {
-  /**
-   * Récupère tous les rapports avec filtres
-   * @param {Object} filter - Filtre MongoDB
-   * @returns {Promise<Array>} Array de rapports
-   */
   async findAll(filter = {}) {
-    return await Report.find(filter).sort({ generatedAt: -1 });
+    return await Report.find(filter)
+      .sort({ generatedAt: -1 })
+      .populate(USER_POPULATE);
   }
 
-  /**
-   * Récupère un rapport par ID
-   * @param {String} id - ID MongoDB
-   * @returns {Promise<Object>} Document rapport ou null
-   */
   async findById(id) {
-    return await Report.findById(id).populate("generatedBy", "username email");
+    return await Report.findById(id).populate(USER_POPULATE);
   }
 
-  /**
-   * Crée un nouveau rapport
-   * @param {Object} data - Données rapport
-   * @returns {Promise<Object>} Document créé
-   */
   async create(data) {
     return await Report.create(data);
   }
 
-  /**
-   * Met à jour un rapport
-   * @param {String} id - ID MongoDB
-   * @param {Object} data - Données à mettre à jour
-   * @returns {Promise<Object>} Document mis à jour
-   */
   async update(id, data) {
     return await Report.findByIdAndUpdate(id, data, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
-    });
+    }).populate(USER_POPULATE);
   }
 
-  /**
-   * Met à jour le statut d'un rapport
-   * @param {String} id - ID MongoDB
-   * @param {String} status - Nouveau statut (DRAFT, SUBMITTED, APPROVED)
-   * @param {String} notes - Notes optionnelles
-   * @returns {Promise<Object>} Document mis à jour
-   */
   async updateStatus(id, status, notes = "") {
     const updateData = { status };
     if (notes) updateData.notes = notes;
     if (status === "SUBMITTED") updateData.submittedAt = new Date();
     if (status === "APPROVED") updateData.approvedAt = new Date();
 
-    return await Report.findByIdAndUpdate(id, updateData, { new: true });
+    return await Report.findByIdAndUpdate(id, updateData, {
+      returnDocument: "after",
+      runValidators: true,
+    }).populate(USER_POPULATE);
   }
 
-  /**
-   * Compte les rapports par statut
-   * @param {String} status - Statut à compter
-   * @returns {Promise<Number>} Nombre de rapports
-   */
+  async updateWorkflowStatus(id, payload) {
+    const {
+      status,
+      actorId = null,
+      notes = "",
+      rejectionReason = "",
+    } = payload;
+
+    const updateData = { status };
+    if (notes) updateData.notes = notes;
+
+    if (status === "SUBMITTED") {
+      updateData.submittedAt = new Date();
+    }
+
+    if (status === "APPROVED") {
+      updateData.approvedAt = new Date();
+      updateData.approvedBy = actorId;
+      updateData.rejectedAt = null;
+      updateData.rejectedBy = null;
+      updateData.rejectionReason = "";
+    }
+
+    if (status === "REJECTED") {
+      updateData.rejectedAt = new Date();
+      updateData.rejectedBy = actorId;
+      updateData.rejectionReason = rejectionReason || notes || "";
+    }
+
+    return await Report.findByIdAndUpdate(id, updateData, {
+      returnDocument: "after",
+      runValidators: true,
+    }).populate(USER_POPULATE);
+  }
+
   async countByStatus(status) {
     return await Report.countDocuments({ status });
   }
 
-  /**
-   * Récupère le rapport le plus récent
-   * @returns {Promise<Object>} Document rapport ou null
-   */
   async findLatest() {
     return await Report.findOne().sort({ generatedAt: -1 });
   }
 
-  /**
-   * Supprime un rapport
-   * @param {String} id - ID MongoDB
-   * @returns {Promise<Object>} Document supprimé
-   */
   async delete(id) {
     return await Report.findByIdAndDelete(id);
   }

@@ -6,6 +6,8 @@
 
 const cron = require("node-cron");
 const aggregationService = require("../services/AggregationService");
+const siteRepository = require("../repositories/SiteRepository");
+const aiService = require("../services/AIService");
 
 class KPIScheduler {
   constructor() {
@@ -92,13 +94,36 @@ class KPIScheduler {
         `  Période: ${periodStart.toISOString()} → ${periodEnd.toISOString()}`,
       );
 
-      const results = await aggregationService.aggregateAllPolluants(
-        "HOURLY",
-        periodStart,
-        periodEnd,
-      );
+      // Agrégation par site
+      const sites = await siteRepository.findAll();
+      console.log(`  Sites trouvés: ${sites.length}`);
 
-      console.log(`✓ Agrégation HOURLY terminée: ${results.length} polluants`);
+      let totalResults = 0;
+      for (const site of sites) {
+        try {
+          const results = await aggregationService.aggregateAllPolluants(
+            "HOURLY",
+            periodStart,
+            periodEnd,
+            site._id.toString(), // Pass siteId for site-scoped aggregation
+          );
+          totalResults += results.length;
+        } catch (error) {
+          console.error(
+            `    ⚠️ Erreur pour site ${site.name}: ${error.message}`,
+          );
+        }
+      }
+
+      console.log(`✓ Agrégation HOURLY terminée: ${totalResults} agrégations`);
+
+      if (aiService.isEnabled()) {
+        console.log("  [IA] Détection anomalies (Isolation Forest)…");
+        await aiService.runAnomalyDetectionForAllZones(periodEnd);
+
+        console.log("  [IA] Lancement prévisions LSTM 4 h…");
+        await aiService.runForecastsForAllZones(periodEnd);
+      }
     } catch (error) {
       console.error("❌ Erreur agrégation HOURLY:", error.message);
     }
@@ -120,13 +145,28 @@ class KPIScheduler {
         `  Période: ${periodStart.toISOString()} → ${periodEnd.toISOString()}`,
       );
 
-      const results = await aggregationService.aggregateAllPolluants(
-        "DAILY",
-        periodStart,
-        periodEnd,
-      );
+      // Agrégation par site
+      const sites = await siteRepository.findAll();
+      console.log(`  Sites trouvés: ${sites.length}`);
 
-      console.log(`✓ Agrégation DAILY terminée: ${results.length} polluants`);
+      let totalResults = 0;
+      for (const site of sites) {
+        try {
+          const results = await aggregationService.aggregateAllPolluants(
+            "DAILY",
+            periodStart,
+            periodEnd,
+            site._id.toString(),
+          );
+          totalResults += results.length;
+        } catch (error) {
+          console.error(
+            `    ⚠️ Erreur pour site ${site.name}: ${error.message}`,
+          );
+        }
+      }
+
+      console.log(`✓ Agrégation DAILY terminée: ${totalResults} agrégations`);
     } catch (error) {
       console.error("❌ Erreur agrégation DAILY:", error.message);
     }
@@ -153,13 +193,28 @@ class KPIScheduler {
         `  Période: ${periodStart.toISOString()} → ${periodEnd.toISOString()}`,
       );
 
-      const results = await aggregationService.aggregateAllPolluants(
-        "WEEKLY",
-        periodStart,
-        periodEnd,
-      );
+      // Agrégation par site
+      const sites = await siteRepository.findAll();
+      console.log(`  Sites trouvés: ${sites.length}`);
 
-      console.log(`✓ Agrégation WEEKLY terminée: ${results.length} polluants`);
+      let totalResults = 0;
+      for (const site of sites) {
+        try {
+          const results = await aggregationService.aggregateAllPolluants(
+            "WEEKLY",
+            periodStart,
+            periodEnd,
+            site._id.toString(),
+          );
+          totalResults += results.length;
+        } catch (error) {
+          console.error(
+            `    ⚠️ Erreur pour site ${site.name}: ${error.message}`,
+          );
+        }
+      }
+
+      console.log(`✓ Agrégation WEEKLY terminée: ${totalResults} agrégations`);
     } catch (error) {
       console.error("❌ Erreur agrégation WEEKLY:", error.message);
     }
@@ -179,13 +234,28 @@ class KPIScheduler {
         `  Période: ${periodStart.toISOString()} → ${periodEnd.toISOString()}`,
       );
 
-      const results = await aggregationService.aggregateAllPolluants(
-        "MONTHLY",
-        periodStart,
-        periodEnd,
-      );
+      // Agrégation par site
+      const sites = await siteRepository.findAll();
+      console.log(`  Sites trouvés: ${sites.length}`);
 
-      console.log(`✓ Agrégation MONTHLY terminée: ${results.length} polluants`);
+      let totalResults = 0;
+      for (const site of sites) {
+        try {
+          const results = await aggregationService.aggregateAllPolluants(
+            "MONTHLY",
+            periodStart,
+            periodEnd,
+            site._id.toString(),
+          );
+          totalResults += results.length;
+        } catch (error) {
+          console.error(
+            `    ⚠️ Erreur pour site ${site.name}: ${error.message}`,
+          );
+        }
+      }
+
+      console.log(`✓ Agrégation MONTHLY terminée: ${totalResults} agrégations`);
     } catch (error) {
       console.error("❌ Erreur agrégation MONTHLY:", error.message);
     }

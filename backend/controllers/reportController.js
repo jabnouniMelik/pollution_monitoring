@@ -1,21 +1,14 @@
 /**
  * CONTROLLER : REPORT
  * Gère toutes les opérations HTTP pour les rapports réglementaires ANPE
- * Logique métier déléguée à ReportService
  */
 
 const reportService = require("../services/ReportService");
-const { error_messages, success_messages } = require("../utils/constants");
+const { success_messages } = require("../utils/constants");
 
-// ── GET /api/reports ─────────────────────────────────────
-// Liste tous les rapports
-// ?status=DRAFT/SUBMITTED/APPROVED → filtrer par statut
 const getAllReports = async (req, res, next) => {
   try {
-    const filter = {};
-    if (req.query.status) filter.status = req.query.status;
-
-    const reports = await reportService.getAllReports(filter);
+    const reports = await reportService.getReportsForUser(req.user, req.query);
 
     res.status(200).json({
       success: true,
@@ -27,10 +20,10 @@ const getAllReports = async (req, res, next) => {
   }
 };
 
-// ── GET /api/reports/:id ─────────────────────────────────
 const getReportById = async (req, res, next) => {
   try {
     const report = await reportService.getReportById(req.params.id);
+    reportService.assertReportAccess(req.user, report);
 
     res.status(200).json({
       success: true,
@@ -41,7 +34,6 @@ const getReportById = async (req, res, next) => {
   }
 };
 
-// ── POST /api/reports/generate ─────────────────────────────
 const generateReport = async (req, res, next) => {
   try {
     const {
@@ -62,12 +54,12 @@ const generateReport = async (req, res, next) => {
       });
     }
 
-    const generatedBy = req.user?.userId || null;
-
     const report = await reportService.generateReport({
       periodStart,
       periodEnd,
-      generatedBy,
+      generatedBy: req.user.userId,
+      generatorRole: req.user.role,
+      industryId: req.user.industryId || null,
       title,
       format,
       siteId: siteId || null,
@@ -86,39 +78,64 @@ const generateReport = async (req, res, next) => {
   }
 };
 
-// ── POST /api/reports/:id/submit ──────────────────────────
-// Soumet le rapport à l'autorité réglementaire (ANPE)
-// Change le statut DRAFT → SUBMITTED
 const submitReport = async (req, res, next) => {
   try {
-    const updated = await reportService.updateReportStatus(
+    const updated = await reportService.submitReportForReview(
       req.params.id,
-      "SUBMITTED",
+      req.user,
     );
 
     res.status(200).json({
       success: true,
-      message: "Rapport soumis à l'ANPE avec succès",
-      data: {
-        _id: updated._id,
-        status: updated.status,
-        overallScore: updated.overallScore,
-        breachCount: updated.breachCount,
-        periodStart: updated.periodStart,
-        periodEnd: updated.periodEnd,
-      },
+      message: "Rapport soumis pour validation par l'auditeur",
+      data: updated,
     });
   } catch (error) {
     next(error);
   }
 };
 
-// ── DELETE /api/reports/:id ──────────────────────────────
-// Supprime uniquement les rapports en statut DRAFT
-// Les rapports soumis ou approuvés ne peuvent pas être supprimés
+const approveReport = async (req, res, next) => {
+  try {
+    const { notes } = req.body || {};
+    const updated = await reportService.approveReport(
+      req.params.id,
+      req.user,
+      notes,
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Rapport approuvé",
+      data: updated,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const rejectReport = async (req, res, next) => {
+  try {
+    const { reason, rejectionReason } = req.body || {};
+    const updated = await reportService.rejectReport(
+      req.params.id,
+      req.user,
+      rejectionReason || reason,
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Rapport refusé",
+      data: updated,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const deleteReport = async (req, res, next) => {
   try {
-    await reportService.deleteReport(req.params.id);
+    await reportService.deleteReport(req.params.id, req.user);
 
     res.status(200).json({
       success: true,
@@ -134,5 +151,7 @@ module.exports = {
   getReportById,
   generateReport,
   submitReport,
+  approveReport,
+  rejectReport,
   deleteReport,
 };

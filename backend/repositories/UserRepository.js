@@ -16,7 +16,11 @@ class UserRepository {
       .select("-password")
       .populate("industryId", "nom secteur")
       .populate("sitesManaging", "nom localisation")
-      .populate({ path: "zonesAssigned", select: "code nom siteId", populate: { path: "siteId", select: "nom" } })
+      .populate({
+        path: "zonesAssigned",
+        select: "code nom siteId",
+        populate: { path: "siteId", select: "nom" },
+      })
       .sort({ createdAt: -1 });
   }
 
@@ -30,7 +34,11 @@ class UserRepository {
       .select("-password")
       .populate("industryId", "nom secteur")
       .populate("sitesManaging", "nom localisation")
-      .populate({ path: "zonesAssigned", select: "code nom siteId", populate: { path: "siteId", select: "nom" } });
+      .populate({
+        path: "zonesAssigned",
+        select: "code nom siteId",
+        populate: { path: "siteId", select: "nom" },
+      });
   }
 
   /**
@@ -68,7 +76,7 @@ class UserRepository {
    */
   async update(id, data) {
     return await User.findByIdAndUpdate(id, data, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     }).select("-password");
   }

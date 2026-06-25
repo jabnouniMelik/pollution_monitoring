@@ -13,6 +13,7 @@ interface AuthPayload {
   userId: string
   role: string
   email: string
+  industryId?: string | null
 }
 
 type MessageHandler = (message: WSMessage) => void

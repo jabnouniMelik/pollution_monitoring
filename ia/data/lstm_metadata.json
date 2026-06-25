@@ -1,0 +1,28 @@
+{
+  "lookback": 48,
+  "horizons": [
+    4
+  ],
+  "pollutant_names": [
+    "CO2",
+    "NOX",
+    "SOX",
+    "PM25",
+    "PM10",
+    "COV",
+    "TEMPERATURE",
+    "HUMIDITY"
+  ],
+  "n_output_features": 8,
+  "n_input_features": 8,
+  "n_sites": 6,
+  "sites": [
+    "site_broyage",
+    "site_expedition",
+    "site_four_A",
+    "site_four_B",
+    "site_mixed",
+    "site_stockage"
+  ],
+  "dataset": "industrial_hybrid_tunisian"
+}

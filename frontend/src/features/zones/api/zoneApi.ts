@@ -92,6 +92,6 @@ export const zoneApi = {
   async getSensorsCount(id: string): Promise<number> {
     const response = await api.get<any>(endpoints.zones.sensorsCount(id))
     const data = unwrap(response.data) as any
-    return data?.count || 0
+    return data?.sensorCount ?? data?.count ?? 0
   },
 }

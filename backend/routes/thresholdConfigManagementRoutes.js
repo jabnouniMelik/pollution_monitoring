@@ -1,6 +1,6 @@
 /**
  * ROUTES : THRESHOLD CONFIG MANAGEMENT
- * Endpoints pour gestion des seuils réglementaires (Décret 2010-2516)
+ * Endpoints pour gestion des seuils réglementaires (Décret 2018-928)
  * Limites d'émission, warning/critical thresholds
  * SUPER_ADMIN only pour modifications
  */
@@ -96,7 +96,7 @@ router.post(
 /**
  * PUT /api/thresholds/:id/reset
  * Réinitialiser aux valeurs par défaut (SUPER_ADMIN only)
- * Décret 2010-2516 (Tunisie)
+ * Décret 2018-928 (Tunisie)
  */
 router.put(
   "/:id/reset",

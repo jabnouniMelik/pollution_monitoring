@@ -26,7 +26,7 @@ const AlertSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["Threshold", "SensorFault", "Anomaly"],
+      enum: ["Threshold", "SensorFault", "Anomaly", "Forecast"],
       required: true,
     },
     value: {

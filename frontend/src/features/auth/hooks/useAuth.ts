@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
 import { authApi } from '../api/authApi'
 import { getAccessToken, onUnauthorized, tryRefreshSession } from '@/lib/api/axios'
@@ -9,6 +10,7 @@ import { getAccessToken, onUnauthorized, tryRefreshSession } from '@/lib/api/axi
  */
 export function useAuth() {
   const { user, isInitialized, setUser, clearSession, markInitialized } = useAuthStore()
+  const queryClient = useQueryClient()
 
   useEffect(() => {
     let cancelled = false
@@ -16,13 +18,15 @@ export function useAuth() {
     async function bootstrap() {
       // Rehydrate only when we have a persisted profile, an in-memory access token,
       // or a chance to rotate via HttpOnly refresh cookie (silent POST /refresh).
-      const hasPersistedUser = Boolean(useAuthStore.getState().user)
       const hasToken = Boolean(getAccessToken())
 
-      if (!hasPersistedUser && !hasToken) {
+      if (!hasToken) {
         const refreshed = await tryRefreshSession()
         if (!refreshed) {
-          if (!cancelled) markInitialized()
+          if (!cancelled) {
+            clearSession()
+            markInitialized()
+          }
           return
         }
       }
@@ -45,8 +49,11 @@ export function useAuth() {
   }, [])
 
   useEffect(() => {
-    return onUnauthorized(() => clearSession())
-  }, [clearSession])
+    return onUnauthorized(() => {
+      clearSession()
+      queryClient.clear()
+    })
+  }, [clearSession, queryClient])
 
   return {
     user,

@@ -3,6 +3,7 @@ import {
   calculateEMJ,
   calculateIPE,
   calculateRCO2,
+  calculateRCO2GoalAttainment,
   calculateTD,
   getKPIStatus,
   type Reading,
@@ -70,9 +71,18 @@ describe('calculateRCO2', () => {
     expect(calculateRCO2(100, 0)).toBe(0)
   })
 
-  it('returns negative value when current < baseline', () => {
-    // baseline=1000, current=900 => improvement of 10% => -10
+  it('returns negative value when current < reference (reduction)', () => {
+    expect(calculateRCO2(760, 800)).toBeCloseTo(-5, 3)
     expect(calculateRCO2(900, 1000)).toBeCloseTo(-10, 3)
+  })
+})
+
+describe('calculateRCO2GoalAttainment', () => {
+  it('returns 100% when target met exactly', () => {
+    expect(calculateRCO2GoalAttainment(-5, -5)).toBe(100)
+  })
+  it('returns partial attainment below target', () => {
+    expect(calculateRCO2GoalAttainment(-3.2, -5)).toBeCloseTo(64, 0)
   })
 })
 

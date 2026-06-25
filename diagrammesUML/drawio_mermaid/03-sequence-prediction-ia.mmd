@@ -1,0 +1,32 @@
+sequenceDiagram
+  autonumber
+  participant Sched as Scheduler/Manual Trigger
+  participant AISvc as AIService
+  participant Agg as AggregationService
+  participant AggDB as aggregateData
+  participant IAApi as Python IA API
+  participant ForecastDB as lstmForecast
+  participant AnomDB as anomalyDetection
+  participant API as /api/ia/*
+  participant UI as Frontend IA panel
+
+  Sched->>AISvc: runForecastForZone(zoneId)
+  AISvc->>Agg: syncHourlyAggregatesForZone(lookback 48h)
+  Agg->>AggDB: upsert HOURLY aggregates
+  AISvc->>AggDB: buildLookbackMatrix(zoneId)
+  AISvc->>IAApi: POST /forecast (LSTM input matrix)
+  IAApi-->>AISvc: forecast horizons + confidence
+  AISvc->>ForecastDB: save latest forecast
+
+  Sched->>AISvc: runAnomalyDetectionForZone(zoneId)
+  AISvc->>IAApi: POST /anomaly-detect
+  IAApi-->>AISvc: anomaly score + label
+  AISvc->>AnomDB: save detection
+
+  UI->>API: GET /api/ia/forecast/latest/:zoneId
+  API->>ForecastDB: find latest by zone
+  API-->>UI: forecast data
+
+  UI->>API: GET /api/ia/anomalies/:zoneId
+  API->>AnomDB: history(limit)
+  API-->>UI: anomalies history

@@ -1,6 +1,6 @@
 # 📊 SYSTÈME KPI ENVIRONNEMENTAUX
 
-Documentation complète du système de calcul des KPIs environnementaux selon la norme NT 106.04 (Tunisie).
+Documentation complète du système de calcul des KPIs environnementaux selon la norme Décret 2018-928 (Tunisie).
 
 ---
 
@@ -86,7 +86,7 @@ Score(p) = 1                           si C_moy ≤ VLE
 Score(p) = max(0, 1 - (C_moy - VLE) / VLE)  si C_moy > VLE
 ```
 
-**Poids réglementaires (NT 106.04) :**
+**Poids réglementaires (Décret 2018-928) :**
 - NOx : 30%
 - SO2 : 25%
 - PM2.5 : 25%
@@ -398,7 +398,7 @@ npm run init:kpi
 
 Crée la configuration par défaut :
 - Q_air = 2.0 Nm³/s
-- Poids réglementaires NT 106.04
+- Poids réglementaires Décret 2018-928
 - Objectifs KPI standards
 - Localisation Sfax, Tunisie
 
@@ -576,7 +576,7 @@ Le système log automatiquement :
 
 ## 📚 RÉFÉRENCES RÉGLEMENTAIRES
 
-- **NT 106.04** : Norme tunisienne sur les émissions atmosphériques
+- **Décret 2018-928** : Norme tunisienne sur les émissions atmosphériques
 - **ISO 14064-1** : Gaz à effet de serre - Quantification et déclaration
 - **ANPE** : Agence Nationale de Protection de l'Environnement (Tunisie)
 
@@ -641,3 +641,103 @@ Vérifier que :
 **Version :** 1.0.0  
 **Date :** 2026-04-07  
 **Auteur :** Système de monitoring environnemental
+
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                    PIPELINE DE CALCUL DES KPIs ENVIRONNEMENTAUX                 ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+ ┌─────────────────────────────────────────────────────────────────────────────┐
+ │                         SOURCES DE DONNÉES                                  │
+ │                                                                             │
+ │  ┌──────────────┐    ┌──────────────────┐    ┌───────────────────────────┐ │
+ │  │   readings   │    │    polluants     │    │       siteconfigs         │ │
+ │  │              │    │                 │    │                           │ │
+ │  │ • value      │    │ • regulatoryLim │    │ • airflow  (Nm³/s)        │ │
+ │  │ • timestamp  │    │ • warningThresh │    │ • polluantWeights         │ │
+ │  │ • isValid    │    │ • weight        │    │   NOx:0.30  SO₂:0.25      │ │
+ │  │ • sensorId   │    │ • name / code   │    │   PM25:0.25 COV:0.15      │ │
+ │  │ • nodeId     │    │                 │    │   CO₂:0.05                │ │
+ │  │ • PolluantId │    │                 │    │ • targets (TD≤2%, IPE≥95) │ │
+ │  └──────┬───────┘    └────────┬────────┘    └─────────────┬─────────────┘ │
+ └─────────┼────────────────────┼─────────────────────────────┼───────────────┘
+           │                    │                             │
+           ▼                    ▼                             ▼
+ ┌─────────────────────────────────────────────────────────────────────────────┐
+ │                     KPIScheduler  (node-cron)                               │
+ │                                                                             │
+ │   ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐  ┌─────────┐ │
+ │   │ HOURLY  H:05    │  │ DAILY  00:10    │  │WEEKLY 00:20  │  │MONTHLY  │ │
+ │   │ période [H-1,H) │  │ période [J-1,J) │  │période [S-1) │  │00:30    │ │
+ │   └────────┬────────┘  └────────┬────────┘  └──────┬───────┘  └────┬────┘ │
+ └────────────┼────────────────────┼──────────────────┼───────────────┼──────┘
+              │                    │                  │               │
+              └────────────────────┴────────┬─────────┘               │
+                                            │                         │
+                                            ▼                         │
+ ┌─────────────────────────────────────────────────────────────────────────────┐
+ │             AggregationService.aggregateAllPolluants(period, siteId)        │
+ │                                                                             │
+ │         
+ └────────────┬────────────────────────────────────────────────────────────────┘
+              │
+              │  ─────────────────────────────────────────────────────────────
+              │
+ 
+              │
+              ▼
+ ┌─────────────────────────────────────────────────────────────────────────────┐
+ │              ÉVALUATION DE LA QUALITÉ DES DONNÉES                           │
+ │                                                                             │
+ │      │
+ └────────────┬────────────────────────────────────────────────────────────────┘
+              │
+              ▼
+ ┌─────────────────────────────────────────────────────────────────────────────┐
+ │                   DOCUMENT AggregateData PERSISTÉ                           │
+ │                                                                             │
+ │  {                                                                          │
+ │    siteId, zoneId, polluantId,                                              │
+ │    period: "HOURLY|DAILY|WEEKLY|MONTHLY",                                   │
+ │    periodStart, periodEnd,                                                  │
+ │                                                                             │
+ │    avgValue,  minValue,  maxValue,  stdDeviation,   ◄── stats brutes        │
+ │    sampleCount,                                                             │
+ │                                                                             │
+ │    tauxDepassement,   breachCount,  warningCount,   ◄── KPI 1 (TD)         │
+ │    emissionKgDay,                                   ◄── KPI 2 (EMJ)        │
+ │    overallScore,      score,                        ◄── KPI 3 (IPE)        │
+ │    reductionPct,      reductionAbsolute,            ◄── KPI 4 (RCO₂)       │
+ │                                                                             │
+ │    dataQuality,       calculationDuration           ◄── métadonnées         │
+ │  }                                                                          │
+ └────────────┬────────────────────────────────────────────────────────────────┘
+              │
+              ├
+              ▼                                                  
+ ┌────────────────────────────┐                  
+ │      API REST              │                  
+ │                            │                  
+ │  GET /api/kpis/summary     │                  
+ │  GET /api/kpis/td/:id      │                 
+ │  GET /api/kpis/emj/:id     │                  
+ │  GET /api/kpis/ipe         │                  
+ │  GET /api/kpis/rco2/:id    │                  
+ └────────────┬───────────────┘                  
+              │
+              ▼
+ ┌─────────────────────────────────────────────────────────────────────────────┐
+ │                     FRONTEND (TanStack Query)                               │
+ │                                                                             │
+ │  staleTime = 30 s  →  évite les requêtes répétitives                        │
+ │                                                                             │
+ │  WebSocket kpi_update  →  invalidateQueries(['kpi','summary'])              │
+ │                        →  refetch automatique → re-render                  │
+ │                                                                             │
+ │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌───────────────────────────┐  │
+ │  │KPIGauge  │  │ TD Chart │  │EMJ Trend │  │  IPE / RCO₂ Dashboard    │  │
+ │  │ IPE/100  │  │  %       │  │  kg/j    │  │  overallScore + badges    │  │
+ │  └──────────┘  └──────────┘  └──────────┘  └───────────────────────────┘  │
+ └─────────────────────────────────────────────────────────────────────────────┘

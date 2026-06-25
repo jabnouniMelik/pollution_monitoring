@@ -70,7 +70,7 @@ class SensorRepository {
    */
   async update(id, data) {
     return await Sensor.findByIdAndUpdate(id, data, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     })
       .populate("sensorNodeId", "name zone")
@@ -88,7 +88,7 @@ class SensorRepository {
     return await Sensor.findByIdAndUpdate(
       id,
       { calibrationDate, driftThreshold },
-      { new: true },
+      { returnDocument: "after" },
     ).populate("PolluantId", "name unit");
   }
 

@@ -5,7 +5,7 @@ export interface ThresholdEntry {
   warning: number
   critical: number
   unit: string
-  /** Derived from regulation (e.g. Décret 2010-2516) */
+  /** Derived from regulation (e.g. Décret 2018-928) */
   regulatory?: number
   min?: number
   max?: number
@@ -32,6 +32,18 @@ export interface KPIConfig {
   weights: Record<string, number>
   targets: { TD: number; IPE: number; RCO2: number; EMJ?: number }
   baseline?: { CO2?: number }
+  baselineCo2?: number
+  expectedSampleIntervalSeconds?: number
+  siteName?: string | null
+  isDefault?: boolean
+}
+
+export interface Rco2Detail {
+  reductionPct: number
+  goalAttainmentPct: number
+  goalTargetPct: number
+  currentAvg: number
+  previousAvg: number
 }
 
 export interface KPISummary {
@@ -39,8 +51,11 @@ export interface KPISummary {
   period: 'hour' | 'day' | 'week' | 'month' | 'year'
   td: number
   emj: Record<string, number>
+  /** TD (%) per pollutant code — for breakdown charts */
+  tdByPollutant?: Record<string, number>
   ipe: number
   rco2: number
+  rco2Detail?: Rco2Detail | null
   deltas?: { td?: number; ipe?: number; rco2?: number }
   timestamp: string
 }

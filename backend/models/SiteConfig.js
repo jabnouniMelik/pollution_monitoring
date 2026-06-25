@@ -21,15 +21,28 @@ const SiteConfigSchema = new mongoose.Schema(
       min: 0.1,
       max: 100,
     },
+    /** Référence CO₂ (ppm) pour affichage baseline et calcul RCO₂ côté UI */
+    baselineCo2: {
+      type: Number,
+      default: 650,
+      min: 0,
+    },
     thermalPower: {
       type: Number,
       default: null, // kW - Puissance thermique installation (optionnel)
+    },
+    expectedSampleIntervalSeconds: {
+      type: Number,
+      default: 30,
+      min: 1,
+      max: 3600,
     },
     // ── Poids réglementaires pour IPE ──────────────────────────
     polluantWeights: {
       NOx: { type: Number, default: 0.30 },
       SO2: { type: Number, default: 0.25 },
-      PM25: { type: Number, default: 0.25 }, // PM2.5 → PM25 (pas de "." dans les clés)
+      PM25: { type: Number, default: 0.15 },
+      PM10: { type: Number, default: 0.10 },
       COV: { type: Number, default: 0.15 },
       CO2: { type: Number, default: 0.05 },
     },
@@ -46,6 +59,10 @@ const SiteConfigSchema = new mongoose.Schema(
       reductionCO2: {
         type: Number,
         default: -5.0, // % - Objectif RCO2 ≤ -5% / trimestre
+      },
+      EMJ: {
+        type: Number,
+        default: null, // kg/j - objectif facultatif pour l'émission massique journalière
       },
     },
     // ── Métadonnées ────────────────────────────────────────────
@@ -90,6 +107,10 @@ SiteConfigSchema.methods.getPolluantWeight = function (polluantName) {
   // Normaliser le nom (PM2.5 → PM25)
   const normalizedName = polluantName.replace(".", "");
   return this.polluantWeights[normalizedName] || 0.1; // Défaut 10%
+};
+
+SiteConfigSchema.methods.getExpectedSampleIntervalSeconds = function () {
+  return this.expectedSampleIntervalSeconds || 30;
 };
 
 module.exports = mongoose.model("SiteConfig", SiteConfigSchema);

@@ -1,7 +1,7 @@
 /**
  * Default KPI targets.
  * Backend may override these per site via `/api/kpi/config`.
- * Keep defaults aligned with Tunisia Décret 2010-2516 guidelines.
+ * Keep defaults aligned with Tunisia Décret 2018-928 guidelines.
  */
 export const KPI_TARGETS = {
   /** TD — Taux de Dépassement. Lower is better. Unit: % */
@@ -17,9 +17,10 @@ export const KPI_TARGETS = {
 export type KPICode = keyof typeof KPI_TARGETS
 
 export const DEFAULT_POLLUTANT_WEIGHTS: Record<string, number> = {
-  CO2: 0.2,
-  NOX: 0.25,
+  CO2: 0.05,
+  NOX: 0.30,
   SO2: 0.25,
-  PM: 0.2,
-  COV: 0.1,
+  PM25: 0.15,
+  PM10: 0.10,
+  COV: 0.15,
 }

@@ -1,6 +1,6 @@
 # Guide de Test Complet — EmissionsIQ
 
-> Système de monitoring des émissions industrielles (Décret tunisien 2010-2516)
+> Système de monitoring des émissions industrielles (Décret tunisien Décret 2018-928)
 
 **Dernière mise à jour :** Mai 2026  
 **Durée estimée :** 30 min (flux rapide) · 2–4 h (test complet)
@@ -175,7 +175,7 @@ npm run init:simulator
 # 2. Crée les 5 utilisateurs de démo (idempotent — réinitialise les mots de passe)
 npm run init:users
 
-# 3. Charge les seuils légaux (Décret 2010-2516)
+# 3. Charge les seuils légaux (Décret Décret 2018-928)
 npm run init:thresholds
 
 # 4. Configure les paramètres KPI (débit d'air, poids des polluants, objectifs)
@@ -264,12 +264,12 @@ npm start
 │ Type         │ Model                │ Frequency │
 ├──────────────┼──────────────────────┼───────────┤
 │ CO2          │ MH-Z19B              │ 10s       │
-│ NOX          │ MQ-135               │ 30s       │
-│ SO2          │ Alphasense SO2-B4    │ 30s       │
-│ PM25         │ Plantower PMS5003    │ 15s       │
-│ COV          │ CCS811               │ 30s       │
-│ TEMPERATURE  │ SHT31                │ 10s       │
-│ HUMIDITY     │ SHT31                │ 10s       │
+│ NOX          │ ME4-NO2              │ 30s       │
+│ SO2          │ ME4-SO2              │ 30s       │
+│ PM25         │ SDS011               │ 15s       │
+│ COV          │ SGP30                │ 30s       │
+│ TEMPERATURE  │ DHT22                │ 10s       │
+│ HUMIDITY     │ DHT22                │ 10s       │
 └──────────────┴──────────────────────┴───────────┘
 ```
 
@@ -508,15 +508,15 @@ npm run test:e2e
 | `operator@example.com` | `operator123` | `OPERATOR` | Monitoring zone assignée, acquittement alertes |
 | `auditor@example.com` | `audit123` | `AUDITOR` | Lecture seule, rapports |
 
-**Seuils des polluants (Décret 2010-2516) :**
+**Seuils des polluants (Décret Décret 2018-928, Annexe 1 — valeurs générales) :**
 
-| Polluant | Unité | Seuil légal | Warning | Critical |
+| Polluant | Unité | VLE (seuil légal) | Warning (80%) | Critical (120%) |
 |----------|-------|-------------|---------|----------|
 | CO2 | ppm | 800 | 640 | 960 |
-| NOX | mg/Nm³ | 120 | 96 | 144 |
-| SO2 | mg/Nm³ | 120 | 96 | 144 |
-| COV | mg/Nm³ | 30 | 24 | 36 |
-| PM25 | µg/m³ | 12 | 9.6 | 14.4 |
+| NOX | mg/Nm³ | 500 | 400 | 600 |
+| SO2 | mg/Nm³ | 300 | 240 | 360 |
+| COV | mg/Nm³ | 110 | 88 | 132 |
+| PM25 | mg/m³ | 40 | 32 | 48 |
 | TEMPERATURE | °C | — | — | — |
 | HUMIDITY | % | — | — | — |
 

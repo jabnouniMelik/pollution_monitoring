@@ -64,7 +64,7 @@ async function runTests() {
       PolluantId: polluant._id,
       type: "NOX",
       unit: "mg/Nm3",
-      model: "MQ-135",
+      model: "ME4-NO2",
       calibrationDate: new Date(),
       driftThreshold: 5,
     });

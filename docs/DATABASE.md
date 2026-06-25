@@ -42,7 +42,7 @@ The system models the real-world structure of an industrial company:
 - **Site**: "Usine Principale" (the main factory)
 - **Zone**: "Zone-A — Fours de calcination" (the kiln area)
 - **SensorNode**: "Station-Sfax-01" (an ESP32 box with sensors attached)
-- **Sensor**: The NOx sensor on that box (model: MQ-135)
+- **Sensor**: The NOx sensor on that box (model: ME4-NO2)
 - **Reading**: "NOx = 135 mg/Nm³ at 14:30:00 on May 4, 2026"
 - **Alert**: "NOx exceeded limit of 120 mg/Nm³ — severity: High"
 
@@ -154,7 +154,7 @@ The catalog of all pollutants the system can monitor, with their regulatory limi
 | `code` | Text (unique) | Short code (auto-generated from name) |
 | `formula` | Text | Chemical formula (e.g., "NO₂") |
 | `unit` | Text | Measurement unit |
-| `regulatoryLimit` | Number | VLE — the legal maximum (from Décret 2010-2516) |
+| `regulatoryLimit` | Number | VLE — the legal maximum (from Décret 2018-928) |
 | `warningThreshold` | Number | Warning level (typically 80% of VLE) |
 | `description` | Text | Description of the pollutant |
 | `conversionFactor` | Number | Unit conversion factor (if sensor measures in different units) |
@@ -210,7 +210,7 @@ Every alert generated when a reading exceeded a threshold.
 ---
 
 ### 10. thresholdconfigs
-The regulatory threshold configuration. Based on Décret 2010-2516.
+The regulatory threshold configuration. Based on Décret 2018-928.
 
 This collection stores the legal limits for each pollutant, plus the warning and critical thresholds derived from them.
 

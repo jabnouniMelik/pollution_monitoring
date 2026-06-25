@@ -23,3 +23,12 @@ export function kpiComparator(type: KPIKind): string {
       return '≤'
   }
 }
+
+/** Format a KPI target for display (RCO₂ targets are negative reductions). */
+export function formatKpiTarget(value: number, type: KPIKind, decimals = 1): string {
+  if (!Number.isFinite(value)) return '—'
+  if (type === 'RCO2' && value > 0) {
+    return formatNumber(-value, decimals)
+  }
+  return formatNumber(value, decimals)
+}

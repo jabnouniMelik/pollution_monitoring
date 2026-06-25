@@ -32,14 +32,18 @@ class UserManagementService {
     if (requester.role === "HEAD_SUPERVISOR") {
       const allowedRoles = ["OPERATOR", "SITE_SUPERVISOR", "HEAD_SUPERVISOR"];
       if (data.role && !allowedRoles.includes(data.role)) {
-        throw new Error("Le responsable industrie ne peut créer que des opérateurs, superviseurs de site ou responsables industrie");
+        throw new Error(
+          "Le responsable industrie ne peut créer que des opérateurs, superviseurs de site ou responsables industrie",
+        );
       }
       if (!data.role) data.role = "OPERATOR";
       // Force same industry
       data.industryId = requester.industryId;
     } else if (requester.role === "SITE_SUPERVISOR") {
       if (data.role && data.role !== "OPERATOR") {
-        throw new Error("Le superviseur de site ne peut créer que des opérateurs");
+        throw new Error(
+          "Le superviseur de site ne peut créer que des opérateurs",
+        );
       }
       data.role = "OPERATOR";
       data.industryId = requester.industryId;
@@ -47,7 +51,15 @@ class UserManagementService {
       throw new Error("Autorisation insuffisante pour créer des utilisateurs");
     }
 
-    const { username, email, password, role, industryId, sitesManaging, zonesAssigned } = data;
+    const {
+      username,
+      email,
+      password,
+      role,
+      industryId,
+      sitesManaging,
+      zonesAssigned,
+    } = data;
 
     // Valider champs requis
     if (!username || !email || !password || !role) {
@@ -75,7 +87,7 @@ class UserManagementService {
     const user = await userRepository.create({
       username,
       email,
-      password,  // passé en clair — le model le hash via pre('save')
+      password, // passé en clair — le model le hash via pre('save')
       role,
       industryId: industryId || null,
       sitesManaging: sitesManaging || [],
@@ -93,13 +105,39 @@ class UserManagementService {
    * @returns {Promise<Array>} Utilisateurs
    */
   /**
+   * Helper: safely extract ID from an ObjectId or populated object
+   * @private
+   */
+  _extractId(value) {
+    if (!value) return null;
+    // If it's an object with _id property (populated document)
+    if (value._id) return value._id.toString();
+    // If it's already a string
+    if (typeof value === "string") return value;
+    // If it's an ObjectId
+    if (value.toString) return value.toString();
+    return null;
+  }
+
+  /**
+   * Helper: safely compare two IDs (handles populated objects and ObjectIds)
+   * @private
+   */
+  _idsMatch(id1, id2) {
+    const str1 = this._extractId(id1);
+    const str2 = this._extractId(id2);
+    if (!str1 || !str2) return false;
+    return str1 === str2;
+  }
+
+  /**
    * Helper: get zone IDs belonging to the supervisor's sites
    * @private
    */
   async _getSupervisorZoneIds(requester) {
     const Zone = require("../models/Zone");
     const siteIds = (requester.sitesManaging || []).map((s) =>
-      s._id ? s._id.toString() : s.toString()
+      s._id ? s._id.toString() : s.toString(),
     );
     if (siteIds.length === 0) return [];
     const zones = await Zone.find({ siteId: { $in: siteIds } })
@@ -118,7 +156,7 @@ class UserManagementService {
     const supervisorZoneIds = await this._getSupervisorZoneIds(requester);
     if (supervisorZoneIds.length === 0) return false;
     const operatorZoneIds = (operator.zonesAssigned || []).map((z) =>
-      z._id ? z._id.toString() : z.toString()
+      z._id ? z._id.toString() : z.toString(),
     );
     // Operator has at least one zone in the supervisor's site
     return operatorZoneIds.some((id) => supervisorZoneIds.includes(id));
@@ -150,7 +188,7 @@ class UserManagementService {
       // OR have no zones yet (just created by this supervisor)
       const filtered = allOperators.filter((op) => {
         const opZones = (op.zonesAssigned || []).map((z) =>
-          z._id ? z._id.toString() : z.toString()
+          z._id ? z._id.toString() : z.toString(),
         );
         // No zones assigned yet → show (supervisor just created them)
         if (opZones.length === 0) return true;
@@ -177,16 +215,18 @@ class UserManagementService {
     if (requester.role === "SUPER_ADMIN") {
       return this._sanitizeUser(user);
     } else if (requester.role === "HEAD_SUPERVISOR") {
-      if (user.industryId?.toString() !== requester.industryId?.toString())
+      if (!this._idsMatch(user.industryId, requester.industryId))
         throw new Error("Accès refusé");
       return this._sanitizeUser(user);
     } else if (requester.role === "SITE_SUPERVISOR") {
-      if (user.role !== "OPERATOR")
-        throw new Error("Accès refusé");
+      if (user.role !== "OPERATOR") throw new Error("Accès refusé");
       // Must be same industry AND belong to supervisor's site
-      if (user.industryId?.toString() !== requester.industryId?.toString())
+      if (!this._idsMatch(user.industryId, requester.industryId))
         throw new Error("Accès refusé");
-      const belongs = await this._operatorBelongsToSupervisorSite(user, requester);
+      const belongs = await this._operatorBelongsToSupervisorSite(
+        user,
+        requester,
+      );
       // Allow access if operator has no zones yet (just created)
       const hasNoZones = !user.zonesAssigned || user.zonesAssigned.length === 0;
       if (!belongs && !hasNoZones) throw new Error("Accès refusé");
@@ -214,7 +254,15 @@ class UserManagementService {
     }
 
     // Éviter de modifier certains champs sensibles via l'API
-    const allowedFields = ["username", "email", "role", "industryId", "sitesManaging", "zonesAssigned", "isActive"];
+    const allowedFields = [
+      "username",
+      "email",
+      "role",
+      "industryId",
+      "sitesManaging",
+      "zonesAssigned",
+      "isActive",
+    ];
     const filteredData = {};
 
     for (const field of allowedFields) {
@@ -239,8 +287,14 @@ class UserManagementService {
    * @returns {Promise<Object>} Utilisateur supprimé
    */
   async deleteUser(userId, requester) {
-    if (!["SUPER_ADMIN", "HEAD_SUPERVISOR", "SITE_SUPERVISOR"].includes(requester.role)) {
-      throw new Error("Autorisation insuffisante pour supprimer des utilisateurs");
+    if (
+      !["SUPER_ADMIN", "HEAD_SUPERVISOR", "SITE_SUPERVISOR"].includes(
+        requester.role,
+      )
+    ) {
+      throw new Error(
+        "Autorisation insuffisante pour supprimer des utilisateurs",
+      );
     }
 
     const user = await userRepository.findById(userId);
@@ -250,7 +304,7 @@ class UserManagementService {
     if (requester.role === "HEAD_SUPERVISOR") {
       if (user._id.toString() === requester.userId)
         throw new Error("Vous ne pouvez pas vous supprimer vous-même");
-      if (user.industryId?.toString() !== requester.industryId?.toString())
+      if (!this._idsMatch(user.industryId, requester.industryId))
         throw new Error("Cet utilisateur n'appartient pas à votre industrie");
       // Cannot delete SUPER_ADMIN
       if (user.role === "SUPER_ADMIN")
@@ -260,10 +314,15 @@ class UserManagementService {
     // SITE_SUPERVISOR: operators in their site only
     if (requester.role === "SITE_SUPERVISOR") {
       if (user.role !== "OPERATOR")
-        throw new Error("Le superviseur de site ne peut supprimer que des opérateurs");
-      if (user.industryId?.toString() !== requester.industryId?.toString())
+        throw new Error(
+          "Le superviseur de site ne peut supprimer que des opérateurs",
+        );
+      if (!this._idsMatch(user.industryId, requester.industryId))
         throw new Error("Cet opérateur n'appartient pas à votre industrie");
-      const belongs = await this._operatorBelongsToSupervisorSite(user, requester);
+      const belongs = await this._operatorBelongsToSupervisorSite(
+        user,
+        requester,
+      );
       const hasNoZones = !user.zonesAssigned || user.zonesAssigned.length === 0;
       if (!belongs && !hasNoZones)
         throw new Error("Cet opérateur n'est pas assigné à votre site");
@@ -271,12 +330,16 @@ class UserManagementService {
 
     if (user.role === "SUPER_ADMIN") {
       const adminCount = await userRepository.countByRole("SUPER_ADMIN");
-      if (adminCount <= 1) throw new Error("Impossible de supprimer le dernier SUPER_ADMIN");
+      if (adminCount <= 1)
+        throw new Error("Impossible de supprimer le dernier SUPER_ADMIN");
     }
 
     if (user.role === "OPERATOR") {
       const Zone = require("../models/Zone");
-      await Zone.updateMany({ operatorsAssigned: userId }, { $pull: { operatorsAssigned: userId } });
+      await Zone.updateMany(
+        { operatorsAssigned: userId },
+        { $pull: { operatorsAssigned: userId } },
+      );
     }
 
     return await userRepository.delete(userId);
@@ -301,19 +364,24 @@ class UserManagementService {
 
     // HEAD_SUPERVISOR can only assign sites from their own industry
     if (requester.role === "HEAD_SUPERVISOR") {
-      if (user.industryId?.toString() !== requester.industryId?.toString())
+      if (!this._idsMatch(user.industryId, requester.industryId))
         throw new Error("Cet utilisateur n'appartient pas à votre industrie");
       const Site = require("../models/Site");
-      const sites = await Site.find({ _id: { $in: siteIds } }).select("industrieId").lean();
-      const allInIndustry = sites.every(
-        s => s.industrieId?.toString() === requester.industryId?.toString()
+      const sites = await Site.find({ _id: { $in: siteIds } })
+        .select("industrieId")
+        .lean();
+      const allInIndustry = sites.every((s) =>
+        this._idsMatch(s.industrieId, requester.industryId),
       );
-      if (!allInIndustry) throw new Error("Certains sites n'appartiennent pas à votre industrie");
+      if (!allInIndustry)
+        throw new Error("Certains sites n'appartiennent pas à votre industrie");
     }
 
     // Derive industryId from the assigned sites and set it on the user
     const Site = require("../models/Site");
-    const firstSite = await Site.findById(siteIds[0]).select("industrieId").lean();
+    const firstSite = await Site.findById(siteIds[0])
+      .select("industrieId")
+      .lean();
     const industryId = firstSite?.industrieId ?? null;
 
     const updatedUser = await userRepository.update(userId, {
@@ -331,7 +399,11 @@ class UserManagementService {
    * @returns {Promise<Object>} Utilisateur mis à jour
    */
   async assignZones(userId, zoneIds, requester) {
-    if (!["SUPER_ADMIN", "HEAD_SUPERVISOR", "SITE_SUPERVISOR"].includes(requester.role)) {
+    if (
+      !["SUPER_ADMIN", "HEAD_SUPERVISOR", "SITE_SUPERVISOR"].includes(
+        requester.role,
+      )
+    ) {
       throw new Error("Autorisation insuffisante");
     }
 
@@ -342,26 +414,31 @@ class UserManagementService {
 
     // HEAD_SUPERVISOR: zones must be in their industry
     if (requester.role === "HEAD_SUPERVISOR") {
-      if (user.industryId?.toString() !== requester.industryId?.toString())
+      if (!this._idsMatch(user.industryId, requester.industryId))
         throw new Error("Cet opérateur n'appartient pas à votre industrie");
       const Zone = require("../models/Zone");
-      const zones = await Zone.find({ _id: { $in: zoneIds } }).select("industrieId").lean();
-      const allInIndustry = zones.every(
-        z => z.industrieId?.toString() === requester.industryId?.toString()
+      const zones = await Zone.find({ _id: { $in: zoneIds } })
+        .select("industrieId")
+        .lean();
+      const allInIndustry = zones.every((z) =>
+        this._idsMatch(z.industrieId, requester.industryId),
       );
-      if (!allInIndustry) throw new Error("Certaines zones n'appartiennent pas à votre industrie");
+      if (!allInIndustry)
+        throw new Error(
+          "Certaines zones n'appartiennent pas à votre industrie",
+        );
     }
 
     // SITE_SUPERVISOR: zones must be from their sites
     if (requester.role === "SITE_SUPERVISOR") {
-      if (user.industryId?.toString() !== requester.industryId?.toString())
+      if (!this._idsMatch(user.industryId, requester.industryId))
         throw new Error("Cet opérateur n'appartient pas à votre industrie");
 
       const supervisorZoneIds = await this._getSupervisorZoneIds(requester);
 
       // All requested zones must belong to supervisor's sites
       const invalidZones = zoneIds.filter(
-        (id) => !supervisorZoneIds.includes(id.toString())
+        (id) => !supervisorZoneIds.includes(id.toString()),
       );
       if (invalidZones.length > 0)
         throw new Error("Certaines zones n'appartiennent pas à vos sites");
@@ -371,14 +448,14 @@ class UserManagementService {
     const Zone = require("../models/Zone");
     await Zone.updateMany(
       { operatorsAssigned: userId },
-      { $pull: { operatorsAssigned: userId } }
+      { $pull: { operatorsAssigned: userId } },
     );
 
     // Add operator to new zones
     if (zoneIds.length > 0) {
       await Zone.updateMany(
         { _id: { $in: zoneIds } },
-        { $addToSet: { operatorsAssigned: userId } }
+        { $addToSet: { operatorsAssigned: userId } },
       );
     }
 
@@ -425,7 +502,7 @@ class UserManagementService {
     }
 
     const users = await userRepository.findAll({ role });
-    return users.map(u => this._sanitizeUser(u));
+    return users.map((u) => this._sanitizeUser(u));
   }
 
   /**

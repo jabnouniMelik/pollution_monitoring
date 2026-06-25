@@ -1,14 +1,26 @@
 import { api, unwrap } from '@/lib/api/axios'
 import { endpoints } from '@/lib/api/endpoints'
 import type { KPIConfig, KPIHistory, KPIHistoryPoint, KPISummary } from '../types/kpi.types'
+import { normalizePollutantCode } from '../utils/mtdSeries'
 
 export interface SummaryParams {
   siteId?: string
   zoneId?: string
+  sensorNodeId?: string
+  sensorNodeIds?: string[]
   period?: 'hour' | 'day' | 'week' | 'month' | 'year'
   from?: string
   to?: string
+  /** Which aggregate field to read from history rows */
+  metric?: KpiHistoryMetric
 }
+
+export type KpiHistoryMetric =
+  | 'avgValue'
+  | 'emissionKgDay'
+  | 'tauxDepassement'
+  | 'reductionPct'
+  | 'overallScore'
 
 type PeriodBucket = 'HOURLY' | 'DAILY' | 'WEEKLY' | 'MONTHLY'
 
@@ -59,6 +71,9 @@ function isMongoObjectId(value: string): boolean {
 }
 
 async function resolvePolluantId(pollutantOrId: string): Promise<string> {
+  const lower = pollutantOrId.toLowerCase()
+  if (lower === 'global' || lower === 'ipe') return pollutantOrId
+
   if (isMongoObjectId(pollutantOrId)) return pollutantOrId
 
   const wantedKey = normalizePolluantKey(pollutantOrId)
@@ -123,6 +138,8 @@ function toBackendSummaryParams(params: SummaryParams): Record<string, string> {
   }
   if (params.siteId) out.siteId = params.siteId
   if (params.zoneId) out.zoneId = params.zoneId
+  if (params.sensorNodeId) out.sensorNodeId = params.sensorNodeId
+  if (params.sensorNodeIds?.length) out.sensorNodeIds = params.sensorNodeIds.join(',')
   return out
 }
 
@@ -139,6 +156,7 @@ function normalizeSummary(raw: unknown): KPISummary {
     period: 'day',
     td: 0,
     emj: {},
+    tdByPollutant: {},
     ipe: 0,
     rco2: 0,
     timestamp: new Date().toISOString(),
@@ -146,19 +164,39 @@ function normalizeSummary(raw: unknown): KPISummary {
 
   if (!raw || typeof raw !== 'object') return fallback
 
-  const maybeKpi = raw as Partial<KPISummary>
+  const maybeKpi = raw as Partial<KPISummary> & { polluants?: RawSummaryPolluant[] }
   if (
     typeof maybeKpi.td === 'number' ||
     typeof maybeKpi.ipe === 'number' ||
     typeof maybeKpi.rco2 === 'number' ||
     typeof maybeKpi.emj === 'object'
   ) {
+    const emj: Record<string, number> = {}
+    const tdByPollutant: Record<string, number> = {}
+    for (const [key, val] of Object.entries(maybeKpi.emj ?? {})) {
+      const code = normalizePollutantCode(key)
+      if (code) emj[code] = Number(val ?? 0)
+    }
+    for (const p of maybeKpi.polluants ?? []) {
+      const code = normalizePollutantCode(p?.name ?? '')
+      if (!code) continue
+      if (Number.isFinite(p?.tauxDepassement)) {
+        tdByPollutant[code] = Number(p.tauxDepassement)
+      }
+      if (Number.isFinite(p?.emissionKgDay)) {
+        emj[code] = Number(p.emissionKgDay)
+      }
+    }
     return {
       period: maybeKpi.period ?? 'day',
       td: Number(maybeKpi.td ?? 0),
-      emj: (maybeKpi.emj as Record<string, number>) ?? {},
+      emj,
+      tdByPollutant: Object.keys(tdByPollutant).length
+        ? tdByPollutant
+        : (maybeKpi.tdByPollutant ?? {}),
       ipe: Number(maybeKpi.ipe ?? 0),
       rco2: Number(maybeKpi.rco2 ?? 0),
+      rco2Detail: maybeKpi.rco2Detail ?? null,
       deltas: maybeKpi.deltas,
       timestamp: maybeKpi.timestamp ?? new Date().toISOString(),
       siteId: maybeKpi.siteId,
@@ -167,13 +205,19 @@ function normalizeSummary(raw: unknown): KPISummary {
 
   const summary = raw as RawSummaryPayload
   const emj: Record<string, number> = {}
+  const tdByPollutant: Record<string, number> = {}
   let tdAccumulator = 0
   let tdCount = 0
   let rco2 = 0
 
   for (const p of summary.polluants ?? []) {
-    const code = normalizePolluantKey(p?.name ?? '')
-    if (code) emj[code === 'PM25' ? 'PM' : code] = Number(p?.emissionKgDay ?? 0)
+    const code = normalizePollutantCode(p?.name ?? '')
+    if (code) {
+      emj[code] = Number(p?.emissionKgDay ?? 0)
+      if (Number.isFinite(p?.tauxDepassement)) {
+        tdByPollutant[code] = Number(p.tauxDepassement)
+      }
+    }
     if (Number.isFinite(p?.tauxDepassement)) {
       tdAccumulator += Number(p?.tauxDepassement)
       tdCount += 1
@@ -187,8 +231,11 @@ function normalizeSummary(raw: unknown): KPISummary {
     period: normalizeSummaryPeriod(summary.period),
     td: tdCount > 0 ? Number((tdAccumulator / tdCount).toFixed(2)) : 0,
     emj,
+    tdByPollutant,
     ipe: Number(summary.globalIPE ?? 0),
     rco2,
+    rco2Detail:
+      (raw as { rco2Detail?: KPISummary['rco2Detail'] }).rco2Detail ?? null,
     timestamp: summary.periodEnd ?? summary.periodStart ?? new Date().toISOString(),
   }
 }
@@ -233,34 +280,41 @@ export const kpiApi = {
   },
 
   /**
-   * Backend returns `{ success, polluantId, period, count, data: AggregateData[] }`
-   * (not `{ data: KPIHistory }`). Map `avgValue` + `periodStart` → points.
+   * Backend returns aggregate rows; map the requested KPI field to points.
    */
   async history(pollutantId: string, params: SummaryParams = {}): Promise<KPIHistory> {
     const periodKey = params.period ?? 'month'
-    const resolvedPolluantId = await resolvePolluantId(pollutantId)
+    const metric: KpiHistoryMetric = params.metric ?? 'avgValue'
+    const lower = pollutantId.toLowerCase()
+    const resolvedPolluantId =
+      lower === 'global' || lower === 'ipe'
+        ? pollutantId
+        : await resolvePolluantId(pollutantId)
     const historyLimit = periodKey === 'day' ? 45 : 30
     const resp = await api.get<{
       success: boolean
       polluantId?: string
       period?: string
-      data?: Array<{
-        periodStart?: string
-        timestamp?: string
-        avgValue?: number
-        value?: number
-      }>
+      data?: Array<Record<string, unknown>>
     }>(endpoints.kpi.history(resolvedPolluantId), {
-      params: { period: PERIOD_MAP[periodKey], limit: historyLimit },
+      params: { ...toBackendSummaryParams({ ...params, period: periodKey }), limit: String(historyLimit) },
     })
     const body = resp.data
     if (!body?.success || !Array.isArray(body.data)) {
       return { pollutantId: resolvedPolluantId, period: PERIOD_MAP[periodKey], points: [] }
     }
-    const points: KPIHistoryPoint[] = body.data.map((row) => ({
-      timestamp: new Date(row.periodStart ?? row.timestamp ?? 0).toISOString(),
-      value: Number(row.avgValue ?? row.value ?? 0),
-    }))
+    const points: KPIHistoryPoint[] = body.data
+      .map((row) => {
+        const raw = extractHistoryMetric(row, metric)
+        if (raw === null) return null
+        const ts = row.periodStart ?? row.timestamp ?? 0
+        return {
+          timestamp: new Date(ts as string | number).toISOString(),
+          value: Number(raw),
+        }
+      })
+      .filter((p): p is KPIHistoryPoint => p !== null && Number.isFinite(p.value))
+      .reverse()
     return {
       pollutantId: String(body.polluantId ?? resolvedPolluantId),
       period: String(body.period ?? PERIOD_MAP[periodKey]),
@@ -287,6 +341,21 @@ export const kpiApi = {
     const resp = await api.put<ApiSuccess<RawKPIConfig>>(endpoints.kpi.configTargets, { targets })
     return normalizeKPIConfig(unwrap(resp.data))
   },
+
+  async updateBaseline(baselineCo2: number) {
+    const resp = await api.put<ApiSuccess<RawKPIConfig>>(endpoints.kpi.configBaseline, {
+      baselineCo2,
+    })
+    return normalizeKPIConfig(unwrap(resp.data))
+  },
+
+  async updateSampleInterval(expectedSampleIntervalSeconds: number) {
+    const resp = await api.put<ApiSuccess<RawKPIConfig>>(
+      endpoints.kpi.configSampleInterval,
+      { expectedSampleIntervalSeconds },
+    )
+    return normalizeKPIConfig(unwrap(resp.data))
+  },
 }
 
 // Backend returns the config with French-flavoured field names
@@ -301,18 +370,75 @@ type RawKPIConfig = Partial<KPIConfig> & {
   airflow?: number | null
 }
 
-function normalizeKPIConfig(raw: RawKPIConfig | null | undefined): KPIConfig {
-  const weights = raw?.weights ?? raw?.polluantWeights ?? {}
-  const targets = {
-    TD: raw?.targets?.TD ?? 2,
-    IPE: raw?.targets?.IPE ?? 95,
-    RCO2: raw?.targets?.RCO2 ?? -5,
-    EMJ: raw?.targets?.EMJ ?? 0,
+function normalizeRco2Target(value: number | undefined, fallback = -5): number {
+  const n = Number(value ?? fallback)
+  if (!Number.isFinite(n)) return fallback
+  return n > 0 ? -n : n
+}
+
+function extractHistoryMetric(
+  row: Record<string, unknown>,
+  metric: KpiHistoryMetric,
+): number | null {
+  const direct = row[metric]
+  if (direct !== undefined && direct !== null && Number.isFinite(Number(direct))) {
+    return Number(direct)
   }
+  if (metric === 'overallScore') {
+    const score = row.overallScore
+    if (score !== undefined && score !== null && Number.isFinite(Number(score))) {
+      return Number(score)
+    }
+  }
+  if (metric === 'avgValue') {
+    const avg = row.avgValue ?? row.value
+    if (avg !== undefined && avg !== null && Number.isFinite(Number(avg))) {
+      return Number(avg)
+    }
+  }
+  return null
+}
+
+function normalizeWeightsForUI(
+  raw: Record<string, number> | undefined,
+): Record<string, number> {
+  const out: Record<string, number> = {}
+  for (const [key, value] of Object.entries(raw ?? {})) {
+    const frontKey = key === 'NOx' ? 'NOX' : key.replace('PM2.5', 'PM25')
+    out[frontKey] = value
+  }
+  return out
+}
+
+function normalizeKPIConfig(raw: RawKPIConfig | null | undefined): KPIConfig {
+  const weights = normalizeWeightsForUI(raw?.weights ?? raw?.polluantWeights ?? {})
+  const rawTargets = raw?.targets ?? {}
+  const targets = {
+    TD:
+      rawTargets.TD ??
+      (rawTargets as { tauxDepassement?: number }).tauxDepassement ??
+      2,
+    IPE:
+      rawTargets.IPE ?? (rawTargets as { ipe?: number }).ipe ?? 95,
+    RCO2: normalizeRco2Target(
+      rawTargets.RCO2 ??
+        (rawTargets as { reductionCO2?: number }).reductionCO2,
+    ),
+    EMJ: rawTargets.EMJ ?? undefined,
+  }
+  const baselineCo2 =
+    raw?.baseline?.CO2 ??
+    (raw as { baselineCo2?: number })?.baselineCo2 ??
+    650
   return {
     airflow: typeof raw?.airflow === 'number' ? raw.airflow : 0,
     weights,
     targets,
-    baseline: raw?.baseline,
+    baseline: { CO2: baselineCo2 },
+    baselineCo2,
+    expectedSampleIntervalSeconds:
+      (raw as { expectedSampleIntervalSeconds?: number })?.expectedSampleIntervalSeconds ?? 30,
+    siteName: (raw as { siteName?: string | null })?.siteName ?? null,
+    isDefault: Boolean((raw as { isDefault?: boolean })?.isDefault),
   }
 }

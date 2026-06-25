@@ -1,0 +1,2160 @@
+<html lang="en" style="--vscode-font-family: &quot;Segoe WPC&quot;, &quot;Segoe UI&quot;, sans-serif; --vscode-font-weight: normal; --vscode-font-size: 13px; --vscode-editor-font-family: Consolas, 'Courier New', monospace; --vscode-editor-font-weight: normal; --vscode-editor-font-size: 14px; --text-link-decoration: none; --vscode-foreground: #ffffff; --vscode-accent: #b080ff; --vscode-disabledForeground: #938f9b; --vscode-errorForeground: #ff8080; --vscode-descriptionForeground: rgba(255, 255, 255, 0.7); --vscode-icon-foreground: #c1bec6; --vscode-focusBorder: #9e61ff; --vscode-textLink-foreground: #b080ff; --vscode-textLink-activeForeground: #8dc8fb; --vscode-textSeparator-foreground: rgba(255, 255, 255, 0.18); --vscode-textPreformat-foreground: #938f9b; --vscode-textPreformat-background: rgba(255, 255, 255, 0.1); --vscode-textBlockQuote-background: #222222; --vscode-textBlockQuote-border: rgba(0, 122, 204, 0.5); --vscode-textCodeBlock-background: rgba(10, 10, 10, 0.4); --vscode-sash-hoverBorder: #9e61ff; --vscode-badge-background: rgba(141, 200, 251, 0.25); --vscode-badge-foreground: #8dc8fb; --vscode-activityWarningBadge-foreground: #ffffff; --vscode-activityWarningBadge-background: #b27c00; --vscode-activityErrorBadge-foreground: #000000; --vscode-activityErrorBadge-background: #f14c4c; --vscode-scrollbar-shadow: #19161d; --vscode-scrollbarSlider-background: rgba(121, 121, 121, 0.4); --vscode-scrollbarSlider-hoverBackground: rgba(100, 100, 100, 0.7); --vscode-scrollbarSlider-activeBackground: rgba(191, 191, 191, 0.4); --vscode-progressBar-background: #7138cc; --vscode-chart-line: #236b8e; --vscode-chart-axis: rgba(191, 191, 191, 0.4); --vscode-chart-guide: rgba(191, 191, 191, 0.2); --vscode-editor-background: #211d25; --vscode-editor-foreground: #ffffff; --vscode-editorStickyScroll-background: #211d25; --vscode-editorStickyScrollGutter-background: #211d25; --vscode-editorStickyScrollHover-background: #2a2d2e; --vscode-editorStickyScroll-shadow: #19161d; --vscode-editorWidget-background: #28242e; --vscode-editorWidget-foreground: #ffffff; --vscode-editorWidget-border: rgba(0, 0, 0, 0); --vscode-inlineDiffToolbar-hotkeyForeground: #000000; --vscode-inlineDiffToolbar-hotkeyBackground: #cc6633; --vscode-editorError-foreground: rgba(255, 128, 128, 0.75); --vscode-editorWarning-foreground: #ffcf99; --vscode-editorInfo-foreground: #8dc8fb; --vscode-editorHint-foreground: rgba(238, 238, 238, 0.7); --vscode-editorLink-activeForeground: #4e94ce; --vscode-editor-selectionBackground: rgba(192, 153, 255, 0.25); --vscode-editor-inactiveSelectionBackground: rgba(192, 153, 255, 0.13); --vscode-editor-selectionHighlightBackground: rgba(0, 0, 0, 0); --vscode-editor-compositionBorder: #ffffff; --vscode-editor-findMatchBackground: #515c6a; --vscode-editor-findMatchHighlightBackground: rgba(176, 128, 255, 0.25); --vscode-editor-findRangeHighlightBackground: rgba(58, 61, 65, 0.4); --vscode-editor-hoverHighlightBackground: rgba(38, 79, 120, 0.25); --vscode-editorHoverWidget-background: #352f3d; --vscode-editorHoverWidget-foreground: #ffffff; --vscode-editorHoverWidget-border: rgba(0, 0, 0, 0); --vscode-editorHoverWidget-statusBarBackground: #403849; --vscode-editorInlayHint-foreground: #969696; --vscode-editorInlayHint-background: rgba(141, 200, 251, 0.03); --vscode-editorInlayHint-typeForeground: #969696; --vscode-editorInlayHint-typeBackground: rgba(141, 200, 251, 0.03); --vscode-editorInlayHint-parameterForeground: #969696; --vscode-editorInlayHint-parameterBackground: rgba(141, 200, 251, 0.03); --vscode-editorLightBulb-foreground: #fff2b3; --vscode-editorLightBulbAutoFix-foreground: #dfffb3; --vscode-editorLightBulbAi-foreground: #fff2b3; --vscode-editor-snippetTabstopHighlightBackground: rgba(124, 124, 124, 0.3); --vscode-editor-snippetFinalTabstopHighlightBorder: #525252; --vscode-diffEditor-insertedTextBackground: rgba(128, 255, 181, 0.13); --vscode-diffEditor-removedTextBackground: rgba(255, 128, 128, 0.13); --vscode-diffEditor-insertedLineBackground: rgba(128, 255, 181, 0.13); --vscode-diffEditor-removedLineBackground: rgba(255, 128, 128, 0.13); --vscode-diffEditor-diagonalFill: rgba(204, 204, 204, 0.2); --vscode-diffEditor-unchangedRegionBackground: #211d25; --vscode-diffEditor-unchangedRegionForeground: #ffffff; --vscode-diffEditor-unchangedCodeBackground: rgba(116, 116, 116, 0.16); --vscode-widget-shadow: #19161d; --vscode-widget-border: rgba(255, 255, 255, 0.2); --vscode-toolbar-hoverBackground: #352f3d; --vscode-toolbar-activeBackground: #3a3443; --vscode-breadcrumb-foreground: rgba(255, 255, 255, 0.8); --vscode-breadcrumb-background: #211d25; --vscode-breadcrumb-focusForeground: #ffffff; --vscode-breadcrumb-activeSelectionForeground: #ffffff; --vscode-breadcrumbPicker-background: #28242e; --vscode-merge-currentHeaderBackground: rgba(64, 200, 174, 0.5); --vscode-merge-currentContentBackground: rgba(64, 200, 174, 0.2); --vscode-merge-incomingHeaderBackground: rgba(64, 166, 255, 0.5); --vscode-merge-incomingContentBackground: rgba(64, 166, 255, 0.2); --vscode-merge-commonHeaderBackground: rgba(96, 96, 96, 0.4); --vscode-merge-commonContentBackground: rgba(96, 96, 96, 0.16); --vscode-editorOverviewRuler-currentContentForeground: rgba(64, 200, 174, 0.5); --vscode-editorOverviewRuler-incomingContentForeground: rgba(64, 166, 255, 0.5); --vscode-editorOverviewRuler-commonContentForeground: rgba(96, 96, 96, 0.4); --vscode-editorOverviewRuler-findMatchForeground: rgba(209, 134, 22, 0.49); --vscode-editorOverviewRuler-selectionHighlightForeground: rgba(160, 160, 160, 0.8); --vscode-problemsErrorIcon-foreground: #ff8080; --vscode-problemsWarningIcon-foreground: #ffcf99; --vscode-problemsInfoIcon-foreground: #8dc8fb; --vscode-minimap-findMatchHighlight: rgba(176, 128, 255, 0.5); --vscode-minimap-selectionOccurrenceHighlight: #b080ff; --vscode-minimap-selectionHighlight: rgba(176, 128, 255, 0.25); --vscode-minimap-infoHighlight: rgba(141, 200, 251, 0.5); --vscode-minimap-warningHighlight: #ffcf99; --vscode-minimap-errorHighlight: rgba(255, 128, 128, 0.5); --vscode-minimap-foregroundOpacity: rgba(255, 255, 255, 0.25); --vscode-minimapSlider-background: rgba(121, 121, 121, 0.2); --vscode-minimapSlider-hoverBackground: rgba(100, 100, 100, 0.35); --vscode-minimapSlider-activeBackground: rgba(191, 191, 191, 0.2); --vscode-charts-foreground: #ffffff; --vscode-charts-lines: rgba(255, 255, 255, 0.5); --vscode-charts-red: rgba(255, 128, 128, 0.75); --vscode-charts-blue: #8dc8fb; --vscode-charts-yellow: #ffcf99; --vscode-charts-orange: rgba(176, 128, 255, 0.5); --vscode-charts-green: #89d185; --vscode-charts-purple: #b180d7; --vscode-input-background: #28242e; --vscode-input-foreground: #ffffff; --vscode-input-border: #4a464f; --vscode-inputOption-activeBorder: rgba(0, 0, 0, 0); --vscode-inputOption-hoverBackground: #28242e; --vscode-inputOption-activeBackground: #8141e6; --vscode-inputOption-activeForeground: #ffffff; --vscode-input-placeholderForeground: rgba(255, 255, 255, 0.5); --vscode-inputValidation-infoBackground: #063b49; --vscode-inputValidation-infoBorder: #007acc; --vscode-inputValidation-warningBackground: #352a05; --vscode-inputValidation-warningBorder: #b89500; --vscode-inputValidation-errorBackground: #ff8080; --vscode-inputValidation-errorForeground: #19161d; --vscode-inputValidation-errorBorder: #ff8080; --vscode-dropdown-background: #28242e; --vscode-dropdown-foreground: #f0f0f0; --vscode-dropdown-border: #4a464f; --vscode-button-foreground: #f2f1f4; --vscode-button-separator: rgba(25, 22, 29, 0.25); --vscode-button-background: #7138cc; --vscode-button-hoverBackground: #8e47ff; --vscode-button-secondaryForeground: #ffffff; --vscode-button-secondaryBackground: rgba(255, 255, 255, 0.07); --vscode-button-secondaryHoverBackground: rgba(142, 71, 255, 0.25); --vscode-button-gradient: rgba(0, 0, 0, 0); --vscode-radio-activeForeground: #ffffff; --vscode-radio-activeBackground: #8141e6; --vscode-radio-activeBorder: rgba(0, 0, 0, 0); --vscode-radio-inactiveBorder: rgba(255, 255, 255, 0.2); --vscode-radio-inactiveHoverBackground: #28242e; --vscode-checkbox-background: #28242e; --vscode-checkbox-selectBackground: #28242e; --vscode-checkbox-foreground: #8e47ff; --vscode-checkbox-border: #4a464f; --vscode-checkbox-selectBorder: #c1bec6; --vscode-checkbox-disabled\.background: #492f72; --vscode-checkbox-disabled\.foreground: #6c3bba; --vscode-keybindingLabel-background: rgba(255, 255, 255, 0.1); --vscode-keybindingLabel-foreground: #938f9b; --vscode-keybindingLabel-border: rgba(0, 0, 0, 0); --vscode-keybindingLabel-bottomBorder: rgba(255, 255, 255, 0.1); --vscode-keybindingLabel-shadow: rgba(0, 0, 0, 0); --vscode-list-focusBackground: rgba(141, 200, 251, 0.25); --vscode-list-focusOutline: rgba(0, 0, 0, 0); --vscode-list-activeSelectionBackground: #352f3d; --vscode-list-activeSelectionForeground: #ffffff; --vscode-list-inactiveSelectionBackground: #352f3d; --vscode-list-hoverBackground: rgba(255, 255, 255, 0.05); --vscode-list-hoverForeground: #ffffff; --vscode-list-dropBackground: #062f4a; --vscode-list-dropBetweenBackground: #c1bec6; --vscode-list-highlightForeground: #2aaaff; --vscode-list-focusHighlightForeground: #2aaaff; --vscode-list-invalidItemForeground: #b89500; --vscode-list-errorForeground: #ff8080; --vscode-list-warningForeground: #ffcf99; --vscode-listFilterWidget-background: #28242e; --vscode-listFilterWidget-outline: rgba(0, 0, 0, 0); --vscode-listFilterWidget-noMatchesOutline: #be1100; --vscode-listFilterWidget-shadow: #19161d; --vscode-list-filterMatchBackground: rgba(176, 128, 255, 0.25); --vscode-list-deemphasizedForeground: #8c8c8c; --vscode-tree-indentGuidesStroke: rgba(147, 143, 155, 0.5); --vscode-tree-inactiveIndentGuidesStroke: rgba(147, 143, 155, 0.25); --vscode-tree-tableColumnsBorder: rgba(204, 204, 204, 0.13); --vscode-tree-tableOddRowsBackground: rgba(255, 255, 255, 0.04); --vscode-editorActionList-background: #28242e; --vscode-editorActionList-foreground: #ffffff; --vscode-editorActionList-focusForeground: #ffffff; --vscode-editorActionList-focusBackground: #352f3d; --vscode-menu-foreground: #f0f0f0; --vscode-menu-background: #28242e; --vscode-menu-selectionForeground: #ffffff; --vscode-menu-selectionBackground: #352f3d; --vscode-menu-separatorBackground: #606060; --vscode-quickInput-background: #211d25; --vscode-quickInput-foreground: #ffffff; --vscode-quickInputTitle-background: rgba(255, 255, 255, 0.1); --vscode-pickerGroup-foreground: #8e47ff; --vscode-pickerGroup-border: #3f3f46; --vscode-quickInputList-focusForeground: #ffffff; --vscode-quickInputList-focusBackground: #352f3d; --vscode-quickInput-overlayBackground: rgba(25, 22, 29, 0.5); --vscode-search-resultsInfoForeground: rgba(255, 255, 255, 0.65); --vscode-searchEditor-findMatchBackground: rgba(176, 128, 255, 0.17); --vscode-background-gradientStart: rgba(0, 0, 0, 0); --vscode-background-gradientEnd: rgba(0, 0, 0, 0); --vscode-activityBar-activeGradientStart: rgba(0, 0, 0, 0); --vscode-activityBar-activeGradientEnd: rgba(0, 0, 0, 0); --vscode-autonomyToggle-background: #352f3d; --vscode-autonomyToggle-foreground: #ffffff; --vscode-autonomyToggle-selectedBackground: #211d25; --vscode-autonomyToggle-selectedIconForeground: #8dc8fb; --vscode-autonomyToggle-selectedGradientStart: rgba(0, 0, 0, 0); --vscode-autonomyToggle-selectedGradientEnd: rgba(0, 0, 0, 0); --vscode-background: #19161d; --vscode-alertButton-foreground: #19161d; --vscode-alertButton-background: #c1bec6; --vscode-alertButton-hoverForeground: #211d25; --vscode-alertButton-hoverBackground: #dcdadf; --vscode-alertButton-secondaryForeground: rgba(255, 255, 255, 0.75); --vscode-alertButton-secondaryBackground: rgba(255, 255, 255, 0.2); --vscode-alertButton-secondaryHoverForeground: rgba(255, 255, 255, 0.85); --vscode-alertButton-secondaryHoverBackground: rgba(255, 255, 255, 0.3); --vscode-editor-lineHighlightBackground: rgba(255, 255, 255, 0.05); --vscode-editor-inactiveLineHighlightBackground: rgba(255, 255, 255, 0.05); --vscode-editor-lineHighlightBorder: rgba(0, 0, 0, 0); --vscode-editor-rangeHighlightBackground: rgba(141, 200, 251, 0.13); --vscode-editor-symbolHighlightBackground: rgba(176, 128, 255, 0.25); --vscode-editorCursor-foreground: #aeafad; --vscode-editorMultiCursor-primary\.foreground: #aeafad; --vscode-editorMultiCursor-secondary\.foreground: #aeafad; --vscode-editorWhitespace-foreground: rgba(227, 228, 226, 0.16); --vscode-editorLineNumber-foreground: rgba(255, 255, 255, 0.4); --vscode-editorIndentGuide-background: rgba(255, 255, 255, 0.05); --vscode-editorIndentGuide-activeBackground: rgba(227, 228, 226, 0.16); --vscode-editorIndentGuide-background1: rgba(255, 255, 255, 0.05); --vscode-editorIndentGuide-background2: rgba(0, 0, 0, 0); --vscode-editorIndentGuide-background3: rgba(0, 0, 0, 0); --vscode-editorIndentGuide-background4: rgba(0, 0, 0, 0); --vscode-editorIndentGuide-background5: rgba(0, 0, 0, 0); --vscode-editorIndentGuide-background6: rgba(0, 0, 0, 0); --vscode-editorIndentGuide-activeBackground1: rgba(255, 255, 255, 0.15); --vscode-editorIndentGuide-activeBackground2: rgba(0, 0, 0, 0); --vscode-editorIndentGuide-activeBackground3: rgba(0, 0, 0, 0); --vscode-editorIndentGuide-activeBackground4: rgba(0, 0, 0, 0); --vscode-editorIndentGuide-activeBackground5: rgba(0, 0, 0, 0); --vscode-editorIndentGuide-activeBackground6: rgba(0, 0, 0, 0); --vscode-editorActiveLineNumber-foreground: #c6c6c6; --vscode-editorLineNumber-activeForeground: rgba(255, 255, 255, 0.6); --vscode-editorLineNumber-dimmedForeground: rgba(255, 255, 255, 0.3); --vscode-editorRuler-foreground: #5a5a5a; --vscode-editorCodeLens-foreground: #999999; --vscode-editorBracketMatch-background: rgba(0, 100, 0, 0.1); --vscode-editorBracketMatch-border: #888888; --vscode-editorOverviewRuler-border: rgba(127, 127, 127, 0.3); --vscode-editorGutter-background: rgba(0, 0, 0, 0); --vscode-editorUnnecessaryCode-opacity: rgba(0, 0, 0, 0.67); --vscode-editorGhostText-foreground: rgba(255, 255, 255, 0.34); --vscode-editorOverviewRuler-rangeHighlightForeground: rgba(0, 122, 204, 0.6); --vscode-editorOverviewRuler-errorForeground: rgba(255, 18, 18, 0.7); --vscode-editorOverviewRuler-warningForeground: #ffcf99; --vscode-editorOverviewRuler-infoForeground: #8dc8fb; --vscode-editorBracketHighlight-foreground1: #ffcf99; --vscode-editorBracketHighlight-foreground2: #fff2b3; --vscode-editorBracketHighlight-foreground3: #dfffb3; --vscode-editorBracketHighlight-foreground4: rgba(0, 0, 0, 0); --vscode-editorBracketHighlight-foreground5: rgba(0, 0, 0, 0); --vscode-editorBracketHighlight-foreground6: rgba(0, 0, 0, 0); --vscode-editorBracketHighlight-unexpectedBracket\.foreground: rgba(255, 18, 18, 0.8); --vscode-editorBracketPairGuide-background1: rgba(0, 0, 0, 0); --vscode-editorBracketPairGuide-background2: rgba(0, 0, 0, 0); --vscode-editorBracketPairGuide-background3: rgba(0, 0, 0, 0); --vscode-editorBracketPairGuide-background4: rgba(0, 0, 0, 0); --vscode-editorBracketPairGuide-background5: rgba(0, 0, 0, 0); --vscode-editorBracketPairGuide-background6: rgba(0, 0, 0, 0); --vscode-editorBracketPairGuide-activeBackground1: rgba(0, 0, 0, 0); --vscode-editorBracketPairGuide-activeBackground2: rgba(0, 0, 0, 0); --vscode-editorBracketPairGuide-activeBackground3: rgba(0, 0, 0, 0); --vscode-editorBracketPairGuide-activeBackground4: rgba(0, 0, 0, 0); --vscode-editorBracketPairGuide-activeBackground5: rgba(0, 0, 0, 0); --vscode-editorBracketPairGuide-activeBackground6: rgba(0, 0, 0, 0); --vscode-editorUnicodeHighlight-border: #ffcf99; --vscode-diffEditor-move\.border: rgba(139, 139, 139, 0.61); --vscode-diffEditor-moveActive\.border: #ffa500; --vscode-diffEditor-unchangedRegionShadow: #000000; --vscode-editorOverviewRuler-bracketMatchForeground: #a0a0a0; --vscode-actionBar-toggledBackground: #8141e6; --vscode-symbolIcon-arrayForeground: #808aff; --vscode-symbolIcon-booleanForeground: #ffffff; --vscode-symbolIcon-classForeground: #ffcf99; --vscode-symbolIcon-colorForeground: #ffffff; --vscode-symbolIcon-constantForeground: #ffffff; --vscode-symbolIcon-constructorForeground: #b180d7; --vscode-symbolIcon-enumeratorForeground: #ee9d28; --vscode-symbolIcon-enumeratorMemberForeground: #75beff; --vscode-symbolIcon-eventForeground: #ee9d28; --vscode-symbolIcon-fieldForeground: #75beff; --vscode-symbolIcon-fileForeground: #ffffff; --vscode-symbolIcon-folderForeground: #ffffff; --vscode-symbolIcon-functionForeground: #8dc8fb; --vscode-symbolIcon-interfaceForeground: #8e47ff; --vscode-symbolIcon-keyForeground: #ffffff; --vscode-symbolIcon-keywordForeground: #ffffff; --vscode-symbolIcon-methodForeground: #b180d7; --vscode-symbolIcon-moduleForeground: #ffffff; --vscode-symbolIcon-namespaceForeground: #ffffff; --vscode-symbolIcon-nullForeground: #ffffff; --vscode-symbolIcon-numberForeground: #ffffff; --vscode-symbolIcon-objectForeground: #ffffff; --vscode-symbolIcon-operatorForeground: #ffffff; --vscode-symbolIcon-packageForeground: #ffffff; --vscode-symbolIcon-propertyForeground: #938f9b; --vscode-symbolIcon-referenceForeground: #ffffff; --vscode-symbolIcon-snippetForeground: #ffffff; --vscode-symbolIcon-stringForeground: #ffffff; --vscode-symbolIcon-structForeground: #ffffff; --vscode-symbolIcon-textForeground: #ffffff; --vscode-symbolIcon-typeParameterForeground: #8e47ff; --vscode-symbolIcon-unitForeground: #ffffff; --vscode-symbolIcon-variableForeground: #ff8080; --vscode-peekViewTitle-background: #28242e; --vscode-peekViewTitleLabel-foreground: #ffffff; --vscode-peekViewTitleDescription-foreground: rgba(204, 204, 204, 0.7); --vscode-peekView-border: #8dc8fb; --vscode-peekViewResult-background: #252526; --vscode-peekViewResult-lineForeground: #bbbbbb; --vscode-peekViewResult-fileForeground: #ffffff; --vscode-peekViewResult-selectionBackground: rgba(51, 153, 255, 0.2); --vscode-peekViewResult-selectionForeground: #ffffff; --vscode-peekViewEditor-background: #001f33; --vscode-peekViewEditorGutter-background: #001f33; --vscode-peekViewEditorStickyScroll-background: #001f33; --vscode-peekViewEditorStickyScrollGutter-background: #001f33; --vscode-peekViewResult-matchHighlightBackground: rgba(234, 92, 0, 0.3); --vscode-peekViewEditor-matchHighlightBackground: rgba(255, 143, 0, 0.6); --vscode-editorMarkerNavigationError-background: rgba(255, 128, 128, 0.75); --vscode-editorMarkerNavigationError-headerBackground: rgba(255, 128, 128, 0.07); --vscode-editorMarkerNavigationWarning-background: #ffcf99; --vscode-editorMarkerNavigationWarning-headerBackground: rgba(255, 207, 153, 0.1); --vscode-editorMarkerNavigationInfo-background: #8dc8fb; --vscode-editorMarkerNavigationInfo-headerBackground: rgba(141, 200, 251, 0.1); --vscode-editorMarkerNavigation-background: #211d25; --vscode-editor-foldBackground: rgba(192, 153, 255, 0.07); --vscode-editor-foldPlaceholderForeground: #808080; --vscode-editorGutter-foldingControlForeground: #c1bec6; --vscode-editorSuggestWidget-background: #28242e; --vscode-editorSuggestWidget-border: rgba(0, 0, 0, 0); --vscode-editorSuggestWidget-foreground: #ffffff; --vscode-editorSuggestWidget-selectedForeground: #ffffff; --vscode-editorSuggestWidget-selectedBackground: #352f3d; --vscode-editorSuggestWidget-highlightForeground: #2aaaff; --vscode-editorSuggestWidget-focusHighlightForeground: #2aaaff; --vscode-editorSuggestWidgetStatus-foreground: rgba(255, 255, 255, 0.5); --vscode-inlineEdit-originalBackground: rgba(255, 128, 128, 0.03); --vscode-inlineEdit-modifiedBackground: rgba(128, 255, 181, 0.04); --vscode-inlineEdit-originalChangedLineBackground: rgba(255, 128, 128, 0.1); --vscode-inlineEdit-originalChangedTextBackground: rgba(255, 128, 128, 0.1); --vscode-inlineEdit-modifiedChangedLineBackground: rgba(128, 255, 181, 0.09); --vscode-inlineEdit-modifiedChangedTextBackground: rgba(128, 255, 181, 0.09); --vscode-inlineEdit-gutterIndicator\.primaryForeground: #f2f1f4; --vscode-inlineEdit-gutterIndicator\.primaryBorder: #7138cc; --vscode-inlineEdit-gutterIndicator\.primaryBackground: rgba(113, 56, 204, 0.4); --vscode-inlineEdit-gutterIndicator\.secondaryForeground: #ffffff; --vscode-inlineEdit-gutterIndicator\.secondaryBorder: rgba(255, 255, 255, 0.07); --vscode-inlineEdit-gutterIndicator\.secondaryBackground: rgba(255, 255, 255, 0.07); --vscode-inlineEdit-gutterIndicator\.successfulForeground: #f2f1f4; --vscode-inlineEdit-gutterIndicator\.successfulBorder: #7138cc; --vscode-inlineEdit-gutterIndicator\.successfulBackground: #7138cc; --vscode-inlineEdit-gutterIndicator\.background: rgba(40, 36, 46, 0.5); --vscode-inlineEdit-originalBorder: rgba(255, 128, 128, 0.13); --vscode-inlineEdit-modifiedBorder: rgba(128, 255, 181, 0.13); --vscode-inlineEdit-tabWillAcceptModifiedBorder: rgba(128, 255, 181, 0.13); --vscode-inlineEdit-tabWillAcceptOriginalBorder: rgba(255, 128, 128, 0.13); --vscode-editor-linkedEditingBackground: rgba(255, 0, 0, 0.3); --vscode-editor-wordHighlightBackground: rgba(141, 200, 251, 0.13); --vscode-editor-wordHighlightStrongBackground: rgba(0, 73, 114, 0.72); --vscode-editor-wordHighlightTextBackground: rgba(141, 200, 251, 0.13); --vscode-editorOverviewRuler-wordHighlightForeground: rgba(160, 160, 160, 0.8); --vscode-editorOverviewRuler-wordHighlightStrongForeground: rgba(192, 160, 192, 0.8); --vscode-editorOverviewRuler-wordHighlightTextForeground: rgba(160, 160, 160, 0.8); --vscode-editorHoverWidget-highlightForeground: #2aaaff; --vscode-editor-placeholder\.foreground: rgba(255, 255, 255, 0.34); --vscode-tab-activeBackground: #28242e; --vscode-tab-unfocusedActiveBackground: #28242e; --vscode-tab-inactiveBackground: #28242e; --vscode-tab-unfocusedInactiveBackground: #28242e; --vscode-tab-activeForeground: #ffffff; --vscode-tab-inactiveForeground: #938f9b; --vscode-tab-unfocusedActiveForeground: rgba(255, 255, 255, 0.5); --vscode-tab-unfocusedInactiveForeground: rgba(147, 143, 155, 0.5); --vscode-tab-border: #4a464f; --vscode-tab-lastPinnedBorder: rgba(147, 143, 155, 0.5); --vscode-tab-activeBorder: #211d25; --vscode-tab-unfocusedActiveBorder: rgba(33, 29, 37, 0.5); --vscode-tab-activeBorderTop: #b080ff; --vscode-tab-unfocusedActiveBorderTop: rgba(176, 128, 255, 0.5); --vscode-tab-selectedBorderTop: #b080ff; --vscode-tab-selectedBackground: #28242e; --vscode-tab-selectedForeground: #ffffff; --vscode-tab-dragAndDropBorder: #ffffff; --vscode-tab-activeModifiedBorder: #3399cc; --vscode-tab-inactiveModifiedBorder: rgba(51, 153, 204, 0.5); --vscode-tab-unfocusedActiveModifiedBorder: rgba(51, 153, 204, 0.5); --vscode-tab-unfocusedInactiveModifiedBorder: rgba(51, 153, 204, 0.25); --vscode-editorPane-background: #211d25; --vscode-editorGroupHeader-tabsBackground: #28242e; --vscode-editorGroupHeader-tabsBorder: #4a464f; --vscode-editorGroupHeader-noTabsBackground: #211d25; --vscode-editorGroupHeader-border: rgba(0, 0, 0, 0); --vscode-editorGroup-border: #4a464f; --vscode-editorGroup-dropBackground: rgba(83, 89, 93, 0.5); --vscode-editorGroup-dropIntoPromptForeground: #ffffff; --vscode-editorGroup-dropIntoPromptBackground: #28242e; --vscode-sideBySideEditor-horizontalBorder: #4a464f; --vscode-sideBySideEditor-verticalBorder: #4a464f; --vscode-banner-background: #352f3d; --vscode-banner-foreground: #ffffff; --vscode-banner-iconForeground: #8dc8fb; --vscode-statusBar-foreground: #938f9b; --vscode-statusBar-noFolderForeground: #938f9b; --vscode-statusBar-background: rgba(0, 0, 0, 0); --vscode-statusBar-noFolderBackground: rgba(0, 0, 0, 0); --vscode-statusBar-focusBorder: #938f9b; --vscode-statusBarItem-activeBackground: rgba(255, 255, 255, 0.18); --vscode-statusBarItem-focusBorder: #938f9b; --vscode-statusBarItem-hoverBackground: rgba(255, 255, 255, 0.07); --vscode-statusBarItem-hoverForeground: #ffffff; --vscode-statusBarItem-compactHoverBackground: rgba(255, 255, 255, 0.12); --vscode-statusBarItem-prominentForeground: #938f9b; --vscode-statusBarItem-prominentBackground: rgba(0, 0, 0, 0.5); --vscode-statusBarItem-prominentHoverForeground: #ffffff; --vscode-statusBarItem-prominentHoverBackground: rgba(255, 255, 255, 0.07); --vscode-statusBarItem-errorBackground: #e60000; --vscode-statusBarItem-errorForeground: #ffffff; --vscode-statusBarItem-errorHoverForeground: #ffffff; --vscode-statusBarItem-errorHoverBackground: rgba(255, 255, 255, 0.07); --vscode-statusBarItem-warningBackground: #f58300; --vscode-statusBarItem-warningForeground: #ffffff; --vscode-statusBarItem-warningHoverForeground: #ffffff; --vscode-statusBarItem-warningHoverBackground: rgba(255, 255, 255, 0.07); --vscode-activityBar-background: #28242e; --vscode-activityBar-foreground: #b080ff; --vscode-activityBar-inactiveForeground: #c1bec6; --vscode-activityBar-border: #4a464f; --vscode-activityBar-activeBorder: rgba(0, 0, 0, 0); --vscode-activityBar-activeBackground: rgba(142, 71, 255, 0.25); --vscode-activityBar-dropBorder: #b080ff; --vscode-activityBarBadge-background: #7138cc; --vscode-activityBarBadge-foreground: #ffffff; --vscode-activityBarTop-foreground: #e7e7e7; --vscode-activityBarTop-activeBorder: #e7e7e7; --vscode-activityBarTop-inactiveForeground: rgba(231, 231, 231, 0.6); --vscode-activityBarTop-dropBorder: #e7e7e7; --vscode-panel-background: #211d25; --vscode-panel-border: rgba(0, 0, 0, 0); --vscode-panelTitle-activeForeground: #ffffff; --vscode-panelTitle-activeBackground: #352f3d; --vscode-panelTitle-inactiveForeground: #938f9b; --vscode-panelTitle-activeBorder: rgba(0, 0, 0, 0); --vscode-panelTitleBadge-background: #7138cc; --vscode-panelTitleBadge-foreground: #ffffff; --vscode-panelInput-border: #4a464f; --vscode-panel-dropBorder: #ffffff; --vscode-panelSection-dropBackground: rgba(83, 89, 93, 0.5); --vscode-panelSectionHeader-background: rgba(128, 128, 128, 0.2); --vscode-panelSection-border: rgba(0, 0, 0, 0); --vscode-panelStickyScroll-background: #211d25; --vscode-panelStickyScroll-shadow: #19161d; --vscode-profileBadge-background: #4d4d4d; --vscode-profileBadge-foreground: #ffffff; --vscode-statusBarItem-remoteBackground: rgba(0, 0, 0, 0); --vscode-statusBarItem-remoteForeground: #938f9b; --vscode-statusBarItem-remoteHoverForeground: #ffffff; --vscode-statusBarItem-remoteHoverBackground: rgba(255, 255, 255, 0.07); --vscode-statusBarItem-offlineBackground: #6c1717; --vscode-statusBarItem-offlineForeground: #938f9b; --vscode-statusBarItem-offlineHoverForeground: #ffffff; --vscode-statusBarItem-offlineHoverBackground: rgba(255, 255, 255, 0.07); --vscode-extensionBadge-remoteBackground: #7138cc; --vscode-extensionBadge-remoteForeground: #ffffff; --vscode-sideBar-background: #211d25; --vscode-sideBar-foreground: #ffffff; --vscode-sideBarTitle-background: #28242e; --vscode-sideBarTitle-foreground: #ffffff; --vscode-sideBarTitle-border: #4a464f; --vscode-sideBar-dropBackground: rgba(83, 89, 93, 0.5); --vscode-sideBarSectionHeader-background: #211d25; --vscode-sideBarSectionHeader-foreground: #ffffff; --vscode-sideBarSectionHeader-border: #352f3d; --vscode-sideBarActivityBarTop-border: #352f3d; --vscode-sideBarStickyScroll-background: #211d25; --vscode-sideBarStickyScroll-shadow: #19161d; --vscode-titleBar-activeForeground: #cccccc; --vscode-titleBar-inactiveForeground: rgba(204, 204, 204, 0.6); --vscode-titleBar-activeBackground: rgba(0, 0, 0, 0); --vscode-titleBar-inactiveBackground: rgba(0, 0, 0, 0); --vscode-titleBar-border: rgba(0, 0, 0, 0); --vscode-menubar-selectionForeground: #cccccc; --vscode-menubar-selectionBackground: #352f3d; --vscode-commandCenter-foreground: #cccccc; --vscode-commandCenter-activeForeground: #cccccc; --vscode-commandCenter-inactiveForeground: rgba(204, 204, 204, 0.6); --vscode-commandCenter-background: rgba(255, 255, 255, 0.05); --vscode-commandCenter-activeBackground: rgba(255, 255, 255, 0.08); --vscode-commandCenter-border: rgba(0, 0, 0, 0); --vscode-commandCenter-activeBorder: rgba(142, 71, 255, 0.25); --vscode-commandCenter-inactiveBorder: rgba(204, 204, 204, 0.15); --vscode-notificationCenter-border: rgba(255, 255, 255, 0.2); --vscode-notificationToast-border: rgba(255, 255, 255, 0.2); --vscode-notifications-foreground: #ffffff; --vscode-notifications-background: #28242e; --vscode-notificationLink-foreground: #b080ff; --vscode-notificationCenterHeader-background: #342f3c; --vscode-notifications-border: rgba(0, 0, 0, 0); --vscode-notificationsErrorIcon-foreground: #ff8080; --vscode-notificationsWarningIcon-foreground: #ffcf99; --vscode-notificationsInfoIcon-foreground: #8dc8fb; --vscode-editorGutter-modifiedBackground: rgba(176, 128, 255, 0.75); --vscode-editorGutter-modifiedSecondaryBackground: rgba(74, 0, 192, 0.75); --vscode-editorGutter-addedBackground: rgba(128, 255, 181, 0.75); --vscode-editorGutter-addedSecondaryBackground: rgba(0, 192, 80, 0.75); --vscode-editorGutter-deletedBackground: rgba(255, 128, 128, 0.75); --vscode-editorGutter-deletedSecondaryBackground: rgba(230, 0, 0, 0.75); --vscode-minimapGutter-modifiedBackground: rgba(176, 128, 255, 0.75); --vscode-minimapGutter-addedBackground: rgba(128, 255, 181, 0.75); --vscode-minimapGutter-deletedBackground: rgba(255, 128, 128, 0.75); --vscode-editorOverviewRuler-modifiedForeground: rgba(176, 128, 255, 0.45); --vscode-editorOverviewRuler-addedForeground: rgba(128, 255, 181, 0.45); --vscode-editorOverviewRuler-deletedForeground: rgba(255, 128, 128, 0.45); --vscode-editorGutter-itemGlyphForeground: #ffffff; --vscode-editorGutter-itemBackground: #352f3d; --vscode-agentSessionReadIndicator-foreground: rgba(255, 255, 255, 0.15); --vscode-terminal-foreground: #cccccc; --vscode-terminal-selectionBackground: rgba(192, 153, 255, 0.25); --vscode-terminal-inactiveSelectionBackground: rgba(192, 153, 255, 0.13); --vscode-terminalCommandDecoration-defaultBackground: rgba(255, 255, 255, 0.25); --vscode-terminalCommandDecoration-successBackground: #1b81a8; --vscode-terminalCommandDecoration-errorBackground: #f14c4c; --vscode-terminalOverviewRuler-cursorForeground: rgba(160, 160, 160, 0.8); --vscode-terminal-border: #4a464f; --vscode-terminalOverviewRuler-border: rgba(127, 127, 127, 0.3); --vscode-terminal-findMatchBackground: #515c6a; --vscode-terminal-hoverHighlightBackground: rgba(38, 79, 120, 0.13); --vscode-terminal-findMatchHighlightBackground: rgba(176, 128, 255, 0.25); --vscode-terminalOverviewRuler-findMatchForeground: rgba(209, 134, 22, 0.49); --vscode-terminal-dropBackground: rgba(83, 89, 93, 0.5); --vscode-terminal-tab\.activeBorder: #211d25; --vscode-terminal-initialHintForeground: rgba(255, 255, 255, 0.34); --vscode-scmGraph-historyItemRefColor: #8dc8fb; --vscode-scmGraph-historyItemRemoteRefColor: #8e47ff; --vscode-scmGraph-historyItemBaseRefColor: #8dc8fb; --vscode-scmGraph-historyItemHoverDefaultLabelForeground: #ffffff; --vscode-scmGraph-historyItemHoverDefaultLabelBackground: rgba(141, 200, 251, 0.25); --vscode-scmGraph-historyItemHoverLabelForeground: #19161d; --vscode-scmGraph-historyItemHoverAdditionsForeground: #81b88b; --vscode-scmGraph-historyItemHoverDeletionsForeground: #c74e39; --vscode-scmGraph-foreground1: #ffb000; --vscode-scmGraph-foreground2: #dc267f; --vscode-scmGraph-foreground3: #994f00; --vscode-scmGraph-foreground4: #40b0a6; --vscode-scmGraph-foreground5: #b66dff; --vscode-commentsView-resolvedIcon: #938f9b; --vscode-commentsView-unresolvedIcon: rgba(0, 0, 0, 0); --vscode-editorCommentsWidget-replyInputBackground: #28242e; --vscode-editorCommentsWidget-resolvedBorder: #938f9b; --vscode-editorCommentsWidget-unresolvedBorder: rgba(0, 0, 0, 0); --vscode-editorCommentsWidget-rangeBackground: rgba(0, 0, 0, 0); --vscode-editorCommentsWidget-rangeActiveBackground: rgba(0, 0, 0, 0); --vscode-editorGutter-commentRangeForeground: #352f3d; --vscode-editorOverviewRuler-commentForeground: #352f3d; --vscode-editorOverviewRuler-commentUnresolvedForeground: #352f3d; --vscode-editorOverviewRuler-commentDraftForeground: #352f3d; --vscode-editorGutter-commentGlyphForeground: #ffffff; --vscode-editorGutter-commentUnresolvedGlyphForeground: #ffffff; --vscode-editorGutter-commentDraftGlyphForeground: #ffffff; --vscode-ports-iconRunningProcessForeground: rgba(0, 0, 0, 0); --vscode-settings-headerForeground: #e7e7e7; --vscode-settings-settingsHeaderHoverForeground: rgba(231, 231, 231, 0.7); --vscode-settings-modifiedItemIndicator: #0c7d9d; --vscode-settings-headerBorder: rgba(0, 0, 0, 0); --vscode-settings-sashBorder: rgba(0, 0, 0, 0); --vscode-settings-dropdownBackground: #28242e; --vscode-settings-dropdownForeground: #f0f0f0; --vscode-settings-dropdownBorder: #4a464f; --vscode-settings-dropdownListBorder: rgba(0, 0, 0, 0); --vscode-settings-checkboxBackground: #28242e; --vscode-settings-checkboxForeground: #8e47ff; --vscode-settings-checkboxBorder: #4a464f; --vscode-settings-textInputBackground: #28242e; --vscode-settings-textInputForeground: #ffffff; --vscode-settings-textInputBorder: #4a464f; --vscode-settings-numberInputBackground: #28242e; --vscode-settings-numberInputForeground: #ffffff; --vscode-settings-numberInputBorder: #4a464f; --vscode-settings-focusedRowBackground: rgba(255, 255, 255, 0.03); --vscode-settings-rowHoverBackground: rgba(255, 255, 255, 0.01); --vscode-settings-focusedRowBorder: #9e61ff; --vscode-keybindingTable-headerBackground: rgba(255, 255, 255, 0.04); --vscode-keybindingTable-rowsBackground: rgba(255, 255, 255, 0.04); --vscode-extensionButton-background: #7138cc; --vscode-extensionButton-foreground: #ffffff; --vscode-extensionButton-hoverBackground: #8e47ff; --vscode-extensionButton-separator: rgba(25, 22, 29, 0.25); --vscode-extensionButton-prominentBackground: #7138cc; --vscode-extensionButton-prominentForeground: #ffffff; --vscode-extensionButton-prominentHoverBackground: #8e47ff; --vscode-debugToolBar-background: #352f3d; --vscode-debugIcon-startForeground: #80ffb5; --vscode-notebook-cellBorderColor: #352f3d; --vscode-notebook-focusedEditorBorder: #9e61ff; --vscode-notebookStatusSuccessIcon-foreground: #80ffb5; --vscode-notebookEditorOverviewRuler-runningCellForeground: #80ffb5; --vscode-notebookStatusErrorIcon-foreground: #ff8080; --vscode-notebookStatusRunningIcon-foreground: #ffffff; --vscode-notebook-cellToolbarSeparator: rgba(128, 128, 128, 0.35); --vscode-notebook-selectedCellBackground: #352f3d; --vscode-notebook-selectedCellBorder: #352f3d; --vscode-notebook-focusedCellBorder: #9e61ff; --vscode-notebook-inactiveFocusedCellBorder: #352f3d; --vscode-notebook-cellStatusBarItemHoverBackground: rgba(255, 255, 255, 0.15); --vscode-notebook-cellInsertionIndicator: #9e61ff; --vscode-notebookScrollbarSlider-background: rgba(121, 121, 121, 0.4); --vscode-notebookScrollbarSlider-hoverBackground: rgba(100, 100, 100, 0.7); --vscode-notebookScrollbarSlider-activeBackground: rgba(191, 191, 191, 0.4); --vscode-notebook-symbolHighlightBackground: rgba(255, 255, 255, 0.04); --vscode-notebook-cellEditorBackground: #211d25; --vscode-notebook-editorBackground: #211d25; --vscode-inlineChat-foreground: #ffffff; --vscode-inlineChat-background: #28242e; --vscode-inlineChat-border: rgba(0, 0, 0, 0); --vscode-inlineChat-shadow: #19161d; --vscode-inlineChatInput-border: rgba(0, 0, 0, 0); --vscode-inlineChatInput-focusBorder: #9e61ff; --vscode-inlineChatInput-placeholderForeground: rgba(255, 255, 255, 0.5); --vscode-inlineChatInput-background: #28242e; --vscode-inlineChatDiff-inserted: rgba(128, 255, 181, 0.06); --vscode-editorOverviewRuler-inlineChatInserted: rgba(128, 255, 181, 0.07); --vscode-editorMinimap-inlineChatInserted: rgba(128, 255, 181, 0.07); --vscode-inlineChatDiff-removed: rgba(255, 128, 128, 0.06); --vscode-editorOverviewRuler-inlineChatRemoved: rgba(255, 128, 128, 0.07); --vscode-extensionIcon-verifiedForeground: #b080ff; --vscode-chat-requestBorder: rgba(255, 255, 255, 0.1); --vscode-chat-requestBackground: rgba(33, 29, 37, 0.62); --vscode-chat-slashCommandBackground: rgba(38, 71, 120, 0.4); --vscode-chat-slashCommandForeground: #85b6ff; --vscode-chat-avatarBackground: #1f1f1f; --vscode-chat-avatarForeground: #ffffff; --vscode-chat-editedFileForeground: #e2c08d; --vscode-chat-requestCodeBorder: rgba(0, 73, 114, 0.72); --vscode-chat-requestBubbleBackground: rgba(192, 153, 255, 0.07); --vscode-chat-requestBubbleHoverBackground: rgba(192, 153, 255, 0.15); --vscode-chat-checkpointSeparator: #585858; --vscode-chat-linesAddedForeground: #54b054; --vscode-chat-linesRemovedForeground: #fc6a6a; --vscode-extensionIcon-starForeground: #ff8e00; --vscode-extensionIcon-preReleaseForeground: #1d9271; --vscode-extensionIcon-sponsorForeground: #d758b3; --vscode-extensionIcon-privateForeground: rgba(255, 255, 255, 0.38); --vscode-debugExceptionWidget-border: #a31515; --vscode-debugExceptionWidget-background: #420b0d; --vscode-editor-inlineValuesForeground: rgba(255, 255, 255, 0.5); --vscode-editor-inlineValuesBackground: rgba(255, 200, 0, 0.2); --vscode-debugIcon-breakpointForeground: #e51400; --vscode-debugIcon-breakpointDisabledForeground: #848484; --vscode-debugIcon-breakpointUnverifiedForeground: #848484; --vscode-debugIcon-breakpointCurrentStackframeForeground: #ffcc00; --vscode-debugIcon-breakpointStackframeForeground: #89d185; --vscode-editor-stackFrameHighlightBackground: rgba(255, 255, 0, 0.2); --vscode-editor-focusedStackFrameHighlightBackground: rgba(122, 189, 122, 0.3); --vscode-multiDiffEditor-headerBackground: #28242e; --vscode-multiDiffEditor-background: #211d25; --vscode-multiDiffEditor-border: #352f3d; --vscode-minimap-chatEditHighlight: rgba(33, 29, 37, 0.6); --vscode-chatManagement-sashBorder: rgba(0, 0, 0, 0); --vscode-interactive-activeCodeBorder: #007acc; --vscode-interactive-inactiveCodeBorder: #352f3d; --vscode-testing-iconFailed: #f14c4c; --vscode-testing-iconErrored: #f14c4c; --vscode-testing-iconPassed: #73c991; --vscode-testing-runAction: #73c991; --vscode-testing-iconQueued: #cca700; --vscode-testing-iconUnset: #848484; --vscode-testing-iconSkipped: #848484; --vscode-testing-peekBorder: rgba(255, 128, 128, 0.75); --vscode-testing-messagePeekBorder: #8dc8fb; --vscode-testing-peekHeaderBackground: rgba(255, 128, 128, 0.07); --vscode-testing-messagePeekHeaderBackground: rgba(141, 200, 251, 0.1); --vscode-testing-coveredBackground: rgba(128, 255, 181, 0.13); --vscode-testing-coveredBorder: rgba(128, 255, 181, 0.09); --vscode-testing-coveredGutterBackground: rgba(128, 255, 181, 0.07); --vscode-testing-uncoveredBranchBackground: #58353b; --vscode-testing-uncoveredBackground: rgba(255, 128, 128, 0.13); --vscode-testing-uncoveredBorder: rgba(255, 128, 128, 0.09); --vscode-testing-uncoveredGutterBackground: rgba(255, 128, 128, 0.19); --vscode-testing-coverCountBadgeBackground: rgba(141, 200, 251, 0.25); --vscode-testing-coverCountBadgeForeground: #8dc8fb; --vscode-testing-message\.error\.badgeBackground: #f14c4c; --vscode-testing-message\.error\.badgeBorder: #f14c4c; --vscode-testing-message\.error\.badgeForeground: #000000; --vscode-testing-message\.info\.decorationForeground: rgba(255, 255, 255, 0.5); --vscode-testing-iconErrored\.retired: rgba(241, 76, 76, 0.7); --vscode-testing-iconFailed\.retired: rgba(241, 76, 76, 0.7); --vscode-testing-iconPassed\.retired: rgba(115, 201, 145, 0.7); --vscode-testing-iconQueued\.retired: rgba(204, 167, 0, 0.7); --vscode-testing-iconUnset\.retired: rgba(132, 132, 132, 0.7); --vscode-testing-iconSkipped\.retired: rgba(132, 132, 132, 0.7); --vscode-searchEditor-textInputBorder: #4a464f; --vscode-statusBar-debuggingBackground: rgba(142, 71, 255, 0.25); --vscode-statusBar-debuggingForeground: #938f9b; --vscode-commandCenter-debuggingBackground: rgba(142, 71, 255, 0.75); --vscode-debugTokenExpression-name: #c586c0; --vscode-debugTokenExpression-type: #4a90e2; --vscode-debugTokenExpression-value: rgba(204, 204, 204, 0.6); --vscode-debugTokenExpression-string: #ce9178; --vscode-debugTokenExpression-boolean: #4e94ce; --vscode-debugTokenExpression-number: #b5cea8; --vscode-debugTokenExpression-error: #f48771; --vscode-debugView-exceptionLabelForeground: #ffffff; --vscode-debugView-exceptionLabelBackground: #6c2022; --vscode-debugView-stateLabelForeground: #ffffff; --vscode-debugView-stateLabelBackground: rgba(136, 136, 136, 0.27); --vscode-debugView-valueChangedHighlight: #569cd6; --vscode-debugConsole-infoForeground: #8dc8fb; --vscode-debugConsole-warningForeground: #ffcf99; --vscode-debugConsole-errorForeground: #ff8080; --vscode-debugConsole-sourceForeground: #ffffff; --vscode-debugConsoleInputIcon-foreground: #ffffff; --vscode-debugIcon-pauseForeground: #8dc8fb; --vscode-debugIcon-stopForeground: #ff8080; --vscode-debugIcon-disconnectForeground: #f48771; --vscode-debugIcon-restartForeground: #80ffb5; --vscode-debugIcon-stepOverForeground: #75beff; --vscode-debugIcon-stepIntoForeground: #75beff; --vscode-debugIcon-stepOutForeground: #75beff; --vscode-debugIcon-continueForeground: #8dc8fb; --vscode-debugIcon-stepBackForeground: #75beff; --vscode-mergeEditor-change\.background: rgba(155, 185, 85, 0.2); --vscode-mergeEditor-change\.word\.background: rgba(156, 204, 44, 0.2); --vscode-mergeEditor-changeBase\.background: #4b1818; --vscode-mergeEditor-changeBase\.word\.background: #6f1313; --vscode-mergeEditor-conflict\.unhandledUnfocused\.border: rgba(255, 166, 0, 0.48); --vscode-mergeEditor-conflict\.unhandledFocused\.border: #ffa600; --vscode-mergeEditor-conflict\.handledUnfocused\.border: rgba(134, 134, 134, 0.29); --vscode-mergeEditor-conflict\.handledFocused\.border: rgba(193, 193, 193, 0.8); --vscode-mergeEditor-conflict\.handled\.minimapOverViewRuler: rgba(173, 172, 168, 0.93); --vscode-mergeEditor-conflict\.unhandled\.minimapOverViewRuler: #fcba03; --vscode-mergeEditor-conflictingLines\.background: rgba(255, 234, 0, 0.28); --vscode-mergeEditor-conflict\.input1\.background: rgba(64, 200, 174, 0.2); --vscode-mergeEditor-conflict\.input2\.background: rgba(64, 166, 255, 0.2); --vscode-terminal-ansiBlack: #000000; --vscode-terminal-ansiRed: #ff8080; --vscode-terminal-ansiGreen: #80ffb5; --vscode-terminal-ansiYellow: #fff2b3; --vscode-terminal-ansiBlue: #8dc8fb; --vscode-terminal-ansiMagenta: #8e47ff; --vscode-terminal-ansiCyan: #80f4ff; --vscode-terminal-ansiWhite: #e5e5e5; --vscode-terminal-ansiBrightBlack: rgba(255, 255, 255, 0.25); --vscode-terminal-ansiBrightRed: #ff8080; --vscode-terminal-ansiBrightGreen: #80ffb5; --vscode-terminal-ansiBrightYellow: #fff2b3; --vscode-terminal-ansiBrightBlue: #8dc8fb; --vscode-terminal-ansiBrightMagenta: #8e47ff; --vscode-terminal-ansiBrightCyan: #80f4ff; --vscode-terminal-ansiBrightWhite: #e5e5e5; --vscode-simpleFindWidget-sashBorder: #454545; --vscode-terminalStickyScrollHover-background: #2a2d2e; --vscode-terminalCommandGuide-foreground: #352f3d; --vscode-terminalSymbolIcon-flagForeground: #ee9d28; --vscode-terminalSymbolIcon-aliasForeground: #b180d7; --vscode-terminalSymbolIcon-optionValueForeground: #75beff; --vscode-terminalSymbolIcon-methodForeground: #b180d7; --vscode-terminalSymbolIcon-argumentForeground: #ff8080; --vscode-terminalSymbolIcon-optionForeground: #ee9d28; --vscode-terminalSymbolIcon-fileForeground: #ffffff; --vscode-terminalSymbolIcon-folderForeground: #ffffff; --vscode-terminalSymbolIcon-commitForeground: #ffffff; --vscode-terminalSymbolIcon-branchForeground: #ffffff; --vscode-terminalSymbolIcon-tagForeground: #ffffff; --vscode-terminalSymbolIcon-stashForeground: #ffffff; --vscode-terminalSymbolIcon-remoteForeground: #ffffff; --vscode-terminalSymbolIcon-pullRequestForeground: #ffffff; --vscode-terminalSymbolIcon-pullRequestDoneForeground: #ffffff; --vscode-terminalSymbolIcon-symbolicLinkFileForeground: #ffffff; --vscode-terminalSymbolIcon-symbolicLinkFolderForeground: #ffffff; --vscode-terminalSymbolIcon-symbolText: #ffffff; --vscode-markdownAlert-note\.foreground: #8dc8fb; --vscode-markdownAlert-tip\.foreground: #89d185; --vscode-markdownAlert-important\.foreground: #b180d7; --vscode-markdownAlert-warning\.foreground: #ffcf99; --vscode-markdownAlert-caution\.foreground: rgba(255, 128, 128, 0.75); --vscode-welcomePage-background: #211d25; --vscode-welcomePage-tileBackground: #19161d; --vscode-welcomePage-tileHoverBackground: #302b37; --vscode-welcomePage-tileBorder: rgba(255, 255, 255, 0.1); --vscode-welcomePage-progress\.background: #28242e; --vscode-welcomePage-progress\.foreground: #8dc8fb; --vscode-walkthrough-stepTitle\.foreground: #ffffff; --vscode-walkThrough-embeddedEditorBackground: rgba(0, 0, 0, 0.4); --vscode-profiles-sashBorder: rgba(0, 0, 0, 0); --vscode-mcpIcon-starForeground: #ff8e00; --vscode-gitDecoration-addedResourceForeground: #81b88b; --vscode-gitDecoration-modifiedResourceForeground: #ffcf99; --vscode-gitDecoration-deletedResourceForeground: #dfffb3; --vscode-gitDecoration-renamedResourceForeground: #73c991; --vscode-gitDecoration-untrackedResourceForeground: #80ffb5; --vscode-gitDecoration-ignoredResourceForeground: #938f9b; --vscode-gitDecoration-stageModifiedResourceForeground: #e2c08d; --vscode-gitDecoration-stageDeletedResourceForeground: #c74e39; --vscode-gitDecoration-conflictingResourceForeground: #ff8080; --vscode-gitDecoration-submoduleResourceForeground: #8db9e2; --vscode-git-blame\.editorDecorationForeground: #969696; --vscode-editor-font-feature-settings: &quot;liga&quot; off, &quot;calt&quot; off;"><head><style id="_defaultStyles">
+		@layer vscode-default {
+			html {
+				scrollbar-color: var(--vscode-scrollbarSlider-background) var(--vscode-editor-background);
+			}
+
+			body {
+				overscroll-behavior-x: none;
+				background-color: transparent;
+				color: var(--vscode-editor-foreground);
+				font-family: var(--vscode-font-family);
+				font-weight: var(--vscode-font-weight);
+				font-size: var(--vscode-font-size);
+				margin: 0;
+				padding: 0 20px;
+			}
+
+			img, video {
+				max-width: 100%;
+				max-height: 100%;
+			}
+
+			a, a code {
+				color: var(--vscode-textLink-foreground);
+			}
+
+			p > a {
+				text-decoration: var(--text-link-decoration);
+			}
+
+			a:hover {
+				color: var(--vscode-textLink-activeForeground);
+			}
+
+			a:focus,
+			input:focus,
+			select:focus,
+			textarea:focus {
+				outline: 1px solid -webkit-focus-ring-color;
+				outline-offset: -1px;
+			}
+
+			code {
+				font-family: var(--monaco-monospace-font);
+				color: var(--vscode-textPreformat-foreground);
+				background-color: var(--vscode-textPreformat-background);
+				padding: 1px 3px;
+				border-radius: 4px;
+			}
+
+			pre code {
+				padding: 0;
+			}
+
+			blockquote {
+				background: var(--vscode-textBlockQuote-background);
+				border-color: var(--vscode-textBlockQuote-border);
+			}
+
+			kbd {
+				background-color: var(--vscode-keybindingLabel-background);
+				color: var(--vscode-keybindingLabel-foreground);
+				border-style: solid;
+				border-width: 1px;
+				border-radius: 3px;
+				border-color: var(--vscode-keybindingLabel-border);
+				border-bottom-color: var(--vscode-keybindingLabel-bottomBorder);
+				box-shadow: inset 0 -1px 0 var(--vscode-widget-shadow);
+				vertical-align: middle;
+				padding: 1px 3px;
+			}
+
+			::-webkit-scrollbar {
+				width: 10px;
+				height: 10px;
+			}
+
+			::-webkit-scrollbar-corner {
+				background-color: var(--vscode-editor-background);
+			}
+
+			::-webkit-scrollbar-thumb {
+				background-color: var(--vscode-scrollbarSlider-background);
+			}
+			::-webkit-scrollbar-thumb:hover {
+				background-color: var(--vscode-scrollbarSlider-hoverBackground);
+			}
+			::-webkit-scrollbar-thumb:active {
+				background-color: var(--vscode-scrollbarSlider-activeBackground);
+			}
+			::highlight(find-highlight) {
+				background-color: var(--vscode-editor-findMatchHighlightBackground);
+			}
+			::highlight(current-find-highlight) {
+				background-color: var(--vscode-editor-findMatchBackground);
+			}
+		}</style><script id="_vscodeApiScript">
+					globalThis.acquireVsCodeApi = (function() {
+						const originalPostMessage = window.parent['__vscode_post_message__'].bind(window.parent);
+						const doPostMessage = (channel, data, transfer) => {
+							originalPostMessage(channel, data, transfer);
+						};
+
+						let acquired = false;
+
+						let state = undefined;
+
+						return () => {
+							if (acquired && !false) {
+								throw new Error('An instance of the VS Code API has already been acquired');
+							}
+							acquired = true;
+							return Object.freeze({
+								postMessage: function(message, transfer) {
+									doPostMessage('onmessage', { message, transfer }, transfer);
+								},
+								setState: function(newState) {
+									state = newState;
+									doPostMessage('do-update-state', JSON.stringify(newState));
+									return newState;
+								},
+								getState: function() {
+									return state;
+								}
+							});
+						};
+					})();
+					window.parent = window;
+					window.top = window;
+					window.frameElement = null;
+				</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview</title>
+    <!-- Local Offline Assets -->
+    <link rel="stylesheet" href="https://file%2B.vscode-resource.vscode-cdn.net/c%3A/Users/melik/.kiro/extensions/allwin-antony.md-viewer-1.1.4-universal/resources/katex/katex.min.css">
+    <script src="https://file%2B.vscode-resource.vscode-cdn.net/c%3A/Users/melik/.kiro/extensions/allwin-antony.md-viewer-1.1.4-universal/resources/katex/katex.min.js"></script>
+    <script src="https://file%2B.vscode-resource.vscode-cdn.net/c%3A/Users/melik/.kiro/extensions/allwin-antony.md-viewer-1.1.4-universal/resources/katex/auto-render.min.js"></script>
+    <link rel="stylesheet" href="https://file%2B.vscode-resource.vscode-cdn.net/c%3A/Users/melik/.kiro/extensions/allwin-antony.md-viewer-1.1.4-universal/resources/highlight/github.min.css" id="highlight-light"="">
+    <link rel="stylesheet" href="https://file%2B.vscode-resource.vscode-cdn.net/c%3A/Users/melik/.kiro/extensions/allwin-antony.md-viewer-1.1.4-universal/resources/highlight/github-dark.min.css" id="highlight-dark" disabled>
+    <script src="https://file%2B.vscode-resource.vscode-cdn.net/c%3A/Users/melik/.kiro/extensions/allwin-antony.md-viewer-1.1.4-universal/resources/morphdom/morphdom-umd.min.js"></script>
+    
+    <style>
+        :root {
+            --content-max-width: 960px;
+            --preview-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --preview-font-size: 14px;
+            --preview-line-height: 1.7;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: var(--preview-font-family);
+            font-size: var(--preview-font-size);
+            line-height: var(--preview-line-height);
+            color: var(--vscode-editor-foreground);
+            background-color: var(--vscode-editor-background);
+            padding: 24px 32px;
+            max-width: var(--content-max-width);
+            margin: 0 auto;
+            word-wrap: break-word;
+            transition: padding-right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        body.minimap-open {
+            padding-right: 292px; /* 260px panel width + 32px padding gap */
+        }
+        @media (max-width: 1024px) {
+            body.minimap-open {
+                padding-right: 32px; /* overlay on small screens instead of reflow */
+            }
+        }
+        h1, h2, h3, h4, h5, h6 { margin-top: 28px; margin-bottom: 16px; font-weight: 600; line-height: 1.3; }
+        h1 { font-size: 2em; border-bottom: 2px solid var(--vscode-panel-border); padding-bottom: 0.3em; }
+        h2 { font-size: 1.5em; border-bottom: 1px solid var(--vscode-panel-border); padding-bottom: 0.3em; }
+        a { color: var(--vscode-textLink-foreground); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        pre { background-color: var(--vscode-textCodeBlock-background); padding: 16px; border-radius: 6px; overflow: auto; position: relative; }
+        code { font-family: 'Fira Code', 'Cascadia Code', monospace; background-color: var(--vscode-textCodeBlock-background); padding: 0.2em 0.4em; border-radius: 3px; font-size: 0.9em; }
+        pre code { padding: 0; background-color: transparent; }
+        img { max-width: 100%; height: auto; border-radius: 6px; cursor: zoom-in; transition: transform 0.2s ease; }
+        img:hover { transform: scale(1.01); }
+        blockquote { border-left: 4px solid var(--vscode-textBlockQuote-border); padding: 4px 16px; color: var(--vscode-textBlockQuote-foreground); margin: 0 0 16px 0; background-color: rgba(128,128,128,0.05); }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 16px; display: block; overflow-x: auto; }
+        th, td { border: 1px solid var(--vscode-panel-border); padding: 8px 14px; text-align: left; }
+        th { background-color: var(--vscode-textCodeBlock-background); font-weight: 600; }
+        tr:nth-child(even) { background-color: rgba(128, 128, 128, 0.05); }
+        .task-list-item { list-style-type: none; margin-left: -1.5em; display: flex; align-items: center; gap: 8px; }
+        .task-list-item input[type="checkbox"] { margin: 0; width: 16px; height: 16px; cursor: pointer; }
+        
+        /* KaTeX overrides */
+        .katex-display { margin: 1em 0; overflow-x: auto; overflow-y: hidden; text-align: center; }
+        html { scroll-behavior: smooth; }
+        ::selection { background-color: var(--vscode-editor-selectionBackground); }
+        .hljs { background: transparent !important; padding: 0 !important; }
+        .selected-highlight {
+            background-color: var(--vscode-editor-selectionHighlightBackground, rgba(128, 128, 128, 0.15)) !important;
+            outline: 2px dashed var(--vscode-focusBorder, rgba(0, 122, 204, 0.5)) !important;
+            outline-offset: 2px;
+            border-radius: 4px;
+            transition: background-color 0.15s ease, outline 0.15s ease;
+        }
+
+        /* Premium Alert Callout Blocks */
+        .alert-block {
+            padding: 16px 20px;
+            margin: 20px 0;
+            border-left: 4px solid var(--alert-border-color);
+            background-color: var(--alert-bg-color);
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .alert-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 0.85em;
+            margin-bottom: 8px;
+            color: var(--alert-text-color);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .alert-icon {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+        .alert-content {
+            color: var(--vscode-editor-foreground);
+            font-size: 0.95em;
+        }
+        .alert-content p:first-child { margin-top: 0; }
+        .alert-content p:last-child { margin-bottom: 0; }
+
+        body.vscode-dark, body.vscode-high-contrast {
+            --alert-bg-note: rgba(59, 130, 246, 0.08);
+            --alert-border-note: #3b82f6;
+            --alert-bg-tip: rgba(16, 185, 129, 0.08);
+            --alert-border-tip: #10b981;
+            --alert-bg-important: rgba(139, 92, 246, 0.08);
+            --alert-border-important: #8b5cf6;
+            --alert-bg-warning: rgba(245, 158, 11, 0.08);
+            --alert-border-warning: #f59e0b;
+            --alert-bg-caution: rgba(239, 68, 68, 0.08);
+            --alert-border-caution: #ef4444;
+        }
+        body.vscode-light {
+            --alert-bg-note: rgba(59, 130, 246, 0.05);
+            --alert-border-note: #2563eb;
+            --alert-bg-tip: rgba(16, 185, 129, 0.05);
+            --alert-border-tip: #059669;
+            --alert-bg-important: rgba(139, 92, 246, 0.05);
+            --alert-border-important: #7c3aed;
+            --alert-bg-warning: rgba(245, 158, 11, 0.05);
+            --alert-border-warning: #d97706;
+            --alert-bg-caution: rgba(239, 68, 68, 0.05);
+            --alert-border-caution: #dc2626;
+        }
+
+        .alert-note { --alert-bg-color: var(--alert-bg-note); --alert-border-color: var(--alert-border-note); --alert-text-color: var(--alert-border-note); }
+        .alert-tip { --alert-bg-color: var(--alert-bg-tip); --alert-border-color: var(--alert-border-tip); --alert-text-color: var(--alert-border-tip); }
+        .alert-important { --alert-bg-color: var(--alert-bg-important); --alert-border-color: var(--alert-border-important); --alert-text-color: var(--alert-border-important); }
+        .alert-warning { --alert-bg-color: var(--alert-bg-warning); --alert-border-color: var(--alert-border-warning); --alert-text-color: var(--alert-border-warning); }
+        .alert-caution { --alert-bg-color: var(--alert-bg-caution); --alert-border-color: var(--alert-border-caution); --alert-text-color: var(--alert-border-caution); }
+
+        /* Code Copy Button */
+        .code-copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(128, 128, 128, 0.12);
+            border: 1px solid rgba(128, 128, 128, 0.15);
+            border-radius: 4px;
+            color: var(--vscode-editor-foreground);
+            opacity: 0;
+            cursor: pointer;
+            padding: 5px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s ease, background-color 0.2s ease, transform 0.1s ease;
+            z-index: 10;
+        }
+        pre:hover .code-copy-btn { opacity: 1; }
+        .code-copy-btn:hover { background: rgba(128, 128, 128, 0.25); }
+        .code-copy-btn:active { transform: scale(0.92); }
+        .code-copy-btn svg { width: 14px; height: 14px; fill: currentColor; }
+
+        /* Lightbox Image Zoom Overlay */
+        .lightbox-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .lightbox-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .lightbox-image {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 6px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+            transform: scale(0.95);
+            transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: zoom-out;
+        }
+        .lightbox-overlay.active .lightbox-image {
+            transform: scale(1);
+        }
+        .lightbox-close-btn {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 2010;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .lightbox-close-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1) rotate(90deg);
+        }
+        .lightbox-close-btn:active {
+            transform: scale(0.95);
+        }
+        .lightbox-close-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* YouTube Embed Cards */
+        .yt-card-link {
+            display: block;
+            margin: 24px auto;
+            text-decoration: none !important;
+            color: inherit !important;
+            max-width: 100%;
+        }
+        .yt-card {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--vscode-panel-border);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease;
+        }
+        .yt-card-link:hover .yt-card {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.22);
+            border-color: var(--vscode-focusBorder);
+        }
+        .yt-card-thumbnail {
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+        .yt-card-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.8) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .yt-card-play-btn {
+            align-self: center;
+            margin-top: auto;
+            margin-bottom: auto;
+            width: 68px;
+            height: 48px;
+            background-color: rgba(229, 9, 20, 0.95);
+            color: #ffffff;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            transition: background-color 0.2s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .yt-card-play-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+        .yt-card-link:hover .yt-card-play-btn {
+            background-color: #ff0000;
+            transform: scale(1.12);
+        }
+        .yt-card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            text-align: left;
+        }
+        .yt-card-title {
+            color: #ffffff;
+            font-size: 1.1em;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+        }
+        .yt-card-subtitle {
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 0.85em;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+        .yt-fallback-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .yt-card-link:hover .yt-fallback-logo {
+            transform: translate(-50%, -50%) scale(1.08);
+        }
+
+        /* PDF Export Floating Button */
+        .pdf-export-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            z-index: 1000;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s ease, opacity 0.2s ease;
+        }
+        .pdf-export-btn:hover {
+            transform: scale(1.08);
+            background-color: var(--vscode-button-hoverBackground);
+        }
+        .pdf-export-btn svg {
+            width: 18px;
+            height: 18px;
+            transition: opacity 0.2s ease;
+        }
+
+        /* Sleek progress indicator spinner */
+        .pdf-export-btn.loading svg {
+            opacity: 0 !important;
+            pointer-events: none;
+        }
+        .pdf-export-btn.loading::after {
+            content: "";
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-right-color: currentColor;
+            border-radius: 50%;
+            animation: spin-loader 0.75s linear infinite;
+        }
+        @keyframes spin-loader {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Publication-Grade PDF Print Style overrides */
+        body.pdf-exporting {
+            background-color: #ffffff !important;
+            color: #1a1a1a !important;
+            padding: 24px 32px !important;
+            max-width: 800px !important;
+            margin: 0 auto !important;
+        }
+        body.pdf-exporting h1, 
+        body.pdf-exporting h2, 
+        body.pdf-exporting h3, 
+        body.pdf-exporting h4, 
+        body.pdf-exporting h5, 
+        body.pdf-exporting h6 {
+            color: #111111 !important;
+            border-bottom-color: #e5e5e5 !important;
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+        }
+        body.pdf-exporting a {
+            color: #0066cc !important;
+        }
+        body.pdf-exporting pre {
+            background-color: #f7f7f7 !important;
+            border: 1px solid #e1e1e1 !important;
+            color: #24292e !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+        body.pdf-exporting code {
+            background-color: #f7f7f7 !important;
+            color: #24292e !important;
+        }
+        body.pdf-exporting blockquote {
+            background-color: #fcfcfc !important;
+            border-left-color: #d1d1d1 !important;
+            color: #586069 !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+        body.pdf-exporting img {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            max-height: 450px !important;
+            object-fit: contain !important;
+        }
+        body.pdf-exporting table {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+        body.pdf-exporting tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+        body.pdf-exporting th,
+        body.pdf-exporting td {
+            border-color: #e1e1e1 !important;
+            color: #1a1a1a !important;
+        }
+        body.pdf-exporting th {
+            background-color: #f7f7f7 !important;
+        }
+        body.pdf-exporting tr:nth-child(even) {
+            background-color: #fafafa !important;
+        }
+        body.pdf-exporting .mermaid {
+            background-color: #ffffff !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            max-width: 100% !important;
+            overflow: visible !important;
+        }
+        body.pdf-exporting .mermaid svg {
+            max-width: 100% !important;
+            height: auto !important;
+        }
+        body.pdf-exporting .mermaid text {
+            fill: #1a1a1a !important;
+        }
+        body.pdf-exporting .yt-card {
+            border-color: #e5e5e5 !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+        body.pdf-exporting .yt-card-subtitle {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+        body.pdf-exporting .minimap-panel,
+        body.pdf-exporting .minimap-toggle-handle {
+            display: none !important;
+        }
+        body.pdf-exporting {
+            padding-right: 0 !important;
+        }
+
+        /* VS Code style Minimap / Outline Panel */
+        .minimap-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 260px;
+            z-index: 1000;
+            background: var(--vscode-sideBar-background, rgba(30, 30, 30, 0.75));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-left: 1px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.08));
+            box-shadow: -4px 0 16px rgba(0, 0, 0, 0.08);
+            transform: translateX(0);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+        }
+        .minimap-panel.collapsed {
+            transform: translateX(100%);
+        }
+
+        /* Sleek toggle handle pinned to the right edge when collapsed */
+        .minimap-toggle-handle {
+            position: fixed;
+            top: 24px;
+            right: 0;
+            width: 32px;
+            height: 40px;
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: 1px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.08));
+            border-right: none;
+            border-radius: 6px 0 0 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 999;
+            box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.15);
+            transform: translateX(100%);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease;
+        }
+        .minimap-toggle-handle.visible {
+            transform: translateX(0);
+        }
+        .minimap-toggle-handle:hover {
+            background-color: var(--vscode-button-hoverBackground);
+        }
+        .minimap-toggle-handle svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Header Buttons */
+        .minimap-action-btn {
+            background: none;
+            border: none;
+            color: var(--vscode-editor-foreground);
+            opacity: 0.6;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            border-radius: 4px;
+            width: 28px;
+            height: 28px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        .minimap-action-btn:hover {
+            opacity: 1;
+            background: rgba(128, 128, 128, 0.15);
+        }
+        .minimap-action-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* PDF Export spinner inside minimap */
+        .minimap-action-btn.loading svg {
+            opacity: 0 !important;
+            pointer-events: none;
+        }
+        .minimap-action-btn.loading::after {
+            content: "";
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-right-color: currentColor;
+            border-radius: 50%;
+            animation: spin-loader 0.75s linear infinite;
+        }
+
+        /* TOC inside minimap */
+        .minimap-toc-item {
+            display: block;
+            padding: 6px 10px;
+            color: var(--vscode-editor-foreground);
+            opacity: 0.6;
+            font-size: 11.5px;
+            border-radius: 4px;
+            transition: all 0.15s ease;
+            margin-bottom: 2px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-left: 2px solid transparent;
+            text-decoration: none !important;
+        }
+        .minimap-toc-item:hover {
+            opacity: 0.95;
+            background: rgba(128, 128, 128, 0.08);
+        }
+        .minimap-toc-item.active {
+            opacity: 1;
+            font-weight: 600;
+            color: var(--vscode-textLink-foreground, #007acc);
+            background: rgba(128, 128, 128, 0.05);
+            border-left-color: var(--vscode-textLink-foreground, #007acc);
+        }
+        .toc-h1 { padding-left: 8px; }
+        .toc-h2 { padding-left: 18px; }
+        .toc-h3 { padding-left: 28px; }
+        .toc-h4 { padding-left: 38px; }
+    </style>
+</head>
+<body role="document" class="vscode-dark minimap-open" data-vscode-theme-kind="vscode-dark" data-vscode-theme-name="Kiro Dark" data-vscode-theme-id="Kiro Dark">
+    <div id="content"><h1 data-line="0" id="ii3-couche-iot-acquisition-et-communication">II.3 Couche IoT — Acquisition et Communication</h1>
+<hr data-line="2">
+<h2 data-line="4" id="ii31-analyse-des-besoins-de-mesure">II.3.1 Analyse des besoins de mesure</h2>
+<h3 data-line="6" id="contexte-rglementaire">Contexte réglementaire</h3>
+<p data-line="8">La surveillance de la pollution industrielle en Tunisie est encadrée par le <strong>décret gouvernemental n°2018-928 du 7 novembre 2018</strong>, modifiant et complétant le décret n°2010-2519 du 28 septembre 2010, fixant les valeurs limite à la source des polluants de l’air des sources fixes. Le projet cible le site industriel de Sfax, un pôle industriel dense où la concentration d’émissions polluantes constitue un risque sanitaire documenté.</p>
+<p data-line="10">Le système de surveillance est conçu comme une <strong>plateforme générique</strong> applicable à tout type d’industrie tunisienne. Les valeurs limites d’émission (VLE) retenues sont donc les <strong>valeurs générales de l’Annexe 1</strong> du décret, applicables à toutes sources fixes industrielles en l’absence de valeur spécifique plus contraignante. Ces valeurs constituent le socle réglementaire minimal commun. Pour un déploiement sur un secteur spécifique (cimenterie → Annexe 6, raffinerie → Annexe 2, etc.), le modèle <code>ThresholdConfig</code> du backend permet de surcharger ces seuils sans modification du code.</p>
+<p data-line="12">Les polluants surveillés ont été choisis selon trois critères : leur présence significative dans les émissions industrielles tunisiennes, leur couverture par le décret, et la disponibilité locale de capteurs adaptés à un déploiement embarqué.</p>
+<h3 data-line="14" id="tableau-des-polluants-cibls">Tableau des polluants ciblés</h3>
+<table data-line="16">
+<thead data-line="16">
+<tr data-line="16">
+<th>Polluant</th>
+<th>Formule</th>
+<th>Unité système</th>
+<th>VLE (Décret 2010-2519, Annexe 1 — valeurs générales)</th>
+<th>Capteur retenu</th>
+<th>Plage capteur</th>
+</tr>
+</thead>
+<tbody data-line="18">
+<tr data-line="18">
+<td>Dioxyde de carbone</td>
+<td>CO₂</td>
+<td>ppm</td>
+<td>Non réglementé (seuil interne KPI)</td>
+<td>MH-Z19B</td>
+<td>0 – 5 000 ppm</td>
+</tr>
+<tr data-line="19">
+<td>Dioxyde d’azote</td>
+<td>NO₂</td>
+<td>mg/Nm³</td>
+<td><strong>500 mg/Nm³</strong> (flux &gt; 25 kg/h)</td>
+<td>MQ-131</td>
+<td>0 – 20 ppm → ~41 mg/Nm³ (mesure NOx+O₃)</td>
+</tr>
+<tr data-line="20">
+<td>Dioxyde de soufre</td>
+<td>SO₂</td>
+<td>mg/Nm³</td>
+<td><strong>300 mg/Nm³</strong> (flux &gt; 25 kg/h)</td>
+<td>MQ-136</td>
+<td>0 – 200 ppm → ~572 mg/Nm³ max</td>
+</tr>
+<tr data-line="21">
+<td>Composés organiques volatils</td>
+<td>COV / TVOC</td>
+<td>mg/Nm³</td>
+<td><strong>110 mg/Nm³</strong> (flux &gt; 2 kg/h)</td>
+<td>SGP30 (I²C)</td>
+<td>0 – ~60 mg/Nm³</td>
+</tr>
+<tr data-line="22">
+<td>Particules totales</td>
+<td>PM₂.₅</td>
+<td>mg/m³</td>
+<td><strong>40 mg/m³</strong> (flux &gt; 1 kg/h)</td>
+<td>SDS011</td>
+<td>0 – 999 µg/m³</td>
+</tr>
+<tr data-line="23">
+<td>Particules totales</td>
+<td>PM₁₀</td>
+<td>mg/m³</td>
+<td><strong>40 mg/m³</strong> (flux &gt; 1 kg/h)</td>
+<td>SDS011</td>
+<td>0 – 999 µg/m³</td>
+</tr>
+<tr data-line="24">
+<td>Température ambiante</td>
+<td>—</td>
+<td>°C</td>
+<td>Paramètre de contexte</td>
+<td>DHT22</td>
+<td>-40 – +80°C</td>
+</tr>
+<tr data-line="25">
+<td>Humidité relative</td>
+<td>—</td>
+<td>%RH</td>
+<td>Paramètre de contexte</td>
+<td>DHT22</td>
+<td>0 – 100 %RH</td>
+</tr>
+</tbody>
+</table>
+<blockquote data-line="27">
+<p data-line="27"><strong>Note :</strong> Les VLE de l’Annexe 1 sont des valeurs générales applicables à toutes sources fixes industrielles. Elles constituent les seuils par défaut du système. Pour un déploiement sectoriel spécifique, le modèle <code>ThresholdConfig</code> (MongoDB) permet de les remplacer par les valeurs de l’annexe réglementaire appropriée (ex. Annexe 6 pour les cimenteries). Le backend stocke ces valeurs dans le champ <code>regulatoryLimit</code> du modèle <code>Polluant</code> ; le moteur d’alertes (<code>ReadingService.js</code>) s’appuie dessus pour déclencher les alertes.</p>
+<p data-line="29">Les MQ-136 et MQ-131 mesurent en <strong>ppm</strong> via la courbe Rs/R0 du datasheet ; le firmware applique la conversion en mg/Nm³ avant publication MQTT (×2,86 pour SO₂, ×2,05 pour NOx), assurant la cohérence directe avec les seuils stockés en base.</p>
+</blockquote>
+<hr data-line="31">
+<h2 data-line="33" id="ii32-choix-de-la-carte-microcontrleur-esp32-wroom-32">II.3.2 Choix de la carte microcontrôleur : ESP32-WROOM-32</h2>
+<h3 data-line="35" id="justification-technique">Justification technique</h3>
+<p data-line="37">L’ESP32 DevKit V1 (module WROOM-32) a été retenu comme unité centrale de la station de surveillance. Ce choix repose sur un ensemble de caractéristiques qui répondent directement aux contraintes du projet.</p>
+<p data-line="39"><strong>Capacités WiFi intégrées.</strong> Le module intègre nativement un émetteur-récepteur WiFi 802.11 b/g/n sur la bande 2,4 GHz, éliminant tout module réseau externe et simplifiant le câblage. La connectivité WiFi permet la publication MQTT directe vers le broker Mosquitto hébergé sur le serveur backend.</p>
+<p data-line="41"><strong>Double cœur 240 MHz.</strong> L’architecture Xtensa LX6 dual-core à 240 MHz permet de séparer la gestion réseau (WiFi/MQTT, exécutée sur le cœur 0 par le stack ESP-IDF) des tâches applicatives (lecture capteurs, construction JSON). Cela garantit que les reconnexions réseau ne bloquent pas l’acquisition de données.</p>
+<p data-line="43"><strong>520 KB de RAM.</strong> La mémoire SRAM intégrée est suffisante pour maintenir les buffers UART des capteurs (MH-Z19B, SDS011), le document JSON ArduinoJson (384 octets par message), et le stack WiFi.</p>
+<p data-line="45"><strong>Support MQTT natif.</strong> La bibliothèque <code>PubSubClient</code> pour Arduino/ESP32 fournit une implémentation MQTT complète, compatible avec le broker Mosquitto utilisé en production. Le firmware configure un buffer de 512 octets (<code>mqtt.setBufferSize(512)</code>) adapté aux payloads JSON du projet.</p>
+<p data-line="47"><strong>Richesse des interfaces.</strong> L’ESP32 expose simultanément deux UART matériels (Serial1, Serial2), un bus I²C, et plusieurs canaux ADC 12 bits — exactement ce que requiert le tableau de capteurs hétérogènes du projet.</p>
+<p data-line="49"><strong>Faible coût et disponibilité locale.</strong> Le DevKit V1 est disponible chez les revendeurs électroniques de Sfax pour moins de 15 DT, en accord avec les contraintes budgétaires du projet.</p>
+<h3 data-line="51" id="tableau-comparatif-des-alternatives">Tableau comparatif des alternatives</h3>
+<table data-line="53">
+<thead data-line="53">
+<tr data-line="53">
+<th>Critère</th>
+<th>ESP32 DevKit V1 ✓</th>
+<th>Arduino Mega 2560</th>
+<th>Raspberry Pi Pico W</th>
+</tr>
+</thead>
+<tbody data-line="55">
+<tr data-line="55">
+<td>WiFi intégré</td>
+<td>Oui (802.11 b/g/n)</td>
+<td>Non (shield externe requis)</td>
+<td>Oui (CYW43439)</td>
+</tr>
+<tr data-line="56">
+<td>Fréquence CPU</td>
+<td>240 MHz dual-core</td>
+<td>16 MHz single-core</td>
+<td>133 MHz dual-core</td>
+</tr>
+<tr data-line="57">
+<td>RAM</td>
+<td>520 KB SRAM</td>
+<td>8 KB SRAM</td>
+<td>264 KB SRAM</td>
+</tr>
+<tr data-line="58">
+<td>UART matériels</td>
+<td>3 (Serial0/1/2)</td>
+<td>4</td>
+<td>2</td>
+</tr>
+<tr data-line="59">
+<td>ADC résolution</td>
+<td>12 bits (ADC1 — WiFi safe)</td>
+<td>10 bits</td>
+<td>12 bits</td>
+</tr>
+<tr data-line="60">
+<td>Support MQTT</td>
+<td>PubSubClient natif</td>
+<td>Limité</td>
+<td>Bibliothèque Python</td>
+</tr>
+<tr data-line="61">
+<td>Environnement dev</td>
+<td>PlatformIO / Arduino</td>
+<td>Arduino IDE</td>
+<td>MicroPython / C SDK</td>
+</tr>
+<tr data-line="62">
+<td>Coût estimé (TN)</td>
+<td>~15 DT</td>
+<td>~25 DT</td>
+<td>~18 DT</td>
+</tr>
+<tr data-line="63">
+<td>Verdict</td>
+<td><strong>Retenu</strong></td>
+<td>Insuffisant (RAM, WiFi)</td>
+<td>Alternative possible mais écosystème C++ limité</td>
+</tr>
+</tbody>
+</table>
+<p data-line="65"><strong>Conclusion :</strong> L’Arduino Mega est écarté principalement pour son manque de connectivité WiFi native et ses 8 KB de RAM, insuffisants pour le stack TCP/IP. Le Raspberry Pi Pico W constitue une alternative valable mais son écosystème C++ embarqué est moins mature que celui de l’ESP32 pour ce type d’application.</p>
+<h3 data-line="67" id="contraintes-dalimentation-retenues">Contraintes d’alimentation retenues</h3>
+<p data-line="69">L’alimentation de la station est assurée par un <strong>bloc d’alimentation à découpage 5 V / 3 A</strong> (format USB ou Jack DC) branché directement sur le secteur 220 V AC disponible dans les bâtiments industriels. Il n’y a pas de transformateur linéaire intermédiaire : le bloc secteur intègre lui-même la conversion AC/DC.</p>
+<p data-line="71">La distribution interne de l’énergie repose sur deux éléments complémentaires : un <strong>module MB102</strong> (Power Supply Module pour breadboard), qui distribue simultanément le 5 V et le 3,3 V à partir d’une entrée USB ou Jack DC, et un <strong>régulateur buck LM2596</strong> utilisé pour les charges nécessitant un 3,3 V stable avec une meilleure capacité de courant. La chaîne complète est la suivante :</p>
+<pre data-line="73" class="hljs"><code>220 V AC (secteur)
+        │
+        ▼
+Bloc alimentation à découpage 5V / 3A (USB / Jack DC)
+        │
+        ├── Interrupteur On/Off
+        │
+        ├── Fusible 1A (protection surintensité)
+        │
+        ├── Diode 1N4007 (protection contre inversion de polarité)
+        │
+        ├── Condensateur 100µF électrolytique (filtrage basse fréquence)
+        │
+        ▼
+        5V DC stabilisé
+        │
+        ├──────────────────────────────────────────────────────────────┐
+        │                                                              │
+        ▼                                                              ▼
+   [MB102 + LM2596 — régulateurs]                    5V direct (capteurs 5V)
+   LM2596 sortie : 3,3V                               ├── MH-Z19B (5V / 150mA)
+   MB102 : 3,3V bus breadboard                        └── SDS011 (5V / 70mA)
+   + Condo 100µF sortie + 100nF céramique
+        │
+        ▼
+   3,3V bus (capteurs logique basse tension)
+        ├── SGP30 (I²C)
+        ├── DHT22 (DATA)
+        ├── MQ-136 (pont diviseur → ADC GPIO33 + chauffage GPIO26)
+        ├── MQ-131 (pont diviseur → ADC GPIO34 + chauffage GPIO27)
+        └── ESP32 DevKit V1 (VIN → régulateur interne 3,3V)
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<p data-line="107"><strong>Condensateurs de découplage.</strong> Un condensateur de <strong>100 µF électrolytique</strong> est placé en entrée/sortie du LM2596, et un <strong>condensateur céramique 100 nF</strong> est positionné au plus près de chaque circuit intégré (ESP32, SGP30) pour filtrer les transitoires haute fréquence. Ces valeurs sont spécifiées dans le schéma électronique du projet (<code>SCHEMA_ELECTRONIQUE.svg</code>).</p>
+<blockquote data-line="109">
+<p data-line="109">Le champ <code>battery</code> dans le payload MQTT est systématiquement à <code>null</code> (firmware <code>main.cpp</code>, <code>doc["battery"] = nullptr</code>), confirmant l’alimentation permanente sur secteur.</p>
+</blockquote>
+<hr data-line="111">
+<h2 data-line="113" id="ii33-slection-et-justification-des-capteurs">II.3.3 Sélection et justification des capteurs</h2>
+<h3 data-line="115" id="mh-z19b-dioxyde-de-carbone-co">MH-Z19B — Dioxyde de carbone (CO₂)</h3>
+<p data-line="117"><strong>Principe physique.</strong> Le MH-Z19B utilise la technologie <strong>NDIR</strong> (Non-Dispersive InfraRed). Une source infrarouge émet un rayonnement dans la cellule de mesure ; les molécules de CO₂ absorbent spécifiquement la longueur d’onde 4,26 µm. La concentration est déduite de l’atténuation du signal mesuré par le détecteur. Cette méthode est hautement sélective au CO₂ et insensible à l’humidité et aux gaz interférants.</p>
+<p data-line="119"><strong>Caractéristiques techniques :</strong></p>
+<ul data-line="120">
+<li data-line="120">Plage de mesure : 0 – 5 000 ppm</li>
+<li data-line="121">Précision : ± 50 ppm ± 5 % de la lecture</li>
+<li data-line="122">Interface : UART 9600 bauds, 8N1 (Serial2 sur ESP32)</li>
+<li data-line="123">Alimentation : 5 V DC, courant pic ≈ 150 mA</li>
+<li data-line="124">Temps de préchauffage : 3 minutes (correction ABC automatique)</li>
+<li data-line="125">Durée de vie : &gt; 5 ans</li>
+</ul>
+<p data-line="127"><strong>Justification du choix.</strong> La mesure NDIR est la seule technologie portable capable d’identifier spécifiquement le CO₂ à des concentrations industrielles. La fonctionnalité ABC (Automatic Baseline Correction) compense la dérive à long terme sans intervention manuelle, ce qui est critique pour une station de surveillance autonome.</p>
+<p data-line="129"><strong>Câblage.</strong> Le MH-Z19B est alimenté en 5 V. Ses signaux TX/RX transitent par un <strong>convertisseur de niveau bidirectionnel</strong> avant les GPIO 16/17 de l’ESP32 (3,3 V) pour éviter d’endommager les entrées logiques.</p>
+<p data-line="131"><strong>Dans le firmware :</strong> Initialisé via <code>mhz19.begin(Serial2)</code> avec <code>mhz19.autoCalibration(true)</code>. La lecture se fait via <code>readCo2(ppm)</code> qui vérifie que la valeur retournée est &gt; 0 (valeur 0 = erreur UART ou capteur non prêt).</p>
+<p data-line="133"><strong>Fournisseur local.</strong> CoThings, Sfax.</p>
+<hr data-line="135">
+<h3 data-line="137" id="mq-136-dioxyde-de-soufre-so">MQ-136 — Dioxyde de soufre (SO₂)</h3>
+<p data-line="139"><strong>Principe physique.</strong> Le MQ-136 (Hanwei Electronics) est un capteur à <strong>oxyde métallique (MOS)</strong>. Un élément sensible en SnO₂ est chauffé à ~200 °C par un filament résistif intégré. En présence de SO₂, la résistance de surface du matériau diminue de manière proportionnelle à la concentration selon une loi log-linéaire. Ce type de capteur est robuste, peu coûteux et disponible localement.</p>
+<p data-line="141"><strong>Caractéristiques techniques :</strong></p>
+<ul data-line="142">
+<li data-line="142">Gaz cible principal : SO₂ (sensible aussi à H₂S, NH₃)</li>
+<li data-line="143">Plage de mesure : 1 – 200 ppm</li>
+<li data-line="144">Tension de chauffage : 5 V DC (~150–200 mA)</li>
+<li data-line="145">Tension de circuit : 5 V DC (pont diviseur + RL = 10 kΩ)</li>
+<li data-line="146">Temps de réponse T90 : &lt; 60 s</li>
+<li data-line="147">Temps de préchauffe : ≥ 24–48 h pour stabilisation R0</li>
+<li data-line="148">Interface : sortie analogique (tension) → diviseur résistif → ADC ESP32</li>
+</ul>
+<p data-line="150"><strong>Interface avec l’ESP32 — pont diviseur résistif.</strong> La sortie du MQ-136 est une tension entre 0 et 5 V (pont Rsensor + RL). Un <strong>diviseur résistif</strong> (R1 = 10 kΩ, R2 = 20 kΩ) ramène cette tension à ≤ 3,3 V pour l’ADC ESP32 :</p>
+<pre data-line="152" class="hljs"><code>      5V
+       │
+   [Rsensor(MQ136)]
+       │
+       ├──[R2 = 20kΩ]──► GND      → Vout_ADC (vers GPIO33)
+       │
+   [RL = 10kΩ]
+       │
+      GND
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<p data-line="164">La conversion tension → ppm est effectuée dans <code>sensors.cpp</code> via la courbe du datasheet :</p>
+<pre data-line="166" class="hljs"><code><span class="hljs-comment">// Rs = RL × (Vcc / Vout_reel - 1)</span>
+<span class="hljs-comment">// ppm = MQ136_A × (Rs / R0) ^ MQ136_B   (courbe log-linéaire Hanwei)</span>
+<span class="hljs-comment">// value = ppm × 2.86   (conversion → mg/Nm³)</span>
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<p data-line="172"><strong>Justification du choix.</strong> Le MQ-136 est un capteur de la famille MOS disponible chez tous les distributeurs électroniques tunisiens (~8 DT). Bien que moins précis et moins sélectif que les capteurs électrochimiques, il convient parfaitement à un prototype PFE : circuit simple (pas de TIA), tension de sortie directe, bibliothèque Arduino disponible. La calibration de R0 en air propre constitue une partie expérimentale documentable du travail.</p>
+<p data-line="174"><strong>Limitation.</strong> La mesure est semi-quantitative sans calibration terrain. La sensibilité croisée (H₂S, NH₃) peut générer de faux positifs dans certains environnements industriels. Ces limitations sont documentées dans les perspectives d’amélioration du projet.</p>
+<p data-line="176"><strong>Câblage.</strong> Le MQ-136 est alimenté en 5 V. Le GPIO de chauffage (GPIO26) est contrôlé par un transistor NPN 2N2222 (résistance de base 1 kΩ, diode 1N4007 de protection). La sortie analogique passe par le diviseur résistif avant <strong>GPIO33</strong> (ADC1 CH5).</p>
+<p data-line="178"><strong>Fournisseur local.</strong> Disponible chez tous les revendeurs électroniques Sfax/Tunis (~8 DT).</p>
+<hr data-line="180">
+<h3 data-line="182" id="mq-131-oxydes-dazote-nox">MQ-131 — Oxydes d’azote (NOx)</h3>
+<p data-line="184"><strong>Principe physique.</strong> Identique au MQ-136 : capteur MOS à base de SnO₂. Le MQ-131 est optimisé pour la détection des <strong>oxydants puissants</strong> : NOx (NO₂, NO) et ozone (O₃). Sa résistance de surface diminue en présence de ces gaz selon une courbe log-linéaire. Il n’est pas sélectif entre NO₂ et O₃ — la mesure représente une <strong>concentration d’oxydants totaux</strong>.</p>
+<p data-line="186"><strong>Caractéristiques techniques :</strong></p>
+<ul data-line="187">
+<li data-line="187">Gaz cibles : NO₂, NO (NOx) + O₃ (mesure combinée)</li>
+<li data-line="188">Plage de mesure : 10 ppb – 200 ppm</li>
+<li data-line="189">Tension de chauffage : 5 V DC (~150–200 mA)</li>
+<li data-line="190">Tension de circuit : 5 V DC</li>
+<li data-line="191">Temps de réponse T90 : &lt; 60 s</li>
+<li data-line="192">Temps de préchauffe : ≥ 24–48 h pour calibration R0</li>
+<li data-line="193">Interface : sortie analogique → diviseur résistif → ADC ESP32</li>
+</ul>
+<p data-line="195"><strong>Interface sur GPIO34.</strong> Même architecture diviseur résistif que le MQ-136. GPIO34 est une broche <strong>input-only</strong> de l’ESP32 (ADC1 CH6), adaptée à cette lecture analogique. Le chauffage est contrôlé via GPIO27.</p>
+<pre data-line="197" class="hljs"><code><span class="hljs-comment">// Conversion MQ-131 dans sensors.cpp :</span>
+<span class="hljs-comment">// Rs = RL × (Vcc / Vout_reel - 1)</span>
+<span class="hljs-comment">// ppm = MQ131_A × (Rs / R0) ^ MQ131_B</span>
+<span class="hljs-comment">// value = ppm × 2.05   (→ mg/Nm³, facteur NO₂)</span>
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<p data-line="204"><strong>Justification du choix.</strong> Pour un prototype PFE à bas coût, le MQ-131 offre une détection de la présence de composés oxydants azotés dans l’environnement industriel. Son prix (~10 DT) et sa disponibilité locale le rendent adapté à la phase de prototypage. La non-sélectivité NO₂/O₃ est une limitation connue et documentée.</p>
+<p data-line="206"><strong>Limitation.</strong> La réponse combinée NOx+O₃ ne permet pas de dissocier les deux espèces. La VLE réglementaire du décret (500 mg/Nm³) est définie pour les NOx seuls (hors N₂O). La valeur publiée est donc indicative des oxydants totaux en zone périmétrique.</p>
+<p data-line="208"><strong>Câblage.</strong> Alimentation 5 V, chauffage via GPIO27/transistor NPN, sortie analogique via diviseur résistif vers <strong>GPIO34</strong> (ADC1 CH6, input-only).</p>
+<p data-line="210"><strong>Fournisseur local.</strong> Disponible chez tous les revendeurs électroniques Sfax/Tunis (~10 DT).</p>
+<hr data-line="212">
+<h3 data-line="214" id="sgp30-composs-organiques-volatils-cov-tvoc">SGP30 — Composés organiques volatils (COV / TVOC)</h3>
+<p data-line="216"><strong>Principe physique.</strong> Capteur <strong>électrochimique I²C</strong> (Sensirion). La mesure TVOC (Total Volatile Organic Compounds) est basée sur la variation de résistance d’une couche d’oxyde métallique chauffée en présence de COV. Le SGP30 intègre également un algorithme de correction d’humidité et produit un index de qualité d’air.</p>
+<p data-line="218"><strong>Caractéristiques techniques :</strong></p>
+<ul data-line="219">
+<li data-line="219">Mesures : TVOC (ppb) et eCO₂ (ppm équivalent)</li>
+<li data-line="220">Interface : I²C, adresse 0x58, SDA GPIO 21 / SCL GPIO 22</li>
+<li data-line="221">Alimentation : 3,3 V exclusivement</li>
+<li data-line="222">Période de mesure recommandée : ≥ 1 s (utilisé à 30 s dans le projet)</li>
+</ul>
+<p data-line="224"><strong>Conversion dans le firmware.</strong> Le SGP30 restitue le TVOC en ppb. Le backend attend des mg/Nm³. Le firmware applique une conversion approximative :</p>
+<pre data-line="226" class="hljs"><code>out.value = tvocPpb * <span class="hljs-number">0.0045f</span>;  <span class="hljs-comment">// ≈ ppb → mg/Nm³ (approximation)</span>
+out.rawValue = tvocPpb;         <span class="hljs-comment">// ppb conservé comme valeur brute</span>
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<p data-line="231">Cette conversion est une approximation linéaire valable pour un mélange COV typique. Pour une mesure réglementaire certifiée, une calibration labo avec gaz étalon est requise.</p>
+<p data-line="233"><strong>Justification.</strong> Le SGP30 est le seul capteur COV du projet qui ne nécessite ni cycle de chauffe externe, ni circuit analogique complexe. Son interface I²C s’intègre directement sur le bus existant (SGP30 + OLED SSD1306).</p>
+<hr data-line="235">
+<h3 data-line="237" id="sds011-particules-pm25-et-pm10">SDS011 — Particules PM2.5 et PM10</h3>
+<p data-line="239"><strong>Principe physique.</strong> Le SDS011 utilise la <strong>diffusion laser</strong> (OPC — Optical Particle Counter). Un laser 650 nm éclaire les particules en suspension ; la lumière diffusée est analysée par un photorécepteur. La granulométrie (PM2.5 et PM10) est déduite de l’intensité et de la fréquence des impulsions. Un ventilateur intégré aspire l’air à travers la chambre de mesure.</p>
+<p data-line="241"><strong>Caractéristiques techniques :</strong></p>
+<ul data-line="242">
+<li data-line="242">Plages : PM2.5 : 0 – 999,9 µg/m³ | PM10 : 0 – 999,9 µg/m³</li>
+<li data-line="243">Précision : ± 15 % (0 – 35 µg/m³), ± 10 % (35 – 500 µg/m³)</li>
+<li data-line="244">Interface : UART 9600 bauds (Serial1 : RX GPIO 18 / TX GPIO 19)</li>
+<li data-line="245">Mode d’acquisition : <strong>Query mode</strong> — l’ESP32 envoie une commande, le SDS011 répond avec une trame 10 octets contenant PM2.5 et PM10</li>
+<li data-line="246">Durée de vie laser : ≈ 8 000 heures</li>
+</ul>
+<p data-line="248"><strong>Justification.</strong> La diffusion laser offre une mesure simultanée des deux fractions granulométriques avec une seule acquisition UART. Le mode query évite le flux continu qui saturerait le buffer UART.</p>
+<p data-line="250"><strong>Fournisseur local.</strong> 2btrading, Tunis (livraison Sfax).</p>
+<p data-line="252"><strong>Dans le firmware :</strong> Une seule lecture <code>readParticulates()</code> produit deux publications MQTT distinctes : <code>emissions/Zone-A/PM25</code> et <code>emissions/Zone-A/PM10</code>.</p>
+<hr data-line="254">
+<h3 data-line="256" id="dht22-temprature-et-humidit">DHT22 — Température et humidité</h3>
+<p data-line="258"><strong>Note sur le plan initial :</strong> Le SHT31 (I²C, ±0.3°C) a été envisagé initialement, mais remplacé par le <strong>DHT22</strong>, disponible immédiatement chez tous les distributeurs électroniques tunisiens. Son interface 1-wire n’occupe pas le bus I²C (déjà utilisé par SGP30 + OLED).</p>
+<p data-line="260"><strong>Caractéristiques DHT22 :</strong></p>
+<ul data-line="261">
+<li data-line="261">Précision température : ± 0,5°C (plage -40 à +80°C)</li>
+<li data-line="262">Précision humidité : ± 2 – 5 %RH (plage 0 – 100 %RH)</li>
+<li data-line="263">Interface : protocole 1-wire propriétaire, GPIO 4 (pull-up 10 kΩ)</li>
+<li data-line="264">Alimentation : 3,3 V – 5 V</li>
+</ul>
+<p data-line="266"><strong>Rôle dans le système.</strong> La température et l’humidité sont publiées comme paramètres de contexte environnemental. Ils alimentent les modèles IA du backend pour la modélisation de la dispersion des polluants. La température est également un facteur de correction pour la sensibilité des capteurs électrochimiques ME4 (compensation recommandée en calibration avancée).</p>
+<hr data-line="268">
+<h3 data-line="270" id="afficheur-oled-12864-retour-oprateur-local">Afficheur OLED 128×64 — Retour opérateur local</h3>
+<p data-line="272">Un afficheur OLED 128×64 pixels (contrôleur SSD1306, interface I²C) est prévu sur le même bus que le SGP30 pour afficher en temps réel les dernières valeurs mesurées et l’état de la connexion MQTT. Ce composant permet au technicien de maintenance de vérifier le fonctionnement de la station sans accès au tableau de bord web.</p>
+<hr data-line="274">
+<h3 data-line="276" id="tableau-rcapitulatif-des-capteurs">Tableau récapitulatif des capteurs</h3>
+<table data-line="278">
+<thead data-line="278">
+<tr data-line="278">
+<th>Capteur</th>
+<th>Polluant mesuré</th>
+<th>Principe</th>
+<th>Interface GPIO</th>
+<th>Fréquence</th>
+<th>Alimentation</th>
+<th>Notes câblage</th>
+</tr>
+</thead>
+<tbody data-line="280">
+<tr data-line="280">
+<td>MH-Z19B</td>
+<td>CO₂</td>
+<td>NDIR infrarouge</td>
+<td>UART — RX:16 TX:17</td>
+<td>10 s</td>
+<td>5 V / 150 mA</td>
+<td>Level shifter bidirectionnel</td>
+</tr>
+<tr data-line="281">
+<td>MQ-136</td>
+<td>SO₂</td>
+<td>Oxyde métallique (MOS)</td>
+<td>ADC GPIO 33 (pont divis. RL=10kΩ)</td>
+<td>30 s</td>
+<td>5 V / 150–200 mA</td>
+<td>Diviseur 10kΩ/20kΩ + chauffage GPIO26</td>
+</tr>
+<tr data-line="282">
+<td>MQ-131</td>
+<td>NOx / O₃</td>
+<td>Oxyde métallique (MOS)</td>
+<td>ADC GPIO 34 input-only (pont divis.)</td>
+<td>30 s</td>
+<td>5 V / 150–200 mA</td>
+<td>Diviseur 10kΩ/20kΩ + chauffage GPIO27</td>
+</tr>
+<tr data-line="283">
+<td>SGP30</td>
+<td>COV / TVOC</td>
+<td>MOX I²C</td>
+<td>I²C SDA:21 SCL:22 + pull-up 2×4,7kΩ</td>
+<td>30 s</td>
+<td>3,3 V</td>
+<td>Bus partagé avec OLED</td>
+</tr>
+<tr data-line="284">
+<td>SDS011</td>
+<td>PM2.5 / PM10</td>
+<td>Diffusion laser</td>
+<td>UART — RX:18 TX:19</td>
+<td>15 s</td>
+<td>5 V / 70 mA</td>
+<td>Level shifter bidirectionnel</td>
+</tr>
+<tr data-line="285">
+<td>DHT22</td>
+<td>Température / Humidité</td>
+<td>Capacitif 1-wire</td>
+<td>GPIO 4 + pull-up 10 kΩ</td>
+<td>10 s</td>
+<td>3,3 V</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr data-line="287">
+<h2 data-line="289" id="ii34-architecture-matrielle-du-nud-iot">II.3.4 Architecture matérielle du nœud IoT</h2>
+<h3 data-line="291" id="schma-dalimentation">Schéma d’alimentation</h3>
+<pre data-line="293" class="hljs"><code>220 V AC (secteur industriel)
+        │
+        ▼
+[Bloc alimentation à découpage 5V / 3A — USB / Jack DC]
+        │
+        ├──[Interrupteur On/Off]
+        ├──[Fusible 1A]──[Diode 1N4007 (anti-inversion)]
+        │
+        ▼
+        5V DC stabilisé
+        │
+        ├──────────────────────────────────────────┐
+        │                                          │
+        ▼                                          ▼
+   [MB102 + LM2596 régulateurs]           5V bus direct
+   MB102 : rail 3,3V breadboard           ├── MH-Z19B (5V / 150mA)
+   LM2596 : 3,3V haute capacité           └── SDS011 (5V / 70mA)
+   + 100µF électo (IN/OUT)
+   + 100nF céramique (IN/OUT)
+        │
+        ▼
+     3,3V bus
+        ├── DHT22 (DATA GPIO4 + pull-up 10kΩ)
+        ├── SGP30 (I²C SDA/SCL + pull-up 2×4,7kΩ)
+        ├── MQ-136 (pont div. 10k/20kΩ → ADC GPIO33 + NPN chauffage GPIO26)
+        ├── MQ-131 (pont div. 10k/20kΩ → ADC GPIO34 + NPN chauffage GPIO27)
+        └── ESP32 DevKit V1 (VIN 5V → régulateur interne 3,3V)
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<h3 data-line="323" id="affectation-complte-des-gpio">Affectation complète des GPIO</h3>
+<pre data-line="325" class="hljs"><code>ESP32 DevKit V1
+┌─────────────────────────────────────────────────────┐
+│  GPIO  4  ← DHT22 DATA (pull-up 10 kΩ vers 3,3V)   │
+│  GPIO 16  ← MH-Z19B TX  (UART RX — Serial2)        │
+│  GPIO 17  → MH-Z19B RX  (UART TX — Serial2)        │
+│  GPIO 18  ← SDS011 TX   (UART RX — Serial1)        │
+│  GPIO 19  → SDS011 RX   (UART TX — Serial1)        │
+│  GPIO 21  ↔ I²C SDA     (SGP30 + OLED SSD1306)     │
+│  GPIO 22  ↔ I²C SCL     (SGP30 + OLED SSD1306)     │
+│  GPIO 26  → MQ-136 Heater (NPN 2N2222, R_base 1kΩ) │
+│  GPIO 27  → MQ-131 Heater (NPN 2N2222, R_base 1kΩ) │
+│  GPIO 33  ← MQ-136 Vout  (ADC1 CH5, diviseur 3,3V) │
+│  GPIO 34  ← MQ-131 Vout  (ADC1 CH6 input-only)     │
+│  VIN (5V) ← Alimentation principale                │
+│  GND      ← Masse commune                          │
+└─────────────────────────────────────────────────────┘
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<p data-line="344"><strong>Règles de câblage importantes :</strong></p>
+<ul data-line="345">
+<li data-line="345">Les entrées ADC GPIO 34–39 sont <em>input-only</em> : pas de pull-up interne, tension max 3,3 V.</li>
+<li data-line="346">Lors de l’utilisation du WiFi, utiliser exclusivement <strong>ADC1</strong> (GPIO 32–39) — l’ADC2 est conflictuel avec le stack WiFi.</li>
+<li data-line="347">Les signaux UART des capteurs 5 V (MH-Z19B, SDS011) passent par un <strong>convertisseur de niveau bidirectionnel</strong> pour protéger les GPIO 3,3 V de l’ESP32.</li>
+<li data-line="348">Les résistances de tirage I²C (<strong>2 × 4,7 kΩ</strong> entre SDA/SCL et 3,3 V) sont obligatoires pour la stabilité du bus SGP30 + OLED.</li>
+<li data-line="349">La sortie analogique des MQ-136 et MQ-131 (0–5 V) doit passer par un <strong>diviseur résistif</strong> (R1 = 10 kΩ, R2 = 20 kΩ) avant l’ADC pour rester ≤ 3,3 V.</li>
+<li data-line="350">Le chauffage des capteurs MQ est alimenté en 5 V via un transistor <strong>NPN 2N2222</strong> (résistance de base 1 kΩ, diode 1N4007) contrôlé par les GPIO 26/27.</li>
+<li data-line="351">Un condensateur <strong>100 µF électrolytique</strong> et un <strong>100 nF céramique</strong> sont placés en entrée/sortie du LM2596 et au plus près de chaque IC pour le découplage.</li>
+<li data-line="352">La <strong>masse GND est commune</strong> à tous les modules (5 V et 3,3 V) pour garantir une référence ADC stable.</li>
+</ul>
+<h3 data-line="354" id="schma-logique-de-la-station-station-sfax-01-en-zone-a">Schéma logique de la station Station-Sfax-01 en Zone-A</h3>
+<pre data-line="356" class="hljs"><code>                    ┌─────────────────────────────────────────────┐
+                    │         Station-Sfax-01 — Zone-A            │
+                    │                                             │
+  [MH-Z19B] ─UART─[Level Shifter]─►│  Serial2                   │
+  [SDS011]  ─UART─[Level Shifter]─►│  Serial1  ┌──────────┐  WiFi 2,4 GHz     │
+  [SGP30]   ─I²C (4.7kΩ pull-up)──►│  I²C bus  │          │──────────────────►│──► MQTT Broker
+  [OLED]    ─I²C (4.7kΩ pull-up)──►│  I²C bus  │  ESP32   │   emissions/#     │    Mosquitto
+  [DHT22]   ─1wire (10kΩ pull-up)─►│  GPIO 4   │  WROOM   │                   │    :1883
+  [MQ-136]  ─Pont div. (10k/20k)──►│  GPIO 33  │   32     │                   │
+  [MQ-131]  ─Pont div. (10k/20k)──►│  GPIO 34  └──────────┘                   │
+  [GPIO26]  ─►[NPN MQ-136 heater]  │                           │
+  [GPIO27]  ─►[NPN MQ-131 heater]  │                           │
+                    │                 │ UART USB                  │
+                    │                 ▼                           │
+                    │          Console Série 115200               │
+                    └─────────────────────────────────────────────┘
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<hr data-line="375">
+<h2 data-line="377" id="ii35-protocole-de-communication-mqtt">II.3.5 Protocole de communication MQTT</h2>
+<h3 data-line="379" id="modle-publishsubscribe">Modèle Publish/Subscribe</h3>
+<p data-line="381">MQTT (Message Queuing Telemetry Transport) est un protocole de messagerie léger basé sur le modèle <strong>Publish/Subscribe</strong>. Ce modèle découple les producteurs de données (stations ESP32) des consommateurs (backend Node.js, tableaux de bord), permettant l’ajout de nouveaux abonnés sans modifier les stations.</p>
+<pre data-line="383" class="hljs"><code>Station ESP32         Broker Mosquitto        Backend Node.js
+(Publisher)           (Port 1883)             (Subscriber)
+     │                     │                       │
+     │── PUBLISH ─────────►│                       │
+     │  emissions/Zone-A/CO2                       │
+     │  {JSON payload}     │──── FORWARD ─────────►│
+     │                     │  (toutes les zones)   │
+     │── PUBLISH ─────────►│                       │
+     │  emissions/Zone-A/PM25                      │
+     │  {JSON payload}     │──── FORWARD ─────────►│
+     │                     │                       │
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<p data-line="397"><strong>Broker retenu :</strong> Mosquitto (Eclipse), version open-source, déployé en local sur le serveur backend. Port <strong>1883</strong> (non-TLS en environnement de développement). La configuration TLS est prévue pour la phase de production.</p>
+<h3 data-line="399" id="structure-des-topics">Structure des topics</h3>
+<p data-line="401">Le schéma de topic est défini dans <code>config.h</code> :</p>
+<pre data-line="403" class="hljs"><code>emissions / &lt;NODE_ZONE&gt; / &lt;sensorType&gt;
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<p data-line="407">Exemples de topics publiés par la station Station-Sfax-01 :</p>
+<table data-line="409">
+<thead data-line="409">
+<tr data-line="409">
+<th>Topic</th>
+<th>Polluant</th>
+<th>Capteur</th>
+</tr>
+</thead>
+<tbody data-line="411">
+<tr data-line="411">
+<td><code>emissions/Zone-A/CO2</code></td>
+<td>CO₂</td>
+<td>MH-Z19B</td>
+</tr>
+<tr data-line="412">
+<td><code>emissions/Zone-A/NOX</code></td>
+<td>NOx</td>
+<td>MQ-131</td>
+</tr>
+<tr data-line="413">
+<td><code>emissions/Zone-A/SO2</code></td>
+<td>SO₂</td>
+<td>MQ-136</td>
+</tr>
+<tr data-line="414">
+<td><code>emissions/Zone-A/PM25</code></td>
+<td>PM2.5</td>
+<td>SDS011</td>
+</tr>
+<tr data-line="415">
+<td><code>emissions/Zone-A/PM10</code></td>
+<td>PM10</td>
+<td>SDS011</td>
+</tr>
+<tr data-line="416">
+<td><code>emissions/Zone-A/COV</code></td>
+<td>TVOC</td>
+<td>SGP30</td>
+</tr>
+<tr data-line="417">
+<td><code>emissions/Zone-A/TEMPERATURE</code></td>
+<td>Température</td>
+<td>DHT22</td>
+</tr>
+<tr data-line="418">
+<td><code>emissions/Zone-A/HUMIDITY</code></td>
+<td>Humidité</td>
+<td>DHT22</td>
+</tr>
+</tbody>
+</table>
+<p data-line="420"><strong>Abonnement backend — wildcard :</strong> Le service <code>mqttService.js</code> s’abonne au topic <code>emissions/#</code> avec un QoS 1. Le caractère <code>#</code> est le wildcard multi-niveau MQTT : il capte tous les messages de toutes les zones et tous les types de polluants, permettant l’extension future à plusieurs stations sans modifier le backend.</p>
+<pre data-line="422" class="hljs"><code><span class="hljs-comment">// mqttService.js — abonnement backend</span>
+client.<span class="hljs-title function_">subscribe</span>(<span class="hljs-string">"emissions/#"</span>, { <span class="hljs-attr">qos</span>: <span class="hljs-number">1</span> }, <span class="hljs-function">(<span class="hljs-params">err</span>) =&gt;</span> {
+    <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">"📡 [MQTT Service] Abonné au topic: emissions/#"</span>);
+});
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<h3 data-line="429" id="niveaux-qos">Niveaux QoS</h3>
+<table data-line="431">
+<thead data-line="431">
+<tr data-line="431">
+<th>QoS</th>
+<th>Garantie</th>
+<th>Choix</th>
+</tr>
+</thead>
+<tbody data-line="433">
+<tr data-line="433">
+<td>QoS 0</td>
+<td>At-most-once (fire and forget)</td>
+<td>Non retenu — perte possible</td>
+</tr>
+<tr data-line="434">
+<td><strong>QoS 1</strong></td>
+<td><strong>At-least-once (accusé de réception)</strong></td>
+<td><strong>Retenu</strong></td>
+</tr>
+<tr data-line="435">
+<td>QoS 2</td>
+<td>Exactly-once</td>
+<td>Surcoût inutile pour les mesures</td>
+</tr>
+</tbody>
+</table>
+<p data-line="437"><strong>Justification du QoS 1.</strong> Pour les mesures de pollution industrielle, la perte de données est inacceptable (risque de non-détection de dépassement). Le QoS 1 garantit la livraison avec un seul acquittement, sans le surcoût du handshake à quatre messages du QoS 2. Les doublons éventuels (retransmission en cas de perte de l’ACK) sont gérés côté backend par la déduplication temporelle.</p>
+<h3 data-line="439" id="format-json-du-message-transmis">Format JSON du message transmis</h3>
+<p data-line="441">Le payload JSON est construit dans <code>main.cpp</code> par la fonction <code>publishReading()</code> :</p>
+<pre data-line="443" class="hljs"><code><span class="hljs-comment">// Extrait main.cpp — construction du payload JSON</span>
+JsonDocument doc;
+doc[<span class="hljs-string">"sensorType"</span>] = sensorType;   <span class="hljs-comment">// Code polluant : CO2, NOX, SO2, PM25…</span>
+doc[<span class="hljs-string">"model"</span>]      = model;        <span class="hljs-comment">// Référence hardware : MH-Z19B, MQ-136, MQ-131…</span>
+doc[<span class="hljs-string">"zone"</span>]       = NODE_ZONE;    <span class="hljs-comment">// Zone logique : Zone-A</span>
+doc[<span class="hljs-string">"nodeName"</span>]   = NODE_NAME;    <span class="hljs-comment">// Identifiant station : Station-Sfax-01</span>
+doc[<span class="hljs-string">"value"</span>]      = value;        <span class="hljs-comment">// Valeur traitée (ppm, µg/m³, mg/Nm³…)</span>
+doc[<span class="hljs-string">"rawValue"</span>]   = rawValue;     <span class="hljs-comment">// Valeur brute (tension TIA en V pour ME4, ppb pour SGP30)</span>
+doc[<span class="hljs-string">"unit"</span>]       = unit;         <span class="hljs-comment">// Unité : ppm, µg/m³, mg/Nm³, °C, %RH</span>
+doc[<span class="hljs-string">"level"</span>]      = level;        <span class="hljs-comment">// Niveau indicatif local : normal|warning|high|critical</span>
+doc[<span class="hljs-string">"timestamp"</span>]  = <span class="hljs-built_in">isoTimestamp</span>(); <span class="hljs-comment">// ISO 8601 UTC (NTP)</span>
+doc[<span class="hljs-string">"isValid"</span>]    = isValid;      <span class="hljs-comment">// false si capteur en défaut</span>
+doc[<span class="hljs-string">"rssi"</span>]       = WiFi.<span class="hljs-built_in">RSSI</span>();  <span class="hljs-comment">// Signal WiFi en dBm (diagnostic)</span>
+doc[<span class="hljs-string">"battery"</span>]    = <span class="hljs-literal">nullptr</span>;      <span class="hljs-comment">// null : alimentation secteur permanente</span>
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<p data-line="460"><strong>Exemple de message CO₂ publié sur <code>emissions/Zone-A/CO2</code> :</strong></p>
+<pre data-line="462" class="hljs"><code><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"sensorType"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"CO2"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"model"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"MH-Z19B"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"zone"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"Zone-A"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"nodeName"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"Station-Sfax-01"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"value"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">850</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"rawValue"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">850</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"unit"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"ppm"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"level"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"warning"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"timestamp"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"2026-06-04T08:32:15Z"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"isValid"</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"rssi"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">-62</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"battery"</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">null</span></span>
+<span class="hljs-punctuation">}</span>
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<p data-line="479"><strong>Exemple de message SO₂ publié sur <code>emissions/Zone-A/SO2</code> :</strong></p>
+<pre data-line="481" class="hljs"><code><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"sensorType"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"SO2"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"model"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"MQ-136"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"zone"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"Zone-A"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"nodeName"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"Station-Sfax-01"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"value"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">12.01</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"rawValue"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.336</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"unit"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"mg/Nm³"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"level"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"normal"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"timestamp"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"2026-06-04T08:32:45Z"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"isValid"</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"rssi"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">-62</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"battery"</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">null</span></span>
+<span class="hljs-punctuation">}</span>
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<blockquote data-line="498">
+<p data-line="498"><code>value</code> = 4,2 ppm × 2,86 = <strong>12,01 mg/Nm³</strong> (post-conversion firmware). <code>rawValue</code> = tension TIA en volts (0,336 V), utile pour le diagnostic du circuit de conditionnement.</p>
+</blockquote>
+<p data-line="500"><strong>Exemple de message PM2.5 publié sur <code>emissions/Zone-A/PM25</code> :</strong></p>
+<pre data-line="502" class="hljs"><code><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"sensorType"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"PM25"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"model"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"SDS011"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"zone"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"Zone-A"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"nodeName"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"Station-Sfax-01"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"value"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">38.7</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"rawValue"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">38.7</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"unit"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"µg/m³"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"level"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"high"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"timestamp"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"2026-06-04T08:32:30Z"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"isValid"</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"rssi"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">-62</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"battery"</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">null</span></span>
+<span class="hljs-punctuation">}</span>
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<hr data-line="519">
+<h2 data-line="521" id="ii36-stratgie-de-transmission-et-frquences-de-publication">II.3.6 Stratégie de transmission et fréquences de publication</h2>
+<h3 data-line="523" id="boucle-principale-non-bloquante">Boucle principale non bloquante</h3>
+<p data-line="525">Le firmware adopte une architecture de planification <strong>non bloquante</strong> basée sur <code>millis()</code>. La boucle <code>loop()</code> vérifie en permanence si l’intervalle de chaque famille de capteurs est écoulé, sans aucun <code>delay()</code> bloquant dans le chemin critique.</p>
+<pre data-line="527" class="hljs"><code><span class="hljs-comment">// Extrait main.cpp — loop() non bloquant</span>
+<span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">loop</span><span class="hljs-params">()</span> </span>{
+  <span class="hljs-comment">// Maintien connexions réseau</span>
+  <span class="hljs-keyword">if</span> (WiFi.<span class="hljs-built_in">status</span>() != WL_CONNECTED) <span class="hljs-built_in">connectWiFi</span>();
+  <span class="hljs-keyword">if</span> (!mqtt.<span class="hljs-built_in">connected</span>()) <span class="hljs-built_in">connectMqtt</span>();
+  mqtt.<span class="hljs-built_in">loop</span>();  <span class="hljs-comment">// Keep-alive MQTT et callbacks</span>
+
+  <span class="hljs-type">const</span> <span class="hljs-type">unsigned</span> <span class="hljs-type">long</span> now = <span class="hljs-built_in">millis</span>();
+
+  <span class="hljs-keyword">if</span> (now - lastCo2Ms &gt;= INTERVAL_CO2_MS) {   <span class="hljs-comment">// 10 000 ms</span>
+    lastCo2Ms = now;
+    <span class="hljs-built_in">publishCo2</span>();
+  }
+  <span class="hljs-keyword">if</span> (now - lastPmMs &gt;= INTERVAL_PM_MS) {      <span class="hljs-comment">// 15 000 ms</span>
+    lastPmMs = now;
+    <span class="hljs-built_in">publishParticulates</span>();
+  }
+  <span class="hljs-keyword">if</span> (now - lastGasMs &gt;= INTERVAL_GAS_MS) {    <span class="hljs-comment">// 30 000 ms</span>
+    lastGasMs = now;
+    <span class="hljs-built_in">publishGases</span>();
+  }
+  <span class="hljs-keyword">if</span> (now - lastEnvMs &gt;= INTERVAL_ENV_MS) {    <span class="hljs-comment">// 10 000 ms</span>
+    lastEnvMs = now;
+    <span class="hljs-built_in">publishEnvironment</span>();
+  }
+  <span class="hljs-built_in">delay</span>(<span class="hljs-number">50</span>);  <span class="hljs-comment">// Cède au watchdog et au stack WiFi</span>
+}
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<h3 data-line="557" id="frquences-de-publication-par-capteur">Fréquences de publication par capteur</h3>
+<p data-line="559">Les fréquences sont définies dans <code>config.h</code> et justifiées par les caractéristiques physiques de chaque capteur :</p>
+<table data-line="561">
+<thead data-line="561">
+<tr data-line="561">
+<th>Capteur</th>
+<th>Intervalle</th>
+<th>Justification</th>
+</tr>
+</thead>
+<tbody data-line="563">
+<tr data-line="563">
+<td>MH-Z19B (CO₂)</td>
+<td><strong>10 s</strong></td>
+<td>Réponse UART rapide, capteur NDIR sans contrainte de chauffe en régime permanent</td>
+</tr>
+<tr data-line="564">
+<td>DHT22 (T°/HR)</td>
+<td><strong>10 s</strong></td>
+<td>Temps de conversion ~2 s, limite datasheet : 0,5 Hz maximum</td>
+</tr>
+<tr data-line="565">
+<td>SDS011 (PM2.5/PM10)</td>
+<td><strong>15 s</strong></td>
+<td>Cycle d’acquisition laser + paquet UART + stabilisation ventilateur</td>
+</tr>
+<tr data-line="566">
+<td>MQ-136 + MQ-131 + SGP30 (SO₂/NOx/COV)</td>
+<td><strong>30 s</strong></td>
+<td>Moyennage ADC sur 16 échantillons (MQ), stabilisation I²C SGP30 (T90 ≤ 30 s)</td>
+</tr>
+</tbody>
+</table>
+<p data-line="568"><strong>Charge réseau estimée.</strong> À ces fréquences, la station génère environ :</p>
+<ul data-line="569">
+<li data-line="569">3 messages par 30 s pour SO₂, NO₂ et COV</li>
+<li data-line="570">2 messages par 15 s pour PM</li>
+<li data-line="571">4 messages par 10 s pour CO₂ + T/HR</li>
+<li data-line="572">Soit ≈ <strong>12 messages/minute</strong>, chacun de ~384 octets → <strong>≈ 4,6 KB/min</strong> de trafic MQTT montant</li>
+</ul>
+<p data-line="574">Cette charge est largement compatible avec une connexion WiFi industrielle standard.</p>
+<h3 data-line="576" id="cohrence-avec-le-simulateur-backend">Cohérence avec le simulateur backend</h3>
+<p data-line="578">Les intervalles du firmware sont alignés sur ceux du simulateur Node.js (<code>iot/simulator.js</code>) pour assurer la compatibilité des données lors des phases de test sans hardware. Le backend <code>ReadingService</code> traite indifféremment les messages provenant du firmware ESP32 ou du simulateur, car le format JSON est identique.</p>
+<hr data-line="580">
+<h2 data-line="582" id="ii37-gestion-de-la-fiabilit-et-reconnexion">II.3.7 Gestion de la fiabilité et reconnexion</h2>
+<h3 data-line="584" id="reconnexion-automatique-mqtt-et-wifi">Reconnexion automatique MQTT et WiFi</h3>
+<p data-line="586">Le firmware implémente une stratégie de reconnexion robuste pour les deux couches réseau. La reconnexion est tentée à chaque itération de <code>loop()</code> si la connexion est perdue, avec un délai de <strong>2 000 ms entre les tentatives MQTT</strong> (configurable via <code>reconnectPeriod</code> côté backend) :</p>
+<pre data-line="588" class="hljs"><code><span class="hljs-comment">// Extrait main.cpp — reconnexion MQTT</span>
+<span class="hljs-function"><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title">connectMqtt</span><span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">if</span> (mqtt.<span class="hljs-built_in">connected</span>()) <span class="hljs-keyword">return</span>;
+  mqtt.<span class="hljs-built_in">setServer</span>(MQTT_BROKER, MQTT_PORT);
+  mqtt.<span class="hljs-built_in">setBufferSize</span>(<span class="hljs-number">512</span>);
+  <span class="hljs-keyword">while</span> (!mqtt.<span class="hljs-built_in">connected</span>()) {
+    Serial.<span class="hljs-built_in">printf</span>(<span class="hljs-string">"[MQTT] Connexion %s:%d...\n"</span>, MQTT_BROKER, MQTT_PORT);
+    <span class="hljs-keyword">if</span> (mqtt.<span class="hljs-built_in">connect</span>(MQTT_CLIENT_ID)) {
+      Serial.<span class="hljs-built_in">println</span>(<span class="hljs-string">"[MQTT] Connecté"</span>);
+      <span class="hljs-keyword">return</span>;
+    }
+    Serial.<span class="hljs-built_in">printf</span>(<span class="hljs-string">"[MQTT] Échec rc=%d\n"</span>, mqtt.<span class="hljs-built_in">state</span>());
+    <span class="hljs-built_in">delay</span>(<span class="hljs-number">3000</span>);  <span class="hljs-comment">// Attente avant nouvelle tentative</span>
+  }
+}
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<p data-line="606">Côté backend, le service <code>mqttService.js</code> est configuré avec <code>reconnectPeriod: 2000</code> (2 s) pour la reconnexion automatique au broker en cas de coupure.</p>
+<pre data-line="608" class="hljs"><code><span class="hljs-comment">// mqttService.js — reconnexion backend</span>
+<span class="hljs-keyword">const</span> client = mqtt.<span class="hljs-title function_">connect</span>(<span class="hljs-variable constant_">MQTT_BROKER</span>, {
+    <span class="hljs-attr">clientId</span>: <span class="hljs-string">"pollution-backend-"</span> + <span class="hljs-title class_">Math</span>.<span class="hljs-title function_">random</span>().<span class="hljs-title function_">toString</span>(<span class="hljs-number">16</span>).<span class="hljs-title function_">slice</span>(<span class="hljs-number">2</span>, <span class="hljs-number">8</span>),
+    <span class="hljs-attr">keepalive</span>: <span class="hljs-number">60</span>,
+    <span class="hljs-attr">reconnectPeriod</span>: <span class="hljs-number">2000</span>,  <span class="hljs-comment">// Reconnexion toutes les 2 secondes</span>
+});
+
+client.<span class="hljs-title function_">on</span>(<span class="hljs-string">"reconnect"</span>, <span class="hljs-function">() =&gt;</span> {
+    <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">"🔄 [MQTT Service] Reconnexion..."</span>);
+});
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<h3 data-line="621" id="validation-ct-firmware-flag-isvalid">Validation côté firmware — flag <code>isValid</code></h3>
+<p data-line="623">Avant toute publication, chaque lecture de capteur est accompagnée d’un indicateur de validité <code>valid</code> (struct <code>GasReading</code>, <code>PmReading</code>, <code>EnvReading</code> dans <code>sensors.h</code>). Une lecture est marquée invalide si :</p>
+<table data-line="625">
+<thead data-line="625">
+<tr data-line="625">
+<th>Condition</th>
+<th>Capteur concerné</th>
+</tr>
+</thead>
+<tbody data-line="627">
+<tr data-line="627">
+<td>Tension ADC &lt; 0,05 V (capteur débranché ou court-circuit)</td>
+<td>MQ-136, MQ-131</td>
+</tr>
+<tr data-line="628">
+<td>Tension ADC &gt; 3,20 V (diviseur résistif absent ou défaillant)</td>
+<td>MQ-136, MQ-131</td>
+</tr>
+<tr data-line="629">
+<td>Retour CO₂ = 0 (erreur UART ou capteur non prêt)</td>
+<td>MH-Z19B</td>
+</tr>
+<tr data-line="630">
+<td>Trame SDS011 incorrecte (<code>result.isOk() = false</code>)</td>
+<td>SDS011</td>
+</tr>
+<tr data-line="631">
+<td><code>isnan(temperature)</code> ou <code>isnan(humidity)</code></td>
+<td>DHT22</td>
+</tr>
+<tr data-line="632">
+<td>Initialisation SGP30 échouée (<code>sgp30.begin() = false</code>)</td>
+<td>SGP30</td>
+</tr>
+</tbody>
+</table>
+<p data-line="634">Le champ <code>isValid</code> est propagé dans le payload JSON. Côté backend, <code>mqttService.js</code> passe ce champ à <code>ReadingService</code> qui le stocke dans MongoDB :</p>
+<pre data-line="636" class="hljs"><code><span class="hljs-comment">// mqttService.js — propagation isValid</span>
+<span class="hljs-keyword">const</span> readingPayload = {
+    ...
+    <span class="hljs-attr">isValid</span>: data.<span class="hljs-property">isValid</span> !== <span class="hljs-literal">false</span>,  <span class="hljs-comment">// false si capteur en défaut</span>
+    ...
+};
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<h3 data-line="645" id="validation-ct-backend-rejet-des-valeurs-physiquement-impossibles">Validation côté backend — rejet des valeurs physiquement impossibles</h3>
+<p data-line="647"><code>ReadingService.ingestReading()</code> applique une deuxième couche de validation métier : toute valeur supérieure à <strong>10 fois la limite réglementaire</strong> du polluant est rejetée comme erreur capteur :</p>
+<pre data-line="649" class="hljs"><code><span class="hljs-comment">// ReadingService.js — validation métier</span>
+<span class="hljs-keyword">const</span> validityMax = polluant.<span class="hljs-property">regulatoryLimit</span>
+    ? polluant.<span class="hljs-property">regulatoryLimit</span> * <span class="hljs-number">10</span>
+    : <span class="hljs-number">10000</span>;
+<span class="hljs-keyword">const</span> isValid = value &gt;= <span class="hljs-number">0</span> &amp;&amp; value &lt;= validityMax;
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<p data-line="657"><strong>Exemple appliqué :</strong> Pour le SO₂ dont la VLE générale est 300 mg/Nm³, toute valeur &gt; 3 000 mg/Nm³ est rejetée automatiquement (<code>isValid = false</code>). Pour le NO₂ (VLE 500 mg/Nm³), tout dépassement de 5 000 mg/Nm³ déclenche le rejet. Cela évite que des tensions TIA anormales (saturation du circuit op-amp, court-circuit) ne génèrent de fausses alertes critiques.</p>
+<h3 data-line="659" id="horodatage-ntp">Horodatage NTP</h3>
+<p data-line="661">Les timestamps ISO 8601 UTC sont générés par <code>isoTimestamp()</code> après synchronisation NTP au démarrage (<code>configTime(0, 0, "pool.ntp.org", "time.nist.gov")</code>). En cas d’échec NTP, la fonction retourne une chaîne vide et le backend utilise <code>new Date()</code> comme fallback :</p>
+<pre data-line="663" class="hljs"><code><span class="hljs-comment">// mqttService.js — fallback timestamp</span>
+<span class="hljs-attr">timestamp</span>: data.<span class="hljs-property">timestamp</span> || <span class="hljs-keyword">new</span> <span class="hljs-title class_">Date</span>(),
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<h3 data-line="668" id="architecture-de-fiabilit-vue-densemble">Architecture de fiabilité — vue d’ensemble</h3>
+<pre data-line="670" class="hljs"><code>Station ESP32                    Backend Node.js
+─────────────                    ───────────────
+Lecture capteur
+    │
+    ▼
+Validation capteur (valid flag)
+    │ invalide → champ isValid=false dans JSON
+    │ valide   → publication MQTT
+    ▼
+Publication MQTT QoS 1 ──────────► Réception mqttService.js
+(reconnexion auto si coupure)          │
+                                       ▼
+                                Résolution Sensor + Polluant (MongoDB)
+                                       │
+                                       ▼
+                                Validation métier (valeur ≤ 10×VLE)
+                                       │ invalide → stocké, isValid=false
+                                       │ valide   → stocké, isValid=true
+                                       ▼
+                                Moteur alertes (ReadingService)
+                                       │
+                                       ▼
+                                MongoDB + WebSocket dashboard
+</code><button class="code-copy-btn" title="Copy Code"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg></button></pre>
+<p data-line="696">Cette double validation (firmware + backend) constitue une défense en profondeur qui garantit la qualité des données stockées et la pertinence des alertes générées, conformément aux exigences d’un système de surveillance industrielle.</p>
+</div>
+
+    
+
+    
+
+    <!-- Image Lightbox Zoom Overlay -->
+    <div class="lightbox-overlay" id="lightboxOverlay">
+        <button class="lightbox-close-btn" id="lightboxCloseBtn" aria-label="Close image zoom" title="Close zoom">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path>
+            </svg>
+        </button>
+        <img class="lightbox-image" id="lightboxImage" src="" alt="Zoomed view">
+    </div>
+
+    <!-- Mermaid Local Offline Script -->
+    <script src="https://file%2B.vscode-resource.vscode-cdn.net/c%3A/Users/melik/.kiro/extensions/allwin-antony.md-viewer-1.1.4-universal/resources/mermaid/mermaid.min.js"></script>
+    <script>
+        const vscodeApi = acquireVsCodeApi();
+        let previewScrollTimeout = null;
+        let isHostScrolling = false;
+        let lastScrollTime = 0;
+        let hostScrollResetTimeout = null;
+        let isUserInteracting = false;
+
+        // User interaction tracking
+        window.addEventListener('mouseenter', () => { isUserInteracting = true; });
+        window.addEventListener('mouseleave', () => { isUserInteracting = false; });
+        window.addEventListener('focus', () => { isUserInteracting = true; });
+        window.addEventListener('blur', () => { isUserInteracting = false; });
+        window.addEventListener('wheel', () => { isUserInteracting = true; }, { passive: true });
+        window.addEventListener('touchstart', () => { isUserInteracting = true; }, { passive: true });
+        window.addEventListener('keydown', () => { isUserInteracting = true; });
+        window.addEventListener('mousedown', () => { isUserInteracting = true; });
+
+        function handlePreviewScroll() {
+            if (isHostScrolling || !isUserInteracting) {
+                return;
+            }
+
+            const elements = Array.from(document.querySelectorAll('[data-line]'));
+            if (elements.length === 0) return;
+
+            const viewportTop = 80;
+            let closestElement = null;
+            let closestDistance = Infinity;
+
+            for (const el of elements) {
+                const rect = el.getBoundingClientRect();
+                const distance = Math.abs(rect.top - viewportTop);
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestElement = el;
+                }
+            }
+
+            if (!closestElement) return;
+            const line = parseInt(closestElement.getAttribute('data-line'), 10);
+            if (!Number.isFinite(line)) return;
+
+            vscodeApi.postMessage({ command: 'previewScroll', line });
+        }
+
+        // Theme switching logic
+        const lightTheme = document.getElementById('highlight-light');
+        const darkTheme = document.getElementById('highlight-dark');
+        let isInitialThemeSetup = true;
+        let currentThemeIsDark = null;
+
+        function updateTheme() {
+            const isDark = document.body.classList.contains('vscode-dark') || 
+                           document.body.classList.contains('vscode-high-contrast');
+            
+            if (isDark === currentThemeIsDark) {
+                return;
+            }
+            currentThemeIsDark = isDark;
+
+            if (isDark) {
+                if (lightTheme) lightTheme.disabled = true;
+                if (darkTheme) darkTheme.disabled = false;
+            } else {
+                if (lightTheme) lightTheme.disabled = false;
+                if (darkTheme) darkTheme.disabled = true;
+            }
+            
+            // Re-init Mermaid with contrast aware theme (only on subsequent dynamic shifts)
+            if (!isInitialThemeSetup) {
+                initializeMermaid();
+            }
+        }
+
+        // Watch for body class changes
+        const observer = new MutationObserver(updateTheme);
+        observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+        // Run once initially
+        updateTheme();
+
+        function renderMathAndMermaid() {
+            // KaTeX Auto Render (Client-side)
+            renderMathInElement(document.getElementById('content'), {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\[', right: '\\]', display: true},
+                    {left: '\\(', right: '\\)', display: false}
+                ],
+                throwOnError: false
+            });
+
+            // Initialize Mermaid Contrast Theme
+            initializeMermaid();
+            
+            // Attach Code block Copy Buttons
+            attachCopyButtons();
+            
+            // Attach Lightbox event listeners to images
+            attachLightbox();
+        }
+
+        function initializeMermaid() {
+            if (window.mermaid) {
+                const isDark = document.body.classList.contains('vscode-dark') || 
+                               document.body.classList.contains('vscode-high-contrast');
+                mermaid.initialize({ 
+                    startOnLoad: false, 
+                    securityLevel: 'loose', 
+                    theme: isDark ? 'dark' : 'default' 
+                });
+                
+                // Find unrendered mermaid blocks
+                const mermaidBlocks = document.querySelectorAll('.mermaid');
+                mermaidBlocks.forEach(el => {
+                    // Reset original layout if morphed from morphdom
+                    if (el.getAttribute('data-processed')) {
+                        el.removeAttribute('data-processed');
+                        const originalCode = el.getAttribute('data-original-code');
+                        if (originalCode) {
+                            el.textContent = originalCode;
+                        } else {
+                            el.textContent = el.textContent;
+                        }
+                    }
+                    mermaid.init(undefined, el);
+                });
+            }
+        }
+
+        // Elegant Code Block Copy Utility
+        function attachCopyButtons() {
+            const preBlocks = document.querySelectorAll('pre');
+            preBlocks.forEach(pre => {
+                if (pre.querySelector('.code-copy-btn')) return; // already added
+
+                const btn = document.createElement('button');
+                btn.className = 'code-copy-btn';
+                btn.title = 'Copy Code';
+                btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`;
+
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const code = pre.querySelector('code');
+                    const text = code ? code.innerText : pre.innerText;
+
+                    navigator.clipboard.writeText(text).then(() => {
+                        btn.innerHTML = `<svg viewBox="0 0 24 24" style="fill:#10b981;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
+                        btn.title = 'Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`;
+                            btn.title = 'Copy Code';
+                        }, 2000);
+                    });
+                });
+
+                pre.appendChild(btn);
+            });
+        }
+
+        // Image Lightbox zoom overlay
+        const lightboxOverlay = document.getElementById('lightboxOverlay');
+        const lightboxImage = document.getElementById('lightboxImage');
+
+        function attachLightbox() {
+            const images = document.querySelectorAll('#content img');
+            images.forEach(img => {
+                // Ignore small icon or placeholder tags, and don't lightbox images inside links
+                if (
+                    img.classList.contains('alert-icon') || 
+                    img.classList.contains('yt-fallback-logo') ||
+                    img.closest('a')
+                ) return;
+                
+                // Prevent duplicate listeners
+                img.removeEventListener('click', openLightbox);
+                img.addEventListener('click', openLightbox);
+            });
+        }
+
+        function openLightbox(e) {
+            e.stopPropagation();
+            lightboxImage.src = this.src;
+            lightboxOverlay.classList.add('active');
+        }
+
+        // Close lightbox on click
+        lightboxOverlay.addEventListener('click', () => {
+            lightboxOverlay.classList.remove('active');
+        });
+
+        // Close lightbox via close button
+        const lightboxCloseBtn = document.getElementById('lightboxCloseBtn');
+        if (lightboxCloseBtn) {
+            lightboxCloseBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                lightboxOverlay.classList.remove('active');
+            });
+        }
+
+        // Close lightbox on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && lightboxOverlay.classList.contains('active')) {
+                lightboxOverlay.classList.remove('active');
+            }
+        });
+
+        // Dynamic Table of Contents (TOC) builder
+        function buildTableOfContents() {
+            const tocList = document.getElementById('tocList');
+            if (!tocList) return;
+
+            const headings = Array.from(document.querySelectorAll('#content h1, #content h2, #content h3, #content h4'));
+            if (headings.length === 0) {
+                tocList.innerHTML = '<div style="opacity: 0.5; font-style: italic; text-align: center; padding: 20px; font-size: 11px; color: var(--vscode-editor-foreground);">No headings found</div>';
+                return;
+            }
+
+            tocList.innerHTML = headings.map(function(heading) {
+                var id = heading.getAttribute('id');
+                if (!id) {
+                    var text = heading.textContent || '';
+                    id = text.trim().toLowerCase().replace(/s+/g, '-').replace(/[^w-]+/g, '');
+                    heading.setAttribute('id', id);
+                }
+                var text = heading.textContent || '';
+                var level = heading.tagName.toLowerCase(); // h1, h2, h3, h4
+                return '<a href="#' + id + '" class="minimap-toc-item toc-' + level + '" data-id="' + id + '">' + text + '</a>';
+            }).join('');
+
+            tocList.querySelectorAll('.minimap-toc-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = item.getAttribute('data-id');
+                    const targetEl = document.getElementById(targetId);
+                    if (targetEl) {
+                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+
+            updateScrollSpy();
+        }
+
+        // Active Scroll Spy logic
+        function updateScrollSpy() {
+            const headings = Array.from(document.querySelectorAll('#content h1, #content h2, #content h3, #content h4'));
+            const tocItems = Array.from(document.querySelectorAll('.minimap-toc-item'));
+            if (headings.length === 0 || tocItems.length === 0) return;
+
+            let activeId = null;
+            const scrollOffset = 120; // Trigger slightly before heading hits top
+
+            for (const heading of headings) {
+                const rect = heading.getBoundingClientRect();
+                if (rect.top <= scrollOffset) {
+                    activeId = heading.getAttribute('id');
+                } else {
+                    break;
+                }
+            }
+
+            if (!activeId) {
+                activeId = headings[0].getAttribute('id');
+            }
+
+            tocItems.forEach(item => {
+                if (item.getAttribute('data-id') === activeId) {
+                    item.classList.add('active');
+                    item.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        // Minimap Panel open/collapse control
+        const minimapPanel = document.getElementById('minimapPanel');
+        const minimapToggleHandle = document.getElementById('minimapToggleHandle');
+
+        function setMinimapState(collapsed) {
+            if (collapsed) {
+                minimapPanel.classList.add('collapsed');
+                minimapToggleHandle.classList.add('visible');
+                document.body.classList.remove('minimap-open');
+                localStorage.setItem('minimap-collapsed', 'true');
+            } else {
+                minimapPanel.classList.remove('collapsed');
+                minimapToggleHandle.classList.remove('visible');
+                document.body.classList.add('minimap-open');
+                localStorage.setItem('minimap-collapsed', 'false');
+            }
+        }
+
+        // Initialize from localStorage (default to open)
+        const isCollapsed = localStorage.getItem('minimap-collapsed') === 'true';
+        setMinimapState(isCollapsed);
+
+        document.getElementById('collapseMinimapBtn').addEventListener('click', () => setMinimapState(true));
+        minimapToggleHandle.addEventListener('click', () => setMinimapState(false));
+        window.addEventListener('scroll', () => {
+            updateScrollSpy();
+            
+            if (isHostScrolling) {
+                if (hostScrollResetTimeout) {
+                    clearTimeout(hostScrollResetTimeout);
+                }
+                hostScrollResetTimeout = setTimeout(() => {
+                    isHostScrolling = false;
+                }, 150);
+                return;
+            }
+
+            const now = Date.now();
+            if (now - lastScrollTime >= 50) {
+                handlePreviewScroll();
+                lastScrollTime = now;
+            } else {
+                if (previewScrollTimeout) {
+                    clearTimeout(previewScrollTimeout);
+                }
+                previewScrollTimeout = window.setTimeout(handlePreviewScroll, 100);
+            }
+        });
+
+        // Listen for live incremental updates or export complete signals
+        window.addEventListener('message', event => {
+            const message = event.data;
+            if (message.command === 'update') {
+                if (typeof morphdom !== 'undefined') {
+                    const wrapper = document.createElement('div');
+                    wrapper.id = 'content';
+                    wrapper.innerHTML = message.body;
+                    morphdom(document.getElementById('content'), wrapper);
+                } else {
+                    document.getElementById('content').innerHTML = message.body;
+                }
+                renderMathAndMermaid();
+                buildTableOfContents();
+            } else if (message.command === 'exportComplete') {
+                const btn = document.getElementById('exportPdfBtn');
+                const htmlBtn = document.getElementById('exportHtmlBtn');
+                if (btn) {
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                }
+                if (htmlBtn) {
+                    htmlBtn.classList.remove('loading');
+                    htmlBtn.disabled = false;
+                }
+            } else if (message.command === 'scrollToLine') {
+                const targetLine = message.line;
+                
+                const elements = Array.from(document.querySelectorAll('[data-line]'));
+                if (elements.length === 0) return;
+                
+                let closestElement = null;
+                let minDiff = Infinity;
+                
+                for (const el of elements) {
+                    const line = parseInt(el.getAttribute('data-line'), 10);
+                    const diff = targetLine - line;
+                    
+                    if (diff >= 0 && diff < minDiff) {
+                        minDiff = diff;
+                        closestElement = el;
+                    }
+                }
+                
+                if (!closestElement && elements.length > 0) {
+                    closestElement = elements[0];
+                }
+                
+                if (closestElement) {
+                    isHostScrolling = true;
+                    isUserInteracting = false;
+                    if (hostScrollResetTimeout) {
+                        clearTimeout(hostScrollResetTimeout);
+                    }
+                    closestElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    setTimeout(updateScrollSpy, 100);
+                }
+            } else if (message.command === 'selectLines') {
+                const startLine = message.startLine;
+                const endLine = message.endLine;
+                
+                // Clear any existing highlights first
+                document.querySelectorAll('.selected-highlight').forEach(el => {
+                    el.classList.remove('selected-highlight');
+                });
+                
+                if (startLine === -1 || endLine === -1) {
+                    return;
+                }
+                
+                // Find all elements with data-line attributes
+                const elements = Array.from(document.querySelectorAll('[data-line]'))
+                    .map(el => ({
+                        element: el,
+                        line: parseInt(el.getAttribute('data-line'), 10)
+                    }))
+                    .filter(item => !isNaN(item.line))
+                    .sort((a, b) => a.line - b.line);
+                
+                if (elements.length === 0) return;
+                
+                // Calculate span ranges and apply highlight
+                for (let i = 0; i < elements.length; i++) {
+                    const elData = elements[i];
+                    const nextLine = (i + 1 < elements.length) ? elements[i + 1].line : Infinity;
+                    const elEndLine = nextLine - 1;
+                    
+                    // Check if element range [elData.line, elEndLine] overlaps selection [startLine, endLine]
+                    const overlaps = elData.line <= endLine && elEndLine >= startLine;
+                    
+                    if (overlaps) {
+                        elData.element.classList.add('selected-highlight');
+                    }
+                }
+            }
+        });
+
+        // Dynamic Interactive Task List Back-Propagation
+        document.addEventListener('change', (e) => {
+            const target = e.target;
+            if (target && target.type === 'checkbox' && target.closest('.task-list-item')) {
+                const parentWithLine = target.closest('[data-line]');
+                if (parentWithLine) {
+                    const line = parseInt(parentWithLine.getAttribute('data-line'), 10);
+                    const checked = target.checked;
+                    vscodeApi.postMessage({
+                        command: 'toggleCheckbox',
+                        line: line,
+                        checked: checked
+                    });
+                }
+            }
+        });
+
+        // Sync selections back to markdown editor on preview text selection
+        document.addEventListener('selectionchange', () => {
+            if (!isUserInteracting) return;
+            
+            const selection = window.getSelection();
+            if (!selection || selection.isCollapsed) {
+                document.querySelectorAll('.selected-highlight').forEach(el => {
+                    el.classList.remove('selected-highlight');
+                });
+                vscodeApi.postMessage({
+                    command: 'editorSelect',
+                    startLine: -1,
+                    endLine: -1
+                });
+                return;
+            }
+            
+            let startLine = Infinity;
+            let endLine = -Infinity;
+            
+            for (let i = 0; i < selection.rangeCount; i++) {
+                const range = selection.getRangeAt(i);
+                const startEl = findNearestDataLineAncestor(range.startContainer);
+                const endEl = findNearestDataLineAncestor(range.endContainer);
+                
+                if (startEl) {
+                    const line = parseInt(startEl.getAttribute('data-line'), 10);
+                    if (!isNaN(line)) {
+                        startLine = Math.min(startLine, line);
+                        endLine = Math.max(endLine, line);
+                    }
+                }
+                if (endEl) {
+                    const line = parseInt(endEl.getAttribute('data-line'), 10);
+                    if (!isNaN(line)) {
+                        startLine = Math.min(startLine, line);
+                        endLine = Math.max(endLine, line);
+                    }
+                }
+            }
+            
+            if (startLine !== Infinity && endLine !== -Infinity) {
+                vscodeApi.postMessage({
+                    command: 'editorSelect',
+                    startLine: startLine,
+                    endLine: endLine
+                });
+            }
+        });
+
+        function findNearestDataLineAncestor(node) {
+            let current = node;
+            while (current && current !== document.body) {
+                if (current.nodeType === Node.ELEMENT_NODE && current.hasAttribute('data-line')) {
+                    return current;
+                }
+                current = current.parentNode;
+            }
+            return null;
+        }
+
+        // Initial render
+        renderMathAndMermaid();
+        buildTableOfContents();
+        isInitialThemeSetup = false;
+
+        // Signal host that webview is loaded and ready
+        vscodeApi.postMessage({ command: 'webviewReady' });
+
+        // Click handler
+        document.addEventListener('click', function(e) {
+            const target = e.target.closest('a');
+            if (!target) return;
+            const href = target.getAttribute('href');
+            if (!href) return;
+
+            if (href.startsWith('#')) {
+                e.preventDefault();
+                e.stopPropagation();
+                const id = href.substring(1);
+                let el = document.getElementById(id) || document.getElementById(id.replace(/^-+|-+$/g, ''));
+                if (el) {
+                    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+                }
+                return;
+            }
+
+            if (href.startsWith('http://') || href.startsWith('https://')) {
+                // Let VS Code's native webview handle external HTTP/HTTPS links naturally.
+                // This prevents the page from opening twice in the default browser.
+                return;
+            }
+
+            if (!href.startsWith('mailto:')) {
+                e.preventDefault();
+                vscodeApi.postMessage({ command: 'openRelative', url: href });
+            }
+        });
+
+        // PDF Export click listener
+        document.getElementById('exportPdfBtn').addEventListener('click', () => {
+            const btn = document.getElementById('exportPdfBtn');
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            const htmlContent = document.documentElement.outerHTML;
+            vscodeApi.postMessage({
+                command: 'exportPdfHtml',
+                html: htmlContent
+            });
+        });
+
+        // Standalone HTML Export click listener
+        document.getElementById('exportHtmlBtn').addEventListener('click', () => {
+            const btn = document.getElementById('exportHtmlBtn');
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            const htmlContent = document.documentElement.outerHTML;
+            vscodeApi.postMessage({
+                command: 'exportStandaloneHtml',
+                html: htmlContent
+            });
+        });
+    </script>
+
+</body></html>

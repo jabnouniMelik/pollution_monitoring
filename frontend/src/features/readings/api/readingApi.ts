@@ -50,7 +50,7 @@ async function resolvePolluantId(pollutantOrId: string): Promise<string> {
       if (normalized) map[normalized] = p._id
     }
   }
-  // Also add PM → PM25 alias
+  // Legacy alias PM → PM25 (zones / anciennes configs)
   if (map['PM25'] && !map['PM']) map['PM'] = map['PM25']
   if (map['PM'] && !map['PM25']) map['PM25'] = map['PM']
 
@@ -84,6 +84,7 @@ interface BackendReading {
   value: number
   unit?: string
   timestamp: string
+  createdAt?: string   // Mongoose auto-field — unique per document, used for chart x-axis
 }
 
 interface BackendLatestReadingGroup {
@@ -93,13 +94,14 @@ interface BackendLatestReadingGroup {
 
 /**
  * Normalize backend pollutant names to the codes the UI expects.
- * Backend uses: CO2, NOX, SO2, COV, PM25, TEMPERATURE, HUMIDITY.
- * UI constants use: CO2, NOX, SO2, COV, PM (+ others), so PM25 → PM.
+ * Backend uses: CO2, NOX, SO2, COV, PM25, PM10, TEMPERATURE, HUMIDITY.
  */
 function normalizePollutantCode(name: string | undefined): string | undefined {
   if (!name) return undefined
   const upper = name.toUpperCase().replace(/[^A-Z0-9]/g, '')
-  if (upper === 'PM25' || upper === 'PM2') return 'PM'
+  if (upper === 'PM' || upper === 'PM2') return 'PM25'
+  if (upper === 'PM25') return 'PM25'
+  if (upper === 'PM10') return 'PM10'
   return upper
 }
 
@@ -225,10 +227,44 @@ export const readingApi = {
     return adaptReadings(rows)
   },
   async history(params: ReadingQuery = {}): Promise<Reading[]> {
-    const resp = await api.get<ApiSuccess<BackendReading[]>>(endpoints.readings.base, {
-      params: await buildQuery(params, 500),
-    })
-    const rows = unwrap(resp.data) ?? []
-    return adaptReadings(rows)
+    // Use the dedicated aggregated history endpoint which buckets readings
+    // server-side — returns ~300 averaged points regardless of time range,
+    // one point per time bucket averaged across all nodes.
+    if (!params.pollutant || !params.from || !params.to) return []
+
+    const polluantId = await resolvePolluantId(params.pollutant)
+
+    const qp: Record<string, string | number> = {
+      polluantId,
+      from: params.from,
+      to: params.to,
+      buckets: 300,
+    }
+    if (params.zoneId) qp.zoneId = params.zoneId
+
+    interface HistoryPoint {
+      timestamp: string
+      avg: number
+      min: number
+      max: number
+      count: number
+    }
+
+    const resp = await api.get<ApiSuccess<HistoryPoint[]>>(
+      endpoints.readings.history,
+      { params: qp },
+    )
+    const points = unwrap(resp.data) ?? []
+
+    // Map aggregated points to the Reading shape the History page expects
+    const code = params.pollutant.toUpperCase()
+    return points.map((p) => ({
+      id: p.timestamp,
+      sensorId: '',
+      timestamp: p.timestamp,
+      measurements: {
+        [code]: { value: p.avg, unit: '' },
+      },
+    }))
   },
 }

@@ -69,7 +69,7 @@ class SiteRepository {
    */
   async update(id, data) {
     return await Site.findByIdAndUpdate(id, data, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     })
       .populate("industrieId", "nom secteur")

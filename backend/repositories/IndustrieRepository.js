@@ -41,7 +41,11 @@ class IndustrieRepository {
    * @param {Object} options - Options Mongoose (ex: { new: true })
    * @returns {Promise<Object>} Document mis à jour
    */
-  async update(id, data, options = { new: true, runValidators: true }) {
+  async update(
+    id,
+    data,
+    options = { returnDocument: "after", runValidators: true },
+  ) {
     return await Industrie.findByIdAndUpdate(id, data, options);
   }
 

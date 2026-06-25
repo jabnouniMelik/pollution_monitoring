@@ -1,14 +1,14 @@
 import axios from 'axios'
 import { api, unwrap } from '@/lib/api/axios'
 import { endpoints } from '@/lib/api/endpoints'
-import type { GenerateReportPayload, Report, ReportFormat } from '../types/report.types'
+import type {
+  GenerateReportPayload,
+  Report,
+  ReportAuthor,
+  ReportFormat,
+  ReportWorkflowStatus,
+} from '../types/report.types'
 
-// Backend Report shape (see backend/models/Report.js):
-//   { _id, periodStart, periodEnd, overallScore, polluantScores, breachCount,
-//     generatedAt, generatedBy, status: 'DRAFT'|'SUBMITTED'|'APPROVED', fileUrl }
-// The UI expects the camelCase/flat shape defined in report.types.ts.
-// Normalize here so `r.format.toUpperCase()` and friends can't crash on an
-// undefined field.
 type RawReport = Partial<Report> & {
   _id?: string
   periodStart?: string
@@ -16,12 +16,9 @@ type RawReport = Partial<Report> & {
   fileUrl?: string
   status?: string
   format?: string
-}
-
-const BACKEND_STATUS_MAP: Record<string, NonNullable<Report['status']>> = {
-  DRAFT: 'pending',
-  SUBMITTED: 'ready',
-  APPROVED: 'ready',
+  generatedBy?: string | ReportAuthor & { _id?: string }
+  approvedBy?: string | ReportAuthor & { _id?: string }
+  rejectedBy?: string | ReportAuthor & { _id?: string }
 }
 
 function inferFormat(url?: string): ReportFormat {
@@ -38,12 +35,26 @@ function formatPeriod(start?: string, end?: string): string {
   return `${toDate(start)} → ${toDate(end)}`
 }
 
+function resolveAuthorName(
+  author?: string | (ReportAuthor & { _id?: string }),
+): string | undefined {
+  if (!author) return undefined
+  if (typeof author === 'string') return author
+  return author.username || author.email
+}
+
+function resolveAuthorId(
+  author?: string | (ReportAuthor & { _id?: string }),
+): string | undefined {
+  if (!author) return undefined
+  if (typeof author === 'string') return author
+  return author.id || author._id
+}
+
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 function normalizeReport(raw: RawReport): Report {
   const rawUrl = raw.url ?? raw.fileUrl
-  // fileUrl from backend is a relative path like /uploads/reports/xxx.pdf
-  // Prepend the backend base URL so the browser fetches from the right server
   const url = rawUrl
     ? rawUrl.startsWith('http')
       ? rawUrl
@@ -56,9 +67,7 @@ function normalizeReport(raw: RawReport): Report {
       ? rawFormat
       : inferFormat(url)
 
-  const status: Report['status'] = raw.status
-    ? (BACKEND_STATUS_MAP[raw.status] ?? (raw.status as Report['status']))
-    : 'ready'
+  const workflowStatus = (raw.status ?? raw.workflowStatus ?? 'DRAFT') as ReportWorkflowStatus
 
   return {
     id: (raw.id ?? raw._id ?? '') as string,
@@ -66,27 +75,36 @@ function normalizeReport(raw: RawReport): Report {
     period: raw.period ?? formatPeriod(raw.periodStart, raw.periodEnd),
     generatedAt: raw.generatedAt ?? new Date().toISOString(),
     generatedBy: raw.generatedBy,
+    generatedById: resolveAuthorId(raw.generatedBy),
+    generatedByName: resolveAuthorName(raw.generatedBy),
     siteId: raw.siteId,
     format,
     sizeBytes: raw.sizeBytes,
     url,
-    status,
+    workflowStatus,
+    submittedAt: raw.submittedAt,
+    approvedAt: raw.approvedAt,
+    rejectedAt: raw.rejectedAt,
+    approvedByName: resolveAuthorName(raw.approvedBy),
+    rejectedByName: resolveAuthorName(raw.rejectedBy),
+    rejectionReason: raw.rejectionReason,
+    notes: raw.notes,
   }
 }
 
 export const reportApi = {
-  async list(params: { siteId?: string; page?: number; pageSize?: number } = {}): Promise<Report[]> {
+  async list(params: { siteId?: string; status?: ReportWorkflowStatus } = {}): Promise<Report[]> {
     const resp = await api.get<ApiSuccess<RawReport[]>>(endpoints.reports.base, { params })
     const raw = unwrap(resp.data) ?? []
     return (Array.isArray(raw) ? raw : []).map(normalizeReport)
   },
+
   async byId(id: string): Promise<Report> {
     const resp = await api.get<ApiSuccess<RawReport>>(endpoints.reports.byId(id))
     return normalizeReport(unwrap(resp.data))
   },
+
   async generate(payload: GenerateReportPayload): Promise<Report> {
-    // Backend's /reports/generate expects { periodStart, periodEnd, generatedBy }
-    // — translate the UI-friendly { from, to, title, format } payload.
     const body = {
       periodStart: payload.from,
       periodEnd: payload.to,
@@ -100,15 +118,32 @@ export const reportApi = {
     const resp = await api.post<ApiSuccess<RawReport>>(endpoints.reports.generate, body)
     return normalizeReport(unwrap(resp.data))
   },
-  /**
-   * Backend has no `GET /reports/:id/export`. Download via `fileUrl` or same-origin path.
-   */
+
+  async submit(id: string): Promise<Report> {
+    const resp = await api.post<ApiSuccess<RawReport>>(endpoints.reports.submit(id))
+    return normalizeReport(unwrap(resp.data))
+  },
+
+  async approve(id: string, notes?: string): Promise<Report> {
+    const resp = await api.post<ApiSuccess<RawReport>>(endpoints.reports.approve(id), { notes })
+    return normalizeReport(unwrap(resp.data))
+  },
+
+  async reject(id: string, reason: string): Promise<Report> {
+    const resp = await api.post<ApiSuccess<RawReport>>(endpoints.reports.reject(id), {
+      rejectionReason: reason,
+    })
+    return normalizeReport(unwrap(resp.data))
+  },
+
+  async remove(id: string): Promise<void> {
+    await api.delete(endpoints.reports.byId(id))
+  },
+
   async export(id: string): Promise<Blob> {
     const r = await reportApi.byId(id)
     if (!r.url) {
-      throw new Error(
-        'Aucun fichier associé à ce rapport. Export serveur non disponible (endpoint manquant côté API).',
-      )
+      throw new Error('Aucun fichier associé à ce rapport.')
     }
     if (r.url.startsWith('http://') || r.url.startsWith('https://')) {
       const resp = await axios.get<Blob>(r.url, { responseType: 'blob' })

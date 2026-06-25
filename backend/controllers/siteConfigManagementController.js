@@ -65,7 +65,7 @@ const updatePollutantWeights = async (req, res, next) => {
     if (!weights || typeof weights !== "object") {
       return res.status(400).json({
         success: false,
-        message: "weights requis (object avec NOx, SO2, PM25, COV, CO2)",
+        message: "weights requis (object avec NOx, SO2, PM25, PM10, COV, CO2)",
       });
     }
 
@@ -96,7 +96,7 @@ const updateTargets = async (req, res, next) => {
     if (!targets || typeof targets !== "object") {
       return res.status(400).json({
         success: false,
-        message: "targets requis (object avec tauxDepassement, ipe, reductionCO2)",
+        message: "targets requis (object avec tauxDepassement, ipe, reductionCO2, EMJ)",
       });
     }
 

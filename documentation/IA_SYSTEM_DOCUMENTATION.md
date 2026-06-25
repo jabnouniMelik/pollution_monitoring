@@ -13,7 +13,7 @@
 Système de **surveillance de la pollution atmosphérique en temps réel** pour les zones industrielles tunisiennes, avec:
 
 - **Capteurs IoT** (ESP32) collectant CO₂, SO₂, NOₓ, PM2.5, PM10, COV, température/humidité
-- **Moteur d'alertes** automatique comparant aux seuils ANPE (NT 106.04)
+- **Moteur d'alertes** automatique comparant aux seuils ANPE (Décret 2018-928)
 - **RBAC complet** (5 rôles: SUPER_ADMIN, HEAD_SUPERVISOR, SITE_SUPERVISOR, OPERATOR, AUDITOR)
 - **Authentification JWT** avec refresh tokens
 - **Rapports réglementaires** exportables en PDF/CSV
@@ -151,7 +151,7 @@ OPERATOR / AUDITOR (niveaux 1-2)
     "CO2", "SO2", "NOX", "PM25", "PM10", "COV",
     "TEMPERATURE", "HUMIDITY"
   ],
-  model: String (required),  // Ex: "MQ-135", "SDS011", "BME680"
+  model: String (required),  // Ex: "MH-Z19B", "ME4-SO2", "ME4-NO2", "SDS011", "SGP30", "DHT22"
   unit: String (required),   // Ex: "ppm", "µg/m³", "°C", "%"
   calibrationDate: Date,
   driftThreshold: Number,    // Seuil de dérive acceptable
@@ -394,7 +394,7 @@ REFRESH_TOKEN_EXPIRY: "7d"        // Longue durée
 ```
 Nouvelle lecture reçue (ex: NO₂ = 150 µg/m³)
        ↓
-Récupérer seuils du polluant (ANPE NT 106.04)
+Récupérer seuils du polluant (ANPE Décret 2018-928)
    - warningThreshold: 100 µg/m³
    - regulatoryLimit: 120 µg/m³
        ↓

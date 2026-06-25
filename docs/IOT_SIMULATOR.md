@@ -39,76 +39,76 @@ This station has **7 sensors** attached to it, each measuring a different thing:
 ### Sensor 2 — NOx (Nitrogen Oxides)
 | Property | Value |
 |----------|-------|
-| Hardware model | MQ-135 |
+| Hardware model | ME4-NO2 |
 | Measurement unit | mg/Nm³ (milligrams per normal cubic meter) |
-| Normal range | 20–120 mg/Nm³ |
-| Legal limit (VLE) | 120 mg/Nm³ |
+| Normal range | 20–400 mg/Nm³ |
+| Legal limit (VLE) | 500 mg/Nm³ (Décret 2018-928, Annexe 1, §4) |
 | Sends data every | 30 seconds |
 | MQTT topic | `emissions/Zone-A/NOX` |
 
-**What it measures:** Nitrogen oxides — a family of gases produced by combustion. Causes acid rain and respiratory problems.
+**What it measures:** Nitrogen dioxide — a reddish-brown gas produced by combustion. Causes respiratory problems and acid rain. Note: the ME4-NO2 sensor covers a perimeter air monitoring range (0–20 ppm nominal ≈ 0–41 mg/Nm³); it is suited for ambient fugitive emission detection around the site.
 
 ---
 
 ### Sensor 3 — SO₂ (Sulfur Dioxide)
 | Property | Value |
 |----------|-------|
-| Hardware model | Alphasense SO2-B4 |
+| Hardware model | ME4-SO2 |
 | Measurement unit | mg/Nm³ |
-| Normal range | 10–120 mg/Nm³ |
-| Legal limit (VLE) | 120 mg/Nm³ |
+| Normal range | 10–240 mg/Nm³ |
+| Legal limit (VLE) | 300 mg/Nm³ (Décret 2018-928, Annexe 1, §3) |
 | Sends data every | 30 seconds |
 | MQTT topic | `emissions/Zone-A/SO2` |
 
-**What it measures:** Sulfur dioxide — produced by burning fossil fuels containing sulfur. Causes acid rain and lung damage.
+**What it measures:** Sulfur dioxide — produced by burning sulfur-containing fuels. Causes acid rain and lung damage. The ME4-SO2 electrochemical sensor outputs current (µA) converted to ppm via a transimpedance amplifier circuit, then to mg/Nm³ (×2.86) in the firmware.
 
 ---
 
 ### Sensor 4 — PM2.5 (Fine Particles)
 | Property | Value |
 |----------|-------|
-| Hardware model | Plantower PMS5003 |
+| Hardware model | SDS011 |
 | Measurement unit | µg/m³ (micrograms per cubic meter) |
-| Normal range | 5–12 µg/m³ |
-| Legal limit (VLE) | 12 µg/m³ |
+| Normal range | 5–25 µg/m³ |
+| WHO guideline | 25 µg/m³ (24h) |
 | Sends data every | 15 seconds |
 | MQTT topic | `emissions/Zone-A/PM25` |
 
-**What it measures:** Particulate matter smaller than 2.5 micrometers. These tiny particles can penetrate deep into the lungs and enter the bloodstream.
+**What it measures:** Particulate matter smaller than 2.5 micrometers. These tiny particles can penetrate deep into the lungs. The SDS011 uses laser diffusion and outputs both PM2.5 and PM10 per query.
 
 ---
 
 ### Sensor 5 — COV (Volatile Organic Compounds)
 | Property | Value |
 |----------|-------|
-| Hardware model | CCS811 |
+| Hardware model | SGP30 |
 | Measurement unit | mg/Nm³ |
-| Normal range | 5–30 mg/Nm³ |
-| Legal limit (VLE) | 30 mg/Nm³ |
+| Normal range | 5–88 mg/Nm³ |
+| Legal limit (VLE) | 110 mg/Nm³ (Décret 2018-928, Annexe 1, §7) |
 | Sends data every | 30 seconds |
 | MQTT topic | `emissions/Zone-A/COV` |
 
-**What it measures:** Volatile organic compounds — a broad category of carbon-based chemicals that evaporate easily. Many are toxic and contribute to smog formation.
+**What it measures:** Volatile organic compounds — carbon-based chemicals that evaporate easily. The SGP30 measures TVOC in ppb via I²C; the firmware converts to mg/Nm³ (×0.0045, approximation).
 
 ---
 
 ### Sensor 6 — Temperature
 | Property | Value |
 |----------|-------|
-| Hardware model | SHT31 |
+| Hardware model | DHT22 |
 | Measurement unit | °C |
 | Normal range | 18–35°C |
 | Sends data every | 10 seconds |
 | MQTT topic | `emissions/Zone-A/TEMPERATURE` |
 
-**What it measures:** Ambient air temperature. Used as environmental context — temperature affects how pollutants disperse in the air.
+**What it measures:** Ambient air temperature. Used as environmental context — temperature affects how pollutants disperse and is a correction factor for electrochemical sensor sensitivity.
 
 ---
 
 ### Sensor 7 — Humidity
 | Property | Value |
 |----------|-------|
-| Hardware model | SHT31 (same chip as temperature) |
+| Hardware model | DHT22 (same chip as temperature) |
 | Measurement unit | %RH (percent relative humidity) |
 | Normal range | 30–60% |
 | Sends data every | 10 seconds |
@@ -158,9 +158,9 @@ Every time a sensor "takes a measurement," the simulator sends a JSON message to
 ```json
 {
   "sensorType": "NOX",
-  "model": "MQ-135",
+  "model": "ME4-NO2",
   "value": 135.7,
-  "rawValue": 135.7,
+  "rawValue": 0.089,
   "unit": "mg/Nm³",
   "timestamp": "2026-05-04T14:30:00.000Z",
   "isValid": true,
@@ -269,12 +269,12 @@ When it starts successfully, you'll see:
 │ Type         │ Model                │ Frequency │
 ├──────────────┼──────────────────────┼───────────┤
 │ CO2          │ MH-Z19B              │ 10s       │
-│ NOX          │ MQ-135               │ 30s       │
-│ SO2          │ Alphasense SO2-B4    │ 30s       │
-│ PM25         │ Plantower PMS5003    │ 15s       │
-│ COV          │ CCS811               │ 30s       │
-│ TEMPERATURE  │ SHT31                │ 10s       │
-│ HUMIDITY     │ SHT31                │ 10s       │
+│ NOX          │ ME4-NO2              │ 30s       │
+│ SO2          │ ME4-SO2              │ 30s       │
+│ PM25         │ SDS011               │ 15s       │
+│ COV          │ SGP30                │ 30s       │
+│ TEMPERATURE  │ DHT22                │ 10s       │
+│ HUMIDITY     │ DHT22                │ 10s       │
 └──────────────┴──────────────────────┴───────────┘
 ```
 

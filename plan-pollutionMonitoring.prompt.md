@@ -13,7 +13,7 @@ Construire un dataset d'entraînement unifié en 3 couches: (1) base réelle pub
 8. Feature engineering commun: mean_10m, std_10m, rate_of_change, rolling_max_30m, index de pollution, corrélation CO2-NOx (ou proxy CO-NO2 en pré-entraînement public). *depends on 7*
 9. Construction jeux ML par tâche:
 - IF (anomalies): fenêtre glissante multivariée, contamination initiale 0.05.
-- LSTM (prévision): tenseur lookback 60, horizon 4 (1h) et 96 (24h) selon granularité re-échantillonnée.
+- LSTM (prévision): cadence 1 h, lookback 48 h, horizons 4 h et 24 h (voir `ia/TRAINING_PLAN.md`).
 *depends on 8*
 10. Stratégie anti-domain shift: pré-entraînement sur données publiques, puis fine-tuning obligatoire sur données IoT locales (ESP32) avant validation finale. *depends on 9*
 11. Données manquantes critiques (CO2/PM1/COV): générer provisoirement via simulation calibrée et marquer clairement synthetic=true; remplacer progressivement par données réelles dès disponibilité. *depends on 10*

@@ -29,7 +29,7 @@ export default function Login() {
                 Surveillance environnementale pour l’industrie tunisienne
               </h2>
               <p className="mt-3 text-sm text-white/80">
-                Conformité en temps réel avec le Décret n° 2010-2516 — suivi des émissions, alertes
+                Conformité en temps réel avec le Décret n° 2018-928 — suivi des émissions, alertes
                 réglementaires et rapports pour l’ANPE.
               </p>
             </div>
@@ -46,6 +46,14 @@ export default function Login() {
             </p>
             <div className="mt-6">
               <LoginForm onSuccess={() => navigate(from, { replace: true })} />
+            </div>
+            <div className="mt-6 border-t border-border pt-4 text-center">
+              <p className="text-xs text-text-secondary">
+                Nouvelle industrie ?{' '}
+                <a href="/register" className="font-medium text-accent hover:underline">
+                  Soumettre une demande d'inscription
+                </a>
+              </p>
             </div>
           </div>
         </div>

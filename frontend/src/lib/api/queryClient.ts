@@ -66,4 +66,12 @@ export const queryKeys = {
     list: (params?: unknown) => ['users', 'list', params] as const,
     byId: (id: string) => ['users', 'detail', id] as const,
   },
+  ia: {
+    health: ['ia', 'health'] as const,
+    forecast: (zoneId: string) => ['ia', 'forecast', zoneId] as const,
+    anomalies: (zoneId: string) => ['ia', 'anomalies', zoneId] as const,
+    retrainDataset: (scope?: unknown) => ['ia', 'retrain', 'dataset', scope] as const,
+    retrainLatestJob: ['ia', 'retrain', 'job', 'latest'] as const,
+    retrainJob: (jobId: string) => ['ia', 'retrain', 'job', jobId] as const,
+  },
 }

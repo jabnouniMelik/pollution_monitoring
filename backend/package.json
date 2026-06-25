@@ -12,16 +12,23 @@
   },
   "scripts": {
     "start": "node --max-old-space-size=4096 server.js",
+    "monitor": "node mqtt-monitor.js",
     "simulate": "node simulator.js",
     "simulate:warning": "node simulator.js warning",
     "simulate:critical": "node simulator.js critical",
     "init:fresh": "node init-fresh.js",
+    "demo:report": "node demo-report.js",
+    "demo:live": "node demo-report.js --live",
     "check": "node check-system-ready.js",
     "init:simulator": "node init-simulator.js",
     "init:kpi": "node init-kpi-config.js",
+    "align:sensors": "node scripts/align-sensor-models.js",
     "init:users": "node init-users.js",
     "init:thresholds": "node init-thresholds.js",
-    "init": "npm run init:simulator && npm run init:users && npm run init:thresholds && npm run init:kpi"
+    "init": "npm run init:simulator && npm run init:users && npm run init:thresholds && npm run init:kpi",
+    "migrate:zones": "node migrations/migrate-sensornode-zone.js",
+    "migrate:limits": "node migrations/update-polluant-limits.js",
+    "ia:forecast": "node scripts/run-ia-forecast.js"
   },
   "dependencies": {
     "axios": "^1.6.7",
@@ -38,7 +45,7 @@
     "mqtt": "^5.15.1",
     "node-cron": "^3.0.3",
     "puppeteer": "^24.42.0",
-    "ws": "^8.16.0"
-  },
-  "devDependencies": {}
+    "ws": "^8.16.0",
+    "xlsx": "^0.18.5"
+  }
 }
